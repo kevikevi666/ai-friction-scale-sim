@@ -246,6 +246,15 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState("scale");
   const [hoveredLevel, setHoveredLevel] = useState(null);
+  const [compareSelection, setCompareSelection] = useState([]);
+
+  const toggleCompare = (idx) => {
+    setCompareSelection(prev => {
+      if (prev.includes(idx)) return prev.filter(i => i !== idx);
+      if (prev.length >= 2) return prev;
+      return [...prev, idx];
+    });
+  };
 
   const t = useTheme(darkMode);
 
@@ -467,51 +476,101 @@ function App() {
 
       // ═══ COMPARE TAB ═══
       activeTab === "compare" && React.createElement("div", null,
-        React.createElement("div", { style: { textAlign:"center", marginBottom:isMobile?16:32 } },
-          React.createElement("p", { style: { fontSize:isMobile?12:14, color:t.textLow, maxWidth:550, margin:"0 auto", lineHeight:1.7, transition:"color 0.5s" } },
-            "Compare all five friction levels. Notice the inverse relationship between efficiency and deep learning outcomes."
+        React.createElement("div", { style: { textAlign:"center", marginBottom:isMobile?16:24 } },
+          React.createElement("p", { style: { fontSize:isMobile?14:16, color:t.textLow, maxWidth:550, margin:"0 auto", lineHeight:1.7, transition:"color 0.5s" } },
+            compareSelection.length < 2
+              ? "Select two friction levels to compare side by side."
+              : "Click a selected card to deselect it, then choose another."
           ),
         ),
-        React.createElement("div", { style: { overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", marginLeft:isMobile?-14:0, marginRight:isMobile?-14:0, paddingLeft:isMobile?14:0, paddingRight:isMobile?14:0, paddingBottom:isMobile?12:0 } },
-          React.createElement("div", { style: { display:isMobile?"flex":"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:isMobile?10:8, minWidth:isMobile?"max-content":"auto" } },
-            LEVELS.map(l =>
-              React.createElement("div", { key:l.id, style: {
-                background:t.cardBg, border:`1px solid ${l.color}20`, borderRadius:14,
-                padding:isMobile?14:18, textAlign:"center", position:"relative", overflow:"hidden",
-                width:isMobile?140:undefined, flex:isMobile?"0 0 140px":undefined,
-                boxShadow:t.cardShadow, transition:"all 0.5s",
-              } },
-                React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:3, background:l.color } }),
-                React.createElement("div", { style: { fontSize:isMobile?22:28, marginBottom:isMobile?4:8, marginTop:isMobile?4:6 } }, l.icon),
-                React.createElement("div", { style: { fontSize:isMobile?9:10, fontWeight:700, color:l.color, fontFamily:mono, letterSpacing:"0.05em", marginBottom:2 } }, l.name),
-                React.createElement("div", { style: { fontSize:isMobile?7:9, color:t.textFaint, fontFamily:mono, marginBottom:isMobile?10:16, transition:"color 0.5s" } }, l.subtitle),
-                React.createElement("div", { style: { marginBottom:isMobile?10:16 } },
-                  React.createElement("div", { style: { fontSize:isMobile?20:24, fontWeight:700, color:l.color, fontFamily:mono } }, l.friction + "%"),
-                  React.createElement("div", { style: { fontSize:isMobile?7:8, color:t.textFaint, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono, transition:"color 0.5s" } }, "Friction"),
-                ),
-                [{label:"Cognitive",value:l.cognitiveDemand},{label:"Retention",value:l.retention},{label:"Authentic",value:l.authenticity},{label:"Efficient",value:l.efficiency}].map(m =>
-                  React.createElement("div", { key:m.label, style: { marginBottom:isMobile?6:8 } },
-                    React.createElement("div", { style: { display:"flex", justifyContent:"space-between", marginBottom:2 } },
-                      React.createElement("span", { style: { fontSize:isMobile?7:8, color:t.textLow, fontFamily:mono, textTransform:"uppercase", transition:"color 0.5s" } }, m.label),
-                      React.createElement("span", { style: { fontSize:isMobile?7:8, color:l.color, fontFamily:mono } }, m.value),
-                    ),
-                    React.createElement("div", { style: { height:3, background:t.barTrack, borderRadius:2, overflow:"hidden", transition:"background 0.5s" } },
-                      React.createElement("div", { style: { height:"100%", width:m.value+"%", background:m.label==="Efficient"?"#6c757d":l.color, borderRadius:2, transition:"width 1s" } }),
-                    ),
-                  )
-                ),
-              )
-            ),
-          ),
+
+        // Level selector cards
+        React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:isMobile?8:12, marginBottom:isMobile?20:32, flexWrap:"wrap" } },
+          LEVELS.map((l, i) => {
+            const isSelected = compareSelection.includes(i);
+            const isFaded = compareSelection.length >= 2 && !isSelected;
+            return React.createElement("button", { key:l.id, onClick:() => toggleCompare(i), style: {
+              background: isSelected ? l.color+"18" : t.cardBg,
+              border: isSelected ? `2px solid ${l.color}` : `2px solid ${l.color}20`,
+              borderRadius: 14, padding: isMobile ? "12px 14px" : "16px 20px", textAlign:"center",
+              position:"relative", overflow:"hidden", cursor:"pointer", transition:"all 0.4s",
+              opacity: isFaded ? 0.35 : 1, transform: isSelected ? "scale(1.05)" : "scale(1)",
+              minWidth: isMobile ? 80 : 120, boxShadow: isSelected ? `0 4px 20px ${l.color}30` : t.cardShadow,
+            } },
+              isSelected && React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:3, background:l.color } }),
+              React.createElement("div", { style: { fontSize:isMobile?22:28, marginBottom:4 } }, l.icon),
+              React.createElement("div", { style: { fontSize:isMobile?11:13, fontWeight:700, color:isSelected?l.color:t.btnTextInactive, fontFamily:mono, letterSpacing:"0.05em", whiteSpace:"nowrap", transition:"color 0.3s" } }, l.name),
+              React.createElement("div", { style: { fontSize:isMobile?9:11, color:t.textFaint, marginTop:2, fontFamily:mono, whiteSpace:"nowrap", transition:"color 0.3s" } }, l.subtitle),
+              isSelected && React.createElement("div", { style: { marginTop:8, fontSize:10, color:l.color, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.1em" } }, "✓ Selected"),
+            );
+          })
         ),
-        React.createElement("div", { style: { marginTop:isMobile?18:28, padding:isMobile?"16px 16px":"20px 24px", background:t.cardBg, border:t.cardBorder, borderRadius:14, textAlign:"center", boxShadow:t.cardShadow, transition:"all 0.5s" } },
-          React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono, marginBottom:10, transition:"color 0.5s" } }, "The Core Insight"),
-          React.createElement("p", { style: { fontSize:isMobile?14:17, lineHeight:1.7, color:t.textHigh, margin:0, maxWidth:650, marginLeft:"auto", marginRight:"auto", fontStyle:"italic", transition:"color 0.5s" } },
-            "\"Friction in learning isn't the enemy. It's the essential signal that growth is happening. The question isn't whether to use AI, but how much productive struggle we preserve when we do.\""
+
+        // Side-by-side comparison
+        compareSelection.length === 2 && React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?16:24, animation:"fadeIn 0.4s ease" } },
+          compareSelection.map(idx => {
+            const cl = LEVELS[idx];
+            return React.createElement("div", { key:cl.id, style: {
+              background:t.cardBg, border:`1px solid ${cl.color}30`, borderRadius:16,
+              padding:pad, position:"relative", overflow:"hidden",
+              boxShadow:`0 4px 24px ${cl.color}15`, transition:"all 0.5s",
+            } },
+              React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:4, background:cl.color } }),
+
+              // Header
+              React.createElement("div", { style: { textAlign:"center", marginBottom:16, marginTop:8 } },
+                React.createElement("div", { style: { fontSize:isMobile?28:36, marginBottom:4 } }, cl.icon),
+                React.createElement("div", { style: { fontSize:isMobile?16:20, fontWeight:700, color:cl.color, fontFamily:mono, letterSpacing:"0.05em" } }, cl.name),
+                React.createElement("div", { style: { fontSize:isMobile?11:13, color:t.textFaint, fontFamily:mono, marginTop:2 } }, cl.subtitle),
+              ),
+
+              // Gauge
+              React.createElement("div", { style: { textAlign:"center", marginBottom:16 } },
+                React.createElement(FrictionGauge, { value:100-cl.friction, color:cl.color, size:isMobile?140:180, t }),
+                React.createElement("div", { style: { fontSize:isMobile?24:30, fontWeight:700, color:cl.color, fontFamily:mono, marginTop:-6 } }, cl.friction + "%"),
+                React.createElement("div", { style: { fontSize:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono } }, "Productive Friction"),
+              ),
+
+              // Metrics
+              React.createElement("div", { style: { marginBottom:16 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0" } }, "Learning Metrics"),
+                React.createElement(AnimatedBar, { value:cl.cognitiveDemand, color:cl.color, delay:0, label:"Cognitive Demand", t }),
+                React.createElement(AnimatedBar, { value:cl.retention, color:cl.color, delay:100, label:"Knowledge Retention", t }),
+                React.createElement(AnimatedBar, { value:cl.authenticity, color:cl.color, delay:200, label:"Work Authenticity", t }),
+                React.createElement(AnimatedBar, { value:cl.efficiency, color:"#6c757d", delay:300, label:"Task Efficiency", t }),
+              ),
+
+              // Description
+              React.createElement("div", { style: { marginBottom:14 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:cl.color, fontFamily:mono, margin:"0 0 8px 0" } }, "Description"),
+                React.createElement("p", { style: { fontSize:isMobile?14:15, lineHeight:1.7, color:t.textHigh, margin:0 } }, cl.description),
+              ),
+
+              // Student Behavior
+              React.createElement("div", { style: { marginBottom:14 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 8px 0" } }, "Student Behavior"),
+                React.createElement("p", { style: { fontSize:isMobile?14:15, lineHeight:1.7, color:t.textMid, margin:0 } }, cl.studentBehavior),
+              ),
+
+              // Learning Outcome
+              React.createElement("div", { style: { padding:"12px 14px", background:cl.color+"08", border:`1px solid ${cl.color}18`, borderRadius:8, borderLeft:`3px solid ${cl.color}` } },
+                React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:cl.color, fontFamily:mono, marginBottom:4 } }, "Learning Outcome"),
+                React.createElement("p", { style: { fontSize:isMobile?13:14, lineHeight:1.6, color:t.textMid, margin:0 } }, cl.learningOutcome),
+              ),
+            );
+          })
+        ),
+
+        // Prompt when less than 2 selected
+        compareSelection.length < 2 && React.createElement("div", { style: { textAlign:"center", padding:isMobile?"40px 20px":"60px 20px" } },
+          React.createElement("div", { style: { fontSize:isMobile?36:48, marginBottom:12 } }, compareSelection.length === 0 ? "👆" : "👆"),
+          React.createElement("p", { style: { fontSize:isMobile?14:16, color:t.textFaint, fontFamily:mono, transition:"color 0.5s" } },
+            compareSelection.length === 0 ? "Select two levels above to compare" : "Select one more level to compare"
           ),
-          React.createElement("p", { style: { fontSize:11, color:t.textFaint, marginTop:10, fontFamily:mono, transition:"color 0.5s" } }, "Inspired by Jane Beckwith's AI Friction Scale"),
         ),
       ),
+
+      React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
 
       // Footer
       React.createElement("footer", { style: { textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
