@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>AI Friction Scale — Interactive Simulation</title>
+<meta name="description" content="An interactive simulation of Jane Beckwith's AI Friction Scale, exploring productive struggle in education." />
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.5s, color 0.5s; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ───────── responsive hook ───────── */
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(window.innerWidth < bp);
+  useEffect(() => { const h = () => setM(window.innerWidth < bp); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, [bp]);
+  return m;
+}
+
+/* ───────── theme helper ───────── */
+function useTheme(dark) {
+  const LIGHT_LEVELS = [
+    { color:"#C62828", glow:"rgba(198,40,40,0.3)" },
+    { color:"#D84315", glow:"rgba(216,67,21,0.3)" },
+    { color:"#E65100", glow:"rgba(230,81,0,0.3)" },
+    { color:"#00796B", glow:"rgba(0,121,107,0.3)" },
+    { color:"#37474F", glow:"rgba(55,71,79,0.3)" },
+  ];
+  const DARK_LEVELS = [
+    { color:"#E63946", glow:"rgba(230,57,70,0.4)" },
+    { color:"#E76F51", glow:"rgba(231,111,81,0.4)" },
+    { color:"#F4A261", glow:"rgba(244,162,97,0.4)" },
+    { color:"#2A9D8F", glow:"rgba(42,157,143,0.4)" },
+    { color:"#264653", glow:"rgba(38,70,83,0.4)" },
+  ];
+  const levelColors = dark ? DARK_LEVELS : LIGHT_LEVELS;
+  const gaugeGradient = dark
+    ? ["#E63946","#E76F51","#F4A261","#2A9D8F","#264653"]
+    : ["#C62828","#D84315","#E65100","#00796B","#37474F"];
+  const badgeColors = dark
+    ? { optimal:"#2A9D8F", caution:"#F4A261", reconsider:"#E63946" }
+    : { optimal:"#00796B", caution:"#E65100", reconsider:"#C62828" };
+  return {
+    bg: dark ? "#0a0a0f" : "#f5f5f0",
+    text: dark ? "#fff" : "#1a1a2e",
+    textHigh: dark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.6)",
+    textMid: dark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)",
+    textLow: dark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+    textFaint: dark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
+    textGhost: dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
+    textSkip: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)",
+    cardBg: dark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.7)",
+    cardBorder: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    cardShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
+    barTrack: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+    btnBg: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+    btnBorder: dark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.06)",
+    btnBorderActive: "30",
+    btnTextInactive: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
+    scenarioBg: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+    scenarioBgOff: dark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.6)",
+    scenarioBorderOn: dark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)",
+    scenarioBorderOff: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    pillBorderOff: dark ? "2px solid rgba(255,255,255,0.06)" : "2px solid rgba(0,0,0,0.08)",
+    pillBgOff: dark ? "transparent" : "rgba(255,255,255,0.6)",
+    pillTextOff: dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+    disabledBg: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+    disabledText: dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
+    gaugeTrack: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    noiseOpacity: dark ? 0.03 : 0.015,
+    scrollThumb: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+    timelineConn: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    timelineConnSkip: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+    timelineCircle: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+    timelineCircleSkip: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+    timelineCircleBorder: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    timelineCircleBorderSkip: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+    analysisBg: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+    analysisBorder: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+    levelColors,
+    gaugeGradient,
+    badgeColors,
+  };
+}
+
+/* ───────── data ───────── */
+const LEVELS_BASE = [
+  { id:1, name:"NO AI", subtitle:"Maximum Friction", friction:100,
+    description:"The learner works entirely without AI. All thinking, drafting, revising, and creating is done by the student. This is where the deepest productive struggle occurs.",
+    studentBehavior:"Writes from scratch, researches independently, confronts confusion head-on, develops original arguments through trial and error.",
+    learningOutcome:"Deep retention, strong metacognition, authentic skill-building, high ownership of work.",
+    cognitiveDemand:95, retention:92, authenticity:100, efficiency:15, icon:"🧠" },
+  { id:2, name:"AI FOR IDEATION", subtitle:"High Friction", friction:75,
+    description:"AI is used only for brainstorming and generating initial ideas. The student takes those sparks and does all the substantive work of developing, organizing, and writing.",
+    studentBehavior:"Uses AI to brainstorm topics or angles, then independently selects, develops, and crafts the work from those seeds.",
+    learningOutcome:"Strong creative foundation with maintained productive struggle in execution.",
+    cognitiveDemand:78, retention:82, authenticity:85, efficiency:35, icon:"💡" },
+  { id:3, name:"AI FOR STRUCTURE", subtitle:"Moderate Friction", friction:50,
+    description:"AI assists with planning, outlining, and organizing ideas. The student provides the substance, thinking, and voice, while AI helps scaffold the architecture.",
+    studentBehavior:"Generates outlines or structural suggestions with AI, then fills in all content, arguments, and analysis independently.",
+    learningOutcome:"Balanced learning: organizational skills partially offloaded, but critical thinking preserved.",
+    cognitiveDemand:58, retention:65, authenticity:65, efficiency:55, icon:"🏗️" },
+  { id:4, name:"AI FOR FEEDBACK", subtitle:"Low Friction", friction:25,
+    description:"AI provides feedback, editing suggestions, and refinement on student-generated work. The student creates first, then uses AI as a revision partner.",
+    studentBehavior:"Produces a complete draft independently, then uses AI for grammar, clarity, argumentation feedback, and iterative improvement.",
+    learningOutcome:"Good revision skills, but risk of over-reliance on external validation.",
+    cognitiveDemand:42, retention:55, authenticity:55, efficiency:72, icon:"✏️" },
+  { id:5, name:"FULL AI", subtitle:"Minimum Friction", friction:0,
+    description:"AI generates the majority of the work. The student's role shifts to prompting, curating, and evaluating AI output. Productive struggle is minimal.",
+    studentBehavior:"Prompts AI to generate content, reviews and selects output, makes minor edits. The cognitive heavy-lifting is done by the machine.",
+    learningOutcome:"Efficiency maximized, but deep learning, skill-building, and ownership are significantly reduced.",
+    cognitiveDemand:15, retention:22, authenticity:12, efficiency:95, icon:"🤖" },
+];
+
+const SCENARIOS = [
+  { id:"essay", name:"Analytical Essay", icon:"📝", subject:"English/Humanities", description:"Write a 5-paragraph analytical essay on a literary work" },
+  { id:"lab", name:"Lab Report", icon:"🔬", subject:"Science", description:"Document findings from a chemistry experiment" },
+  { id:"code", name:"Coding Project", icon:"💻", subject:"Computer Science", description:"Build a functional web application from requirements" },
+  { id:"art", name:"Design Project", icon:"🎨", subject:"Art & Design", description:"Create a poster for a school event with original artwork" },
+  { id:"research", name:"Research Paper", icon:"📚", subject:"Social Studies", description:"Investigate a historical event with primary sources" },
+  { id:"math", name:"Problem Set", icon:"📐", subject:"Mathematics", description:"Solve multi-step calculus problems showing all work" },
+];
+
+const mono = "'JetBrains Mono', monospace";
+
+/* ───────── Toggle Switch ───────── */
+function ThemeToggle({ dark, onToggle }) {
+  return React.createElement("button", {
+    onClick: onToggle,
+    "aria-label": dark ? "Switch to light mode" : "Switch to dark mode",
+    style: {
+      position: "relative", width: 56, height: 28, borderRadius: 14, border: "none", cursor: "pointer",
+      background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
+      transition: "background 0.3s", padding: 0, display: "flex", alignItems: "center",
+    }
+  },
+    React.createElement("div", { style: {
+      position: "absolute", left: dark ? 30 : 4, width: 20, height: 20, borderRadius: "50%",
+      background: dark ? "#1a1a2e" : "#f5f5f0",
+      transition: "left 0.3s, background 0.3s",
+      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+    } }, dark ? "🌙" : "☀️"),
+  );
+}
+
+/* ───────── Gauge ───────── */
+function FrictionGauge({ value, color, size = 200, t }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr; canvas.height = size * 0.65 * dpr;
+    ctx.scale(dpr, dpr); canvas.style.width = size + "px"; canvas.style.height = size * 0.65 + "px";
+    const cx = size / 2, cy = size * 0.55, r = size * 0.38;
+    ctx.clearRect(0, 0, size, size * 0.65);
+    ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,2*Math.PI); ctx.lineWidth = size*0.08; ctx.strokeStyle = t.gaugeTrack; ctx.lineCap = "round"; ctx.stroke();
+    const grad = ctx.createLinearGradient(0,cy,size,cy);
+    grad.addColorStop(0,t.gaugeGradient[0]); grad.addColorStop(0.25,t.gaugeGradient[1]); grad.addColorStop(0.5,t.gaugeGradient[2]); grad.addColorStop(0.75,t.gaugeGradient[3]); grad.addColorStop(1,t.gaugeGradient[4]);
+    const p = value / 100;
+    ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,Math.PI+p*Math.PI); ctx.lineWidth = size*0.08; ctx.strokeStyle = grad; ctx.lineCap = "round"; ctx.stroke();
+    const na = Math.PI+p*Math.PI, nl = r*0.7;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+nl*Math.cos(na),cy+nl*Math.sin(na)); ctx.lineWidth = 3; ctx.strokeStyle = color; ctx.lineCap = "round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,6,0,2*Math.PI); ctx.fillStyle = color; ctx.fill();
+  }, [value, color, size, t]);
+  return React.createElement("canvas", { ref: canvasRef });
+}
+
+/* ───────── Animated bar ───────── */
+function AnimatedBar({ value, color, delay = 0, label, t }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { const tm = setTimeout(() => setW(value), 100+delay); return () => clearTimeout(tm); }, [value, delay]);
+  return React.createElement("div", { style: { marginBottom: 12 } },
+    React.createElement("div", { style: { display:"flex", justifyContent:"space-between", marginBottom:4 } },
+      React.createElement("span", { style: { fontSize:11, color:t.textMid, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:mono } }, label),
+      React.createElement("span", { style: { fontSize:11, color, fontFamily:mono, fontWeight:700 } }, value + "%"),
+    ),
+    React.createElement("div", { style: { height:6, background:t.barTrack, borderRadius:3, overflow:"hidden" } },
+      React.createElement("div", { style: { height:"100%", width:w+"%", background:`linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius:3, transition:"width 1s cubic-bezier(0.16,1,0.3,1)", boxShadow:`0 0 12px ${color}33` } }),
+    ),
+  );
+}
+
+/* ───────── Timeline ───────── */
+function SimulationTimeline({ level, isRunning, onComplete, isMobile, t }) {
+  const [step, setStep] = useState(-1);
+  const steps = [{label:"Encounter",icon:"📋"},{label:"Confusion",icon:"😕"},{label:"Struggle",icon:"🔥"},{label:"Breakthrough",icon:"⚡"},{label:"Understanding",icon:"🎯"}];
+  const frictionSteps = Math.max(1, Math.ceil((level.friction/100)*5));
+  useEffect(() => {
+    if (!isRunning) { setStep(-1); return; }
+    let c = 0;
+    const iv = setInterval(() => { if (c < frictionSteps) { setStep(c); c++; } else { clearInterval(iv); onComplete && onComplete(); } }, 800);
+    return () => clearInterval(iv);
+  }, [isRunning, frictionSteps]);
+
+  return React.createElement("div", { style: { position:"relative", padding:"20px 0", overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch" } },
+    React.createElement("div", { style: { display:"flex", alignItems:"center", minWidth:isMobile?380:"auto" } },
+      steps.map((s, i) => {
+        const isActive = i <= step, isSkipped = i >= frictionSteps;
+        return React.createElement("div", { key: i, style: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", position:"relative" } },
+          i > 0 && React.createElement("div", { style: { position:"absolute", top:18, left:"-50%", right:"50%", height:2, background:isActive?level.color:isSkipped?t.timelineConnSkip:t.timelineConn, transition:"background 0.5s" } }),
+          React.createElement("div", { style: {
+            width:isMobile?34:40, height:isMobile?34:40, borderRadius:"50%",
+            background:isActive?level.color+"18":isSkipped?t.timelineCircleSkip:t.timelineCircle,
+            border:`2px solid ${isActive?level.color:isSkipped?t.timelineCircleBorderSkip:t.timelineCircleBorder}`,
+            display:"flex", alignItems:"center", justifyContent:"center", fontSize:isMobile?14:18,
+            transition:"all 0.5s", opacity:isSkipped?0.25:1, position:"relative", zIndex:1,
+            boxShadow:isActive?`0 0 20px ${level.glow}`:"none",
+          } }, isSkipped ? "⏭️" : s.icon),
+          React.createElement("span", { style: {
+            fontSize:isMobile?7:9, marginTop:6, color:isActive?level.color:isSkipped?t.textSkip:t.textLow,
+            textTransform:"uppercase", letterSpacing:"0.08em", fontFamily:mono, textAlign:"center",
+            textDecoration:isSkipped?"line-through":"none", transition:"all 0.5s",
+          } }, s.label),
+        );
+      }),
+    ),
+  );
+}
+
+/* ───────── Main ───────── */
+function App() {
+  const isMobile = useIsMobile();
+  const [darkMode, setDarkMode] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState(0);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simComplete, setSimComplete] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState("scale");
+  const [hoveredLevel, setHoveredLevel] = useState(null);
+
+  const t = useTheme(darkMode);
+
+  // Build levels with theme colors
+  const LEVELS = LEVELS_BASE.map((l, i) => ({ ...l, color: t.levelColors[i].color, glow: t.levelColors[i].glow }));
+
+  const level = LEVELS[selectedLevel];
+  const displayLevel = hoveredLevel !== null ? LEVELS[hoveredLevel] : level;
+  const pad = isMobile ? 16 : 28;
+
+  // Update body bg
+  useEffect(() => { document.body.style.background = t.bg; document.body.style.color = t.text; }, [darkMode]);
+
+  const runSimulation = () => { setIsSimulating(true); setSimComplete(false); setShowAnalysis(false); };
+  const handleSimComplete = () => { setIsSimulating(false); setSimComplete(true); };
+
+  const analyzeLocally = () => {
+    setIsAnalyzing(true); setShowAnalysis(true);
+    const scenario = SCENARIOS.find(s => s.id === selectedScenario);
+    const analyses = {
+      1: { recommendation:"OPTIMAL", reasoning:`Level 1 (No AI) is ideal for ${scenario.name} when the goal is deep skill-building. Students will experience maximum productive struggle, leading to strong retention and authentic learning.`, teacherTip:"Scaffold the difficulty with check-ins and peer collaboration rather than AI tools.", studentPrompt:"What moment of confusion led to your biggest breakthrough in this assignment?", frictionInsight:"The frustration you feel before a breakthrough is your brain literally building new neural pathways." },
+      2: { recommendation:"OPTIMAL", reasoning:`Level 2 (AI for Ideation) works well for ${scenario.name}. Students get a creative spark from AI but do all the heavy cognitive lifting themselves, preserving productive struggle.`, teacherTip:"Have students document which AI-generated ideas they chose and why, building metacognitive awareness.", studentPrompt:"How did your final work differ from the initial ideas AI helped you brainstorm?", frictionInsight:"Using AI for ideation only means students still own the transformation from idea to finished work." },
+      3: { recommendation:"CAUTION", reasoning:`Level 3 (AI for Structure) is a middle ground for ${scenario.name}. Organizational skills are partially offloaded, which may be appropriate for some learners but reduces a key area of cognitive development.`, teacherTip:"Ask students to create their own outline first, then compare it with an AI-generated one to build structural thinking.", studentPrompt:"If you had organized this work without AI help, what would you have done differently?", frictionInsight:"Structure is where many students give up. Preserving that friction builds the executive function skills they need most." },
+      4: { recommendation:"CAUTION", reasoning:`Level 4 (AI for Feedback) for ${scenario.name} means students produce work independently but may become dependent on AI validation rather than developing self-assessment skills.`, teacherTip:"Alternate between AI feedback and peer feedback to help students develop their own critical eye.", studentPrompt:"Can you now identify the same issues AI flagged before it points them out?", frictionInsight:"The ability to evaluate your own work is a skill that only develops through practice, not through outsourcing." },
+      5: { recommendation:"RECONSIDER", reasoning:`Level 5 (Full AI) for ${scenario.name} dramatically reduces learning. While efficient, the student misses nearly all productive struggle, resulting in minimal skill development and retention.`, teacherTip:"If using Level 5, pair it with a metacognitive reflection where students critique and rebuild the AI output from scratch.", studentPrompt:"If AI disappeared tomorrow, could you complete this assignment on your own? What gaps remain?", frictionInsight:"Efficiency without learning is just outsourcing. The question is whether the student is growing or just producing." },
+    };
+    setTimeout(() => {
+      const a = analyses[level.id];
+      setAiAnalysis({ ...a, optimalLevel: level.id <= 2 ? level.id : Math.max(1, level.id - 1) });
+      setIsAnalyzing(false);
+    }, 1500);
+  };
+
+  return React.createElement("div", { style: { minHeight:"100vh", background:t.bg, color:t.text, fontFamily:"'Crimson Pro', Georgia, serif", position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" } },
+    // BG
+    React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
+    React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
+
+    React.createElement("div", { style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
+
+      // Theme toggle row
+      React.createElement("div", { style: { display:"flex", justifyContent:"flex-end", marginBottom: 8 } },
+        React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
+      ),
+
+      // Header
+      React.createElement("header", { style: { textAlign:"center", marginBottom:isMobile?20:40 } },
+        React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.3em", color:level.color, fontFamily:mono, marginBottom:10, transition:"color 0.5s" } }, "Interactive Simulation"),
+        React.createElement("h1", { style: { fontSize:isMobile?26:48, fontWeight:300, letterSpacing:"-0.02em", lineHeight:1.1, margin:"0 0 8px 0" } },
+          "The AI ", React.createElement("span", { style: { fontWeight:700, fontStyle:"italic", color:level.color, transition:"color 0.5s" } }, "Friction"), " Scale"
+        ),
+        React.createElement("p", { style: { fontSize:isMobile?12:14, color:t.textLow, margin:0, maxWidth:500, marginLeft:"auto", marginRight:"auto", lineHeight:1.6, transition:"color 0.5s" } },
+          "Developed by Jane Beckwith at Holland Hall, building on the AI Assessment Scale by Furze et al."
+        ),
+      ),
+
+      // Tabs
+      React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:4, marginBottom:isMobile?18:32 } },
+        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"}].map(tab =>
+          React.createElement("button", { key:tab.id, onClick:() => setActiveTab(tab.id), style: {
+            padding:isMobile?"8px 14px":"10px 24px", border:"none", borderRadius:100,
+            background:activeTab===tab.id?level.color+"15":"transparent",
+            color:activeTab===tab.id?level.color:t.textLow,
+            fontSize:isMobile?11:12, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.08em",
+            cursor:"pointer", transition:"all 0.3s", fontWeight:activeTab===tab.id?700:400,
+          } }, tab.label)
+        ),
+      ),
+
+      // ═══ SCALE TAB ═══
+      activeTab === "scale" && React.createElement("div", null,
+        React.createElement("div", { style: { display:"flex", gap:isMobile?8:2, marginBottom:isMobile?18:32, justifyContent:isMobile?"flex-start":"center", overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", paddingBottom:isMobile?6:0, marginLeft:isMobile?-14:undefined, marginRight:isMobile?-14:undefined, paddingLeft:isMobile?14:undefined, paddingRight:isMobile?14:undefined } },
+          LEVELS.map((l,i) =>
+            React.createElement("button", { key:l.id, onClick:() => { setSelectedLevel(i); setHoveredLevel(null); },
+              onMouseEnter:() => !isMobile && setHoveredLevel(i), onMouseLeave:() => !isMobile && setHoveredLevel(null),
+              style: { flex:isMobile?"0 0 auto":1, maxWidth:isMobile?"none":200, minWidth:isMobile?78:"auto", padding:isMobile?"10px 8px":"16px 8px",
+                background:selectedLevel===i?l.color+"10":t.btnBg, border:selectedLevel===i?`1px solid ${l.color}${t.btnBorderActive}`:t.btnBorder,
+                borderRadius:isMobile?10:(i===0?"12px 4px 4px 12px":i===4?"4px 12px 12px 4px":"4px"),
+                cursor:"pointer", transition:"all 0.3s", textAlign:"center", position:"relative", overflow:"hidden" } },
+              selectedLevel===i && React.createElement("div", { style: { position:"absolute", bottom:0, left:0, right:0, height:3, background:l.color } }),
+              React.createElement("div", { style: { fontSize:isMobile?18:22, marginBottom:4 } }, l.icon),
+              React.createElement("div", { style: { fontSize:isMobile?8:10, fontWeight:700, color:selectedLevel===i?l.color:t.btnTextInactive, fontFamily:mono, letterSpacing:"0.05em", whiteSpace:"nowrap", transition:"color 0.3s" } }, l.name),
+              React.createElement("div", { style: { fontSize:isMobile?7:9, color:t.textFaint, marginTop:2, fontFamily:mono, whiteSpace:"nowrap", transition:"color 0.3s" } }, l.subtitle),
+            )
+          ),
+        ),
+
+        React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24 } },
+          React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+            React.createElement("div", { style: { textAlign:"center", marginBottom:16 } },
+              React.createElement(FrictionGauge, { value:100-displayLevel.friction, color:displayLevel.color, size:isMobile?160:220, t }),
+              React.createElement("div", { style: { fontSize:isMobile?28:36, fontWeight:700, color:displayLevel.color, fontFamily:mono, transition:"color 0.3s", marginTop:-8 } }, displayLevel.friction + "%"),
+              React.createElement("div", { style: { fontSize:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono, transition:"color 0.5s" } }, "Productive Friction"),
+            ),
+            React.createElement("div", { style: { marginTop:16 } },
+              React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:displayLevel.color, fontFamily:mono, margin:"0 0 10px 0" } }, `Level ${displayLevel.id}: ${displayLevel.name}`),
+              React.createElement("p", { style: { fontSize:isMobile?13:14, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, displayLevel.description),
+            ),
+          ),
+          React.createElement("div", { style: { display:"flex", flexDirection:"column", gap:14 } },
+            React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+              React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 16px 0", transition:"color 0.5s" } }, "Learning Impact Metrics"),
+              React.createElement(AnimatedBar, { value:displayLevel.cognitiveDemand, color:displayLevel.color, delay:0, label:"Cognitive Demand", t }),
+              React.createElement(AnimatedBar, { value:displayLevel.retention, color:displayLevel.color, delay:100, label:"Knowledge Retention", t }),
+              React.createElement(AnimatedBar, { value:displayLevel.authenticity, color:displayLevel.color, delay:200, label:"Work Authenticity", t }),
+              React.createElement(AnimatedBar, { value:displayLevel.efficiency, color:"#6c757d", delay:300, label:"Task Efficiency", t }),
+            ),
+            React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, flex:1, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+              React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 10px 0", transition:"color 0.5s" } }, "Student Behavior"),
+              React.createElement("p", { style: { fontSize:13, lineHeight:1.7, color:t.textMid, margin:"0 0 14px 0", transition:"color 0.5s" } }, displayLevel.studentBehavior),
+              React.createElement("div", { style: { padding:"12px 14px", background:displayLevel.color+"08", border:`1px solid ${displayLevel.color}18`, borderRadius:8, borderLeft:`3px solid ${displayLevel.color}` } },
+                React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:displayLevel.color, fontFamily:mono, marginBottom:4 } }, "Learning Outcome"),
+                React.createElement("p", { style: { fontSize:12, lineHeight:1.6, color:t.textMid, margin:0, transition:"color 0.5s" } }, displayLevel.learningOutcome),
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      // ═══ SIMULATE TAB ═══
+      activeTab === "simulate" && React.createElement("div", null,
+        React.createElement("div", { style: { marginBottom:22 } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0", transition:"color 0.5s" } }, "1. Choose an Assignment Scenario"),
+          React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3, 1fr)", gap:isMobile?8:10 } },
+            SCENARIOS.map(s =>
+              React.createElement("button", { key:s.id, onClick:() => setSelectedScenario(s.id), style: {
+                background:selectedScenario===s.id?t.scenarioBg:t.scenarioBgOff,
+                border:selectedScenario===s.id?t.scenarioBorderOn:t.scenarioBorderOff,
+                borderRadius:12, padding:isMobile?"12px 10px":"14px 16px", cursor:"pointer", textAlign:"left", transition:"all 0.3s",
+                boxShadow:t.cardShadow,
+              } },
+                React.createElement("div", { style: { fontSize:isMobile?18:22, marginBottom:4 } }, s.icon),
+                React.createElement("div", { style: { fontSize:isMobile?11:13, color:t.text, fontWeight:600, marginBottom:2, fontFamily:"'Space Mono', monospace", transition:"color 0.5s" } }, s.name),
+                React.createElement("div", { style: { fontSize:isMobile?9:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:mono, transition:"color 0.5s" } }, s.subject),
+              )
+            ),
+          ),
+        ),
+        React.createElement("div", { style: { marginBottom:22 } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0", transition:"color 0.5s" } }, "2. Set the AI Friction Level"),
+          React.createElement("div", { style: { display:"flex", gap:8, overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", paddingBottom:isMobile?4:0, marginLeft:isMobile?-14:undefined, marginRight:isMobile?-14:undefined, paddingLeft:isMobile?14:undefined, paddingRight:isMobile?14:undefined } },
+            LEVELS.map((l,i) =>
+              React.createElement("button", { key:l.id, onClick:() => setSelectedLevel(i), style: {
+                padding:isMobile?"8px 12px":"10px 18px", borderRadius:100, whiteSpace:"nowrap",
+                border:selectedLevel===i?`2px solid ${l.color}`:t.pillBorderOff,
+                background:selectedLevel===i?l.color+"12":t.pillBgOff, color:selectedLevel===i?l.color:t.pillTextOff,
+                fontSize:isMobile?10:11, fontFamily:mono, cursor:"pointer", transition:"all 0.3s", fontWeight:600, flex:"0 0 auto",
+              } }, l.icon + " " + l.name)
+            ),
+          ),
+        ),
+        React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, marginBottom:18, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 6px 0", transition:"color 0.5s" } }, "3. Run the Learning Simulation"),
+          React.createElement("p", { style: { fontSize:isMobile?12:13, color:t.textLow, margin:"0 0 14px 0", lineHeight:1.6, transition:"color 0.5s" } }, `Watch how a student moves through learning at Friction Level ${level.id}. Skipped steps = cognitive work offloaded to AI.`),
+          React.createElement(SimulationTimeline, { level, isRunning:isSimulating, onComplete:handleSimComplete, isMobile, t }),
+          React.createElement("div", { style: { display:"flex", gap:10, marginTop:14, flexWrap:"wrap" } },
+            React.createElement("button", { onClick:runSimulation, disabled:isSimulating||!selectedScenario, style: {
+              padding:isMobile?"10px 18px":"12px 28px", borderRadius:100, border:"none",
+              background:!selectedScenario?t.disabledBg:level.color,
+              color:!selectedScenario?t.disabledText:"#fff",
+              fontSize:isMobile?11:12, fontFamily:mono, fontWeight:700, cursor:!selectedScenario?"not-allowed":"pointer",
+              textTransform:"uppercase", letterSpacing:"0.1em", transition:"all 0.3s",
+            } }, isSimulating ? "Simulating..." : "Run Simulation"),
+            simComplete && selectedScenario && React.createElement("button", { onClick:analyzeLocally, disabled:isAnalyzing, style: {
+              padding:isMobile?"10px 18px":"12px 28px", borderRadius:100, border:`1px solid ${level.color}40`,
+              background:"transparent", color:level.color, fontSize:isMobile?11:12, fontFamily:mono, fontWeight:700,
+              cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.1em", transition:"all 0.3s",
+            } }, isAnalyzing ? "Analyzing..." : "🤖 Analyze"),
+          ),
+          simComplete && React.createElement("div", { style: { marginTop:14, padding:isMobile?"12px 14px":"16px 20px", background:level.color+"08", border:`1px solid ${level.color}15`, borderRadius:12 } },
+            React.createElement("div", { style: { fontSize:11, color:level.color, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6 } }, "Simulation Result"),
+            React.createElement("p", { style: { fontSize:isMobile?12:13, lineHeight:1.7, color:t.textMid, margin:0, transition:"color 0.5s" } },
+              "At ", React.createElement("strong", { style: { color:level.color } }, `Friction Level ${level.id} (${level.name})`), ", the student experienced ",
+              level.friction>=75?"significant productive struggle, engaging deeply through sustained effort and iterative problem-solving.":
+              level.friction>=50?"moderate productive struggle. Some cognitive work was scaffolded by AI, while core thinking remained with the student.":
+              level.friction>=25?"limited productive struggle. AI handled much of the structural and editorial work.":
+              "minimal productive struggle. The learning process was largely automated.",
+              " Estimated retention: ", React.createElement("strong", { style: { color:level.color } }, level.retention + "%"), "."
+            ),
+          ),
+        ),
+
+        showAnalysis && React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, position:"relative", overflow:"hidden", boxShadow:t.cardShadow, transition:"all 0.5s" } },
+          React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg, ${level.color}, transparent)` } }),
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:level.color, fontFamily:mono, margin:"0 0 16px 0" } }, "🤖 Friction Analysis"),
+          isAnalyzing ?
+            React.createElement("div", { style: { textAlign:"center", padding:28 } },
+              React.createElement("div", { style: { fontSize:28, marginBottom:12, animation:"spin 2s linear infinite" } }, "⚙️"),
+              React.createElement("div", { style: { fontSize:12, color:t.textLow, fontFamily:mono, transition:"color 0.5s" } }, "Analyzing..."),
+            )
+          : aiAnalysis ?
+            React.createElement("div", { style: { display:"grid", gap:14 } },
+              React.createElement("div", { style: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" } },
+                React.createElement("div", { style: {
+                  padding:"6px 14px", borderRadius:100, fontSize:11, fontFamily:mono, fontWeight:700, letterSpacing:"0.1em",
+                  background:aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal+"15":aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution+"15":t.badgeColors.reconsider+"15",
+                  color:aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal:aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution:t.badgeColors.reconsider,
+                  border:`1px solid ${aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal+"30":aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution+"30":t.badgeColors.reconsider+"30"}`,
+                } }, (aiAnalysis.recommendation==="OPTIMAL"?"✓ ":aiAnalysis.recommendation==="CAUTION"?"⚠ ":"✗ ")+aiAnalysis.recommendation),
+                React.createElement("span", { style: { fontSize:11, color:t.textLow, fontFamily:mono, transition:"color 0.5s" } }, "Optimal level: " + aiAnalysis.optimalLevel),
+              ),
+              React.createElement("p", { style: { fontSize:isMobile?13:14, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, aiAnalysis.reasoning),
+              React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:12 } },
+                [{label:"Teacher Tip",content:aiAnalysis.teacherTip,icon:"👩‍🏫"},{label:"Student Reflection",content:aiAnalysis.studentPrompt,icon:"🤔"}].map(item =>
+                  React.createElement("div", { key:item.label, style: { padding:"14px 14px", background:t.analysisBg, borderRadius:10, border:t.analysisBorder, transition:"all 0.5s" } },
+                    React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:level.color, fontFamily:mono, marginBottom:8 } }, item.icon + " " + item.label),
+                    React.createElement("p", { style: { fontSize:12, lineHeight:1.6, color:t.textMid, margin:0, transition:"color 0.5s" } }, item.content),
+                  )
+                ),
+              ),
+              React.createElement("div", { style: { padding:"14px 16px", background:level.color+"06", borderLeft:`3px solid ${level.color}`, borderRadius:"0 8px 8px 0" } },
+                React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:level.color, fontFamily:mono, marginBottom:4 } }, "💡 Friction Insight"),
+                React.createElement("p", { style: { fontSize:13, lineHeight:1.6, color:t.textMid, margin:0, fontStyle:"italic", transition:"color 0.5s" } }, aiAnalysis.frictionInsight),
+              ),
+            )
+          : null,
+        ),
+      ),
+
+      // ═══ COMPARE TAB ═══
+      activeTab === "compare" && React.createElement("div", null,
+        React.createElement("div", { style: { textAlign:"center", marginBottom:isMobile?16:32 } },
+          React.createElement("p", { style: { fontSize:isMobile?12:14, color:t.textLow, maxWidth:550, margin:"0 auto", lineHeight:1.7, transition:"color 0.5s" } },
+            "Compare all five friction levels. Notice the inverse relationship between efficiency and deep learning outcomes."
+          ),
+        ),
+        React.createElement("div", { style: { overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", marginLeft:isMobile?-14:0, marginRight:isMobile?-14:0, paddingLeft:isMobile?14:0, paddingRight:isMobile?14:0, paddingBottom:isMobile?12:0 } },
+          React.createElement("div", { style: { display:isMobile?"flex":"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:isMobile?10:8, minWidth:isMobile?"max-content":"auto" } },
+            LEVELS.map(l =>
+              React.createElement("div", { key:l.id, style: {
+                background:t.cardBg, border:`1px solid ${l.color}20`, borderRadius:14,
+                padding:isMobile?14:18, textAlign:"center", position:"relative", overflow:"hidden",
+                width:isMobile?140:undefined, flex:isMobile?"0 0 140px":undefined,
+                boxShadow:t.cardShadow, transition:"all 0.5s",
+              } },
+                React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:3, background:l.color } }),
+                React.createElement("div", { style: { fontSize:isMobile?22:28, marginBottom:isMobile?4:8, marginTop:isMobile?4:6 } }, l.icon),
+                React.createElement("div", { style: { fontSize:isMobile?9:10, fontWeight:700, color:l.color, fontFamily:mono, letterSpacing:"0.05em", marginBottom:2 } }, l.name),
+                React.createElement("div", { style: { fontSize:isMobile?7:9, color:t.textFaint, fontFamily:mono, marginBottom:isMobile?10:16, transition:"color 0.5s" } }, l.subtitle),
+                React.createElement("div", { style: { marginBottom:isMobile?10:16 } },
+                  React.createElement("div", { style: { fontSize:isMobile?20:24, fontWeight:700, color:l.color, fontFamily:mono } }, l.friction + "%"),
+                  React.createElement("div", { style: { fontSize:isMobile?7:8, color:t.textFaint, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono, transition:"color 0.5s" } }, "Friction"),
+                ),
+                [{label:"Cognitive",value:l.cognitiveDemand},{label:"Retention",value:l.retention},{label:"Authentic",value:l.authenticity},{label:"Efficient",value:l.efficiency}].map(m =>
+                  React.createElement("div", { key:m.label, style: { marginBottom:isMobile?6:8 } },
+                    React.createElement("div", { style: { display:"flex", justifyContent:"space-between", marginBottom:2 } },
+                      React.createElement("span", { style: { fontSize:isMobile?7:8, color:t.textLow, fontFamily:mono, textTransform:"uppercase", transition:"color 0.5s" } }, m.label),
+                      React.createElement("span", { style: { fontSize:isMobile?7:8, color:l.color, fontFamily:mono } }, m.value),
+                    ),
+                    React.createElement("div", { style: { height:3, background:t.barTrack, borderRadius:2, overflow:"hidden", transition:"background 0.5s" } },
+                      React.createElement("div", { style: { height:"100%", width:m.value+"%", background:m.label==="Efficient"?"#6c757d":l.color, borderRadius:2, transition:"width 1s" } }),
+                    ),
+                  )
+                ),
+              )
+            ),
+          ),
+        ),
+        React.createElement("div", { style: { marginTop:isMobile?18:28, padding:isMobile?"16px 16px":"20px 24px", background:t.cardBg, border:t.cardBorder, borderRadius:14, textAlign:"center", boxShadow:t.cardShadow, transition:"all 0.5s" } },
+          React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono, marginBottom:10, transition:"color 0.5s" } }, "The Core Insight"),
+          React.createElement("p", { style: { fontSize:isMobile?14:17, lineHeight:1.7, color:t.textHigh, margin:0, maxWidth:650, marginLeft:"auto", marginRight:"auto", fontStyle:"italic", transition:"color 0.5s" } },
+            "\"Friction in learning isn't the enemy. It's the essential signal that growth is happening. The question isn't whether to use AI, but how much productive struggle we preserve when we do.\""
+          ),
+          React.createElement("p", { style: { fontSize:11, color:t.textFaint, marginTop:10, fontFamily:mono, transition:"color 0.5s" } }, "Inspired by Jane Beckwith's AI Friction Scale"),
+        ),
+      ),
+
+      // Footer
+      React.createElement("footer", { style: { textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
+        React.createElement("div", { style: { fontSize:9, color:t.textGhost, fontFamily:mono, letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8, transition:"color 0.5s" } },
+          "Based on Jane Beckwith's AI Friction Scale (2024)", React.createElement("br"), "Building on the AI Assessment Scale by Perkins, Furze, Roe & MacVaugh"
+        ),
+      ),
+    ),
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
