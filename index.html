@@ -49,9 +49,10 @@ function useTheme(dark) {
     { color:"#264653", glow:"rgba(38,70,83,0.4)" },
   ];
   const levelColors = dark ? DARK_LEVELS : LIGHT_LEVELS;
+  // Productive friction should read from low (greenish) to high (red).
   const gaugeGradient = dark
-    ? ["#E63946","#E76F51","#F4A261","#2A9D8F","#264653"]
-    : ["#C62828","#D84315","#E65100","#00796B","#37474F"];
+    ? ["#2A9D8F","#2A9D8F","#F4A261","#E76F51","#E63946"]
+    : ["#00796B","#00796B","#E65100","#D84315","#C62828"];
   const badgeColors = dark
     ? { optimal:"#2A9D8F", caution:"#F4A261", reconsider:"#E63946" }
     : { optimal:"#00796B", caution:"#E65100", reconsider:"#C62828" };
@@ -457,7 +458,7 @@ function App() {
         React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24 } },
           React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, boxShadow:t.cardShadow, transition:"all 0.5s" } },
             React.createElement("div", { style: { textAlign:"center", marginBottom:16 } },
-              React.createElement(FrictionGauge, { value:100-displayLevel.friction, color:displayLevel.color, size:isMobile?160:220, t }),
+              React.createElement(FrictionGauge, { value:displayLevel.friction, color:displayLevel.color, size:isMobile?160:220, t }),
               React.createElement("div", { style: { fontSize:isMobile?28:36, fontWeight:700, color:displayLevel.color, fontFamily:mono, transition:"color 0.3s", marginTop:-8 } }, displayLevel.friction + "%"),
               React.createElement("div", { style: { fontSize:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono, transition:"color 0.5s" } }, "Productive Friction"),
             ),
@@ -638,7 +639,7 @@ function App() {
 
               // Gauge
               React.createElement("div", { style: { textAlign:"center", marginBottom:16 } },
-                React.createElement(FrictionGauge, { value:100-cl.friction, color:cl.color, size:isMobile?140:180, t }),
+                React.createElement(FrictionGauge, { value:cl.friction, color:cl.color, size:isMobile?140:180, t }),
                 React.createElement("div", { style: { fontSize:isMobile?24:30, fontWeight:700, color:cl.color, fontFamily:mono, marginTop:-6 } }, cl.friction + "%"),
                 React.createElement("div", { style: { fontSize:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono } }, "Productive Friction"),
               ),
