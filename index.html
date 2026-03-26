@@ -440,19 +440,25 @@ function App() {
       // ═══ SCALE TAB ═══
       activeTab === "scale" && React.createElement("div", null,
         React.createElement("div", { style: { display:"flex", gap:isMobile?8:2, marginBottom:isMobile?18:32, justifyContent:isMobile?"flex-start":"center", overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", paddingBottom:isMobile?6:0, marginLeft:isMobile?-14:undefined, marginRight:isMobile?-14:undefined, paddingLeft:isMobile?14:undefined, paddingRight:isMobile?14:undefined } },
-          LEVELS.map((l,i) =>
-            React.createElement("button", { key:l.id, onClick:() => { setSelectedLevel(i); setHoveredLevel(null); },
+          LEVELS.map((l,i) => {
+            const isSelected = selectedLevel === i;
+            const isHovered = hoveredLevel === i;
+            const isLifted = !isMobile && isHovered;
+            return React.createElement("button", { key:l.id, onClick:() => { setSelectedLevel(i); setHoveredLevel(null); },
               onMouseEnter:() => !isMobile && setHoveredLevel(i), onMouseLeave:() => !isMobile && setHoveredLevel(null),
               style: { flex:isMobile?"0 0 auto":1, maxWidth:isMobile?"none":200, minWidth:isMobile?78:"auto", padding:isMobile?"10px 8px":"16px 8px",
-                background:selectedLevel===i?l.color+"10":t.btnBg, border:selectedLevel===i?`1px solid ${l.color}${t.btnBorderActive}`:t.btnBorder,
+                background:isSelected||isLifted?l.color+"10":t.btnBg, border:isSelected||isLifted?`1px solid ${l.color}${isLifted?"55":t.btnBorderActive}`:t.btnBorder,
                 borderRadius:isMobile?10:(i===0?"12px 4px 4px 12px":i===4?"4px 12px 12px 4px":"4px"),
-                cursor:"pointer", transition:"all 0.3s", textAlign:"center", position:"relative", overflow:"hidden" } },
-              selectedLevel===i && React.createElement("div", { style: { position:"absolute", bottom:0, left:0, right:0, height:3, background:l.color } }),
-              React.createElement("div", { style: { fontSize:isMobile?18:22, marginBottom:4 } }, l.icon),
-              React.createElement("div", { style: { fontSize:isMobile?11:13, fontWeight:700, color:selectedLevel===i?l.color:t.btnTextInactive, fontFamily:mono, letterSpacing:"0.05em", whiteSpace:"nowrap", transition:"color 0.3s" } }, l.name),
-              React.createElement("div", { style: { fontSize:isMobile?9:11, color:t.textFaint, marginTop:2, fontFamily:mono, whiteSpace:"nowrap", transition:"color 0.3s" } }, l.subtitle),
-            )
-          ),
+                cursor:"pointer", transition:"transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.28s, border-color 0.28s",
+                textAlign:"center", position:"relative", overflow:"hidden", transform:isLifted?"translateY(-6px) scale(1.025)":isSelected?"translateY(-2px)":"translateY(0) scale(1)",
+                boxShadow:isLifted?`0 16px 32px ${l.color}${darkMode?"20":"24"}`:isSelected?`0 8px 18px ${l.color}${darkMode?"12":"16"}`:"none",
+                willChange:"transform, box-shadow" } },
+              (isSelected || isLifted) && React.createElement("div", { style: { position:"absolute", bottom:0, left:0, right:0, height:3, background:l.color, opacity:isSelected?1:0.75 } }),
+              React.createElement("div", { style: { fontSize:isMobile?18:22, marginBottom:4, transition:"transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)", transform:isLifted?"translateY(-2px) scale(1.06)":"translateY(0) scale(1)" } }, l.icon),
+              React.createElement("div", { style: { fontSize:isMobile?11:13, fontWeight:700, color:isSelected||isLifted?l.color:t.btnTextInactive, fontFamily:mono, letterSpacing:"0.05em", whiteSpace:"nowrap", transition:"color 0.3s" } }, l.name),
+              React.createElement("div", { style: { fontSize:isMobile?9:11, color:isLifted?t.textMid:t.textFaint, marginTop:2, fontFamily:mono, whiteSpace:"nowrap", transition:"color 0.3s" } }, l.subtitle),
+            );
+          }),
         ),
 
         React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24 } },
