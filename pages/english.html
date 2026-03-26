@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>High School English — AI Friction Scale Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.5s, color 0.5s; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const mono = "'JetBrains Mono', monospace";
+const ACCENT = "#4f46e5";
+
+/* ───────── responsive hook ───────── */
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(window.innerWidth < bp);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < bp);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, [bp]);
+  return m;
+}
+
+/* ───────── theme ───────── */
+function useTheme(dark) {
+  return {
+    bg:              dark ? "#0a0a0f"                    : "#f5f5f0",
+    text:            dark ? "#fff"                       : "#1a1a2e",
+    textHigh:        dark ? "rgba(255,255,255,0.65)"     : "rgba(0,0,0,0.6)",
+    textMid:         dark ? "rgba(255,255,255,0.55)"     : "rgba(0,0,0,0.55)",
+    textLow:         dark ? "rgba(255,255,255,0.4)"      : "rgba(0,0,0,0.4)",
+    textFaint:       dark ? "rgba(255,255,255,0.3)"      : "rgba(0,0,0,0.35)",
+    cardBg:          dark ? "rgba(255,255,255,0.02)"     : "rgba(255,255,255,0.7)",
+    cardBorder:      dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    cardShadow:      dark ? "none"                       : "0 1px 3px rgba(0,0,0,0.04)",
+    scenarioBg:      dark ? "rgba(255,255,255,0.08)"     : "rgba(0,0,0,0.04)",
+    scenarioBgOff:   dark ? "rgba(255,255,255,0.02)"     : "rgba(255,255,255,0.6)",
+    scenarioBorderOn:  dark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)",
+    scenarioBorderOff: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    noiseOpacity:    dark ? 0.03 : 0.015,
+    scrollThumb:     dark ? "rgba(255,255,255,0.12)"    : "rgba(0,0,0,0.12)",
+    accentFaint:     dark ? `${ACCENT}20`               : `${ACCENT}12`,
+    accentBorder:    dark ? `${ACCENT}30`               : `${ACCENT}22`,
+  };
+}
+
+/* ───────── theme toggle ───────── */
+function ThemeToggle({ dark, onToggle }) {
+  return (
+    <button onClick={onToggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      style={{ position:"relative", width:56, height:28, borderRadius:14, border:"none", cursor:"pointer",
+        background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
+        transition:"background 0.3s", padding:0, display:"flex", alignItems:"center" }}>
+      <div style={{ position:"absolute", left: dark ? 30 : 4, width:20, height:20, borderRadius:"50%",
+        background: dark ? "#1a1a2e" : "#f5f5f0",
+        transition:"left 0.3s, background 0.3s",
+        display:"flex", alignItems:"center", justifyContent:"center", fontSize:12,
+        boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}>
+        {dark ? "🌙" : "☀️"}
+      </div>
+    </button>
+  );
+}
+
+/* ───────── data ───────── */
+const scenarios = [
+  {
+    id: "literary-analysis",
+    name: "Literary Analysis",
+    icon: "📖",
+    subject: "Close Reading / Essay",
+    subtitle: "From five paragraphs to thinking portfolios",
+    traditional: {
+      label: "Traditional Approach",
+      description: "Students write a 5-paragraph essay analyzing a text. Teacher assigns a prompt, students submit a final draft, teacher grades for thesis, evidence, and structure.",
+      steps: ["Teacher assigns essay prompt", "Students read and take notes", "Students write a draft independently", "Students submit final essay", "Teacher grades with rubric"],
+    },
+    frictionPoints: [
+      { level: "High", color: "#C62828", label: "AI can generate a polished essay in seconds", detail: "Students can produce a competent literary analysis with minimal engagement with the text. The final product becomes indistinguishable from genuine student work." },
+      { level: "High", color: "#C62828", label: "Detection tools are unreliable", detail: "AI detection software produces false positives and negatives regularly, creating adversarial dynamics between teachers and students." },
+      { level: "Medium", color: "#E65100", label: "The prompt rewards product over process", detail: "A single submission captures none of the intellectual journey. Teachers can only evaluate the destination, not the path." },
+      { level: "Low", color: "#00796B", label: "Rubric criteria still hold value", detail: "Thesis quality, textual evidence, and analytical depth remain important skills worth assessing, just not through this format alone." },
+    ],
+    alternative: {
+      label: "Process Portfolio",
+      tagline: "Capturing the evolution of thought over time",
+      description: "Students maintain a thinking journal throughout their reading of a text. They document initial reactions, questions, confusions, evolving interpretations, and moments of insight. The portfolio becomes the assessment, showing intellectual growth that is nearly impossible to fabricate with AI.",
+      steps: ["Students begin a digital thinking journal on Day 1", "Daily entries capture reactions, questions, and evolving ideas", "Students flag moments where their thinking shifted", "Periodic check-ins with teacher to discuss entries", "Final reflection synthesizes the journey of understanding", "Teacher assesses depth, growth, and authentic engagement"],
+      benefits: ["Captures genuine intellectual struggle and growth", "Extremely difficult to replicate with AI across weeks of entries", "Creates a richer picture of student understanding", "Builds metacognitive skills students actually need", "Shifts the teacher role from judge to thinking partner"],
+      aiRole: "AI can be used transparently as a thinking partner. Students might journal about how a conversation with AI challenged or confirmed their interpretation, making AI a visible part of the learning process rather than a hidden shortcut.",
+    },
+  },
+  {
+    id: "creative-writing",
+    name: "Creative Writing",
+    icon: "✍️",
+    subject: "Voice / Craft",
+    subtitle: "From submission to performance",
+    traditional: {
+      label: "Traditional Approach",
+      description: "Students write an original short story, poem, or creative piece. Teacher assigns genre or theme constraints, students submit a final written product, teacher evaluates craft and originality.",
+      steps: ["Teacher assigns creative writing prompt", "Students brainstorm and draft", "Optional peer workshop", "Students revise and submit final piece", "Teacher grades for voice, craft, and originality"],
+    },
+    frictionPoints: [
+      { level: "High", color: "#C62828", label: "AI excels at mimicking creative styles", detail: "Large language models can produce convincing poetry, fiction, and creative nonfiction that passes as student work, especially when students edit AI output to add personal touches." },
+      { level: "High", color: "#C62828", label: "Originality is nearly impossible to verify", detail: "Unlike factual writing, creative work has no sources to check. A student's voice is still developing, making it hard to distinguish from AI-generated text." },
+      { level: "Medium", color: "#E65100", label: "The written product obscures the creative process", detail: "A polished final draft tells you nothing about the choices the writer made, the drafts they abandoned, or the risks they took." },
+      { level: "Low", color: "#00796B", label: "Creative writing skills remain essential", detail: "Voice, imagery, structure, and emotional resonance are deeply human skills worth cultivating regardless of AI capabilities." },
+    ],
+    alternative: {
+      label: "Live Reading + Craft Reflection",
+      tagline: "Performing and defending creative choices",
+      description: "Students perform a live reading of their creative work and then engage in a craft conversation with their teacher or peers. They explain why they made specific choices: word selection, structural decisions, what they revised and why. The performance and dialogue reveal authentic ownership of the work.",
+      steps: ["Students develop creative work over multiple drafts", "Students annotate their own piece with craft notes", "Live reading to class or small group", "Craft Q&A: peers and teacher ask about specific choices", "Written craft reflection explaining 3 key decisions", "Teacher assesses both the work and the maker's understanding"],
+      benefits: ["Live performance reveals authentic connection to the work", "Craft conversations expose whether the student truly owns their choices", "Peer dialogue builds literary community", "Annotation practice develops revision skills", "Shifts evaluation from 'is this good?' to 'does this writer understand their craft?'"],
+      aiRole: "AI can be used openly as a revision partner. Students might discuss how they used AI to generate alternative phrasings, then explain why they chose one over another. The craft reflection makes AI use transparent and educational.",
+    },
+  },
+  {
+    id: "research-paper",
+    name: "Research Paper",
+    icon: "📚",
+    subject: "Argument / Sources",
+    subtitle: "From citations to synthesis storytelling",
+    traditional: {
+      label: "Traditional Approach",
+      description: "Students research a topic, gather sources, and write a formal research paper with citations. Teacher evaluates argument quality, source integration, and proper formatting (MLA/APA).",
+      steps: ["Teacher assigns research topic or question", "Students gather and evaluate sources", "Students create an outline", "Students write the research paper with citations", "Teacher grades for argument, sources, and formatting"],
+    },
+    frictionPoints: [
+      { level: "High", color: "#C62828", label: "AI can synthesize sources and generate citations", detail: "AI tools can research a topic, pull together arguments from multiple perspectives, and format citations, producing a paper that looks thoroughly researched." },
+      { level: "High", color: "#C62828", label: "AI hallucinated sources are a growing problem", detail: "AI sometimes fabricates plausible-sounding citations that do not exist, creating a new category of academic dishonesty that is difficult to catch at scale." },
+      { level: "Medium", color: "#E65100", label: "The format prioritizes compilation over original thinking", detail: "Traditional research papers often reward students for summarizing and organizing existing knowledge rather than generating new insights or connections." },
+      { level: "Low", color: "#00796B", label: "Research skills remain foundational", detail: "Evaluating sources, constructing arguments, and synthesizing information are critical skills, even if the delivery format needs to evolve." },
+    ],
+    alternative: {
+      label: "Multimedia Synthesis Project",
+      tagline: "Show your thinking, don't just cite it",
+      description: "Students create a multimedia project (podcast episode, video essay, or interactive presentation) that synthesizes their research into a compelling narrative. They include an annotated source map showing how each source shaped their thinking. The format demands genuine understanding because you cannot narrate what you do not know.",
+      steps: ["Students select a research question they care about", "Source gathering with annotated source map", "Students create a narrative outline for their medium", "Production phase: recording, editing, or building", "Annotated bibliography with personal commentary on each source", "Presentation to class with live Q&A"],
+      benefits: ["Speaking about research demands genuine comprehension", "Multimedia format develops communication skills for the real world", "Annotated source maps reveal actual engagement with materials", "Live Q&A tests depth of understanding in real time", "Students develop skills in storytelling, production, and presentation"],
+      aiRole: "AI can assist with research organization, help students identify gaps in their source base, or suggest narrative structures. The live presentation component ensures students have deeply internalized their research regardless of how they gathered it.",
+    },
+  },
+];
+
+const phases = [
+  { id: "traditional", label: "Traditional",     icon: "📋" },
+  { id: "friction",    label: "Friction Points",  icon: "⚡" },
+  { id: "alternative", label: "Alternative",      icon: "🚀" },
+];
+
+/* ───────── components ───────── */
+function StepList({ steps, t }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+      {steps.map((step, i) => (
+        <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+          <div style={{ minWidth:26, height:26, borderRadius:"50%", background:ACCENT, color:"#fff",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            fontSize:11, fontWeight:700, fontFamily:mono, flexShrink:0 }}>{i + 1}</div>
+          <p style={{ margin:0, fontSize:16, lineHeight:1.7, color:t.textHigh, paddingTop:2 }}>{step}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SectionLabel({ children, t }) {
+  return (
+    <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.2em",
+      color:t.textLow, fontFamily:mono, marginBottom:12 }}>
+      {children}
+    </div>
+  );
+}
+
+function Card({ label, icon, accent, t, children }) {
+  return (
+    <div style={{ background:t.cardBg, border:t.cardBorder, borderRadius:16,
+      boxShadow:t.cardShadow, overflow:"hidden", transition:"all 0.5s" }}>
+      {label && (
+        <div style={{ padding:"12px 20px", borderBottom:t.cardBorder,
+          display:"flex", alignItems:"center", gap:10,
+          background: accent ? `${accent}08` : "transparent" }}>
+          {icon && <span style={{ fontSize:18 }}>{icon}</span>}
+          <span style={{ fontSize:10, fontFamily:mono, textTransform:"uppercase",
+            letterSpacing:"0.15em", color: accent || t.textLow, fontWeight:600 }}>
+            {label}
+          </span>
+        </div>
+      )}
+      <div style={{ padding:20 }}>{children}</div>
+    </div>
+  );
+}
+
+function PhaseContent({ phase, scenario, t, isMobile }) {
+  if (phase === "traditional") {
+    return (
+      <Card label={scenario.traditional.label} icon="📋" t={t}>
+        <p style={{ margin:"0 0 20px", fontSize:17, lineHeight:1.75, color:t.textHigh }}>
+          {scenario.traditional.description}
+        </p>
+        <SectionLabel t={t}>Process</SectionLabel>
+        <StepList steps={scenario.traditional.steps} t={t} />
+      </Card>
+    );
+  }
+
+  if (phase === "friction") {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+        <SectionLabel t={t}>Where AI Creates Friction in This Assignment</SectionLabel>
+        {scenario.frictionPoints.map((fp, i) => (
+          <div key={i} style={{ background:t.cardBg, border:t.cardBorder, borderRadius:14,
+            padding:"16px 20px", borderLeft:`4px solid ${fp.color}`,
+            boxShadow:t.cardShadow, transition:"all 0.5s" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8, flexWrap:"wrap" }}>
+              <span style={{ fontSize:10, fontFamily:mono, textTransform:"uppercase",
+                letterSpacing:"0.1em", fontWeight:700, color:fp.color }}>
+                {fp.level} Friction
+              </span>
+              <span style={{ fontSize:15, fontWeight:600, color:t.text }}>{fp.label}</span>
+            </div>
+            <p style={{ margin:0, fontSize:15, lineHeight:1.7, color:t.textMid }}>{fp.detail}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (phase === "alternative") {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+        <Card label={scenario.alternative.label} icon="🚀" accent={ACCENT} t={t}>
+          <p style={{ margin:"0 0 4px", fontSize:14, fontStyle:"italic",
+            color:ACCENT, fontFamily:mono }}>{scenario.alternative.tagline}</p>
+          <p style={{ margin:"0 0 20px", fontSize:17, lineHeight:1.75, color:t.textHigh }}>
+            {scenario.alternative.description}
+          </p>
+          <SectionLabel t={t}>How It Works</SectionLabel>
+          <StepList steps={scenario.alternative.steps} t={t} />
+        </Card>
+
+        <Card label="Why This Works" icon="✅" accent="#00796B" t={t}>
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {scenario.alternative.benefits.map((b, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+                <span style={{ color:"#00796B", fontSize:16, flexShrink:0, lineHeight:1.5 }}>✓</span>
+                <p style={{ margin:0, fontSize:16, lineHeight:1.7, color:t.textHigh }}>{b}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card label="AI's New Role" icon="🤖" accent="#7c3aed" t={t}>
+          <p style={{ margin:0, fontSize:16, lineHeight:1.75, color:t.textHigh }}>
+            {scenario.alternative.aiRole}
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+/* ───────── main ───────── */
+function App() {
+  const isMobile = useIsMobile();
+  const [dark, setDark] = useState(false);
+  const [activeScenario, setActiveScenario] = useState(0);
+  const [activePhase, setActivePhase] = useState("traditional");
+  const t = useTheme(dark);
+  const scenario = scenarios[activeScenario];
+  const pad = isMobile ? 16 : 28;
+
+  useEffect(() => {
+    document.body.style.background = t.bg;
+    document.body.style.color = t.text;
+  }, [dark]);
+
+  return (
+    <div style={{ minHeight:"100vh", background:t.bg, color:t.text,
+      fontFamily:"'Crimson Pro', Georgia, serif",
+      position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" }}>
+
+      {/* Background radial glow */}
+      <div style={{ position:"fixed", inset:0,
+        backgroundImage:`radial-gradient(circle at 20% 50%, ${ACCENT}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${ACCENT}04 0%, transparent 40%)`,
+        pointerEvents:"none", transition:"all 1s" }} />
+
+      {/* Noise texture */}
+      <div style={{ position:"fixed", inset:0, opacity:t.noiseOpacity,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        pointerEvents:"none", transition:"opacity 0.5s" }} />
+
+      <div style={{ position:"relative", zIndex:1, maxWidth:1000, margin:"0 auto",
+        padding: isMobile ? "20px 14px" : "30px 28px" }}>
+
+        {/* Theme toggle */}
+        <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
+          <ThemeToggle dark={dark} onToggle={() => setDark(!dark)} />
+        </div>
+
+        {/* Header */}
+        <header style={{ textAlign:"center", marginBottom: isMobile ? 24 : 44 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.3em",
+            color:ACCENT, fontFamily:mono, marginBottom:10 }}>
+            AI Friction Scale Toolkit
+          </div>
+          <h1 style={{ fontSize: isMobile ? 28 : 52, fontWeight:300, letterSpacing:"-0.02em",
+            lineHeight:1.1, margin:"0 0 10px 0" }}>
+            High School{" "}
+            <span style={{ fontWeight:700, fontStyle:"italic", color:ACCENT }}>English</span>
+          </h1>
+          <p style={{ fontSize: isMobile ? 13 : 15, color:t.textLow, margin:"0 auto",
+            maxWidth:520, lineHeight:1.7 }}>
+            Rethinking assessment in the age of AI. Explore how traditional English assignments
+            create AI friction points and discover alternatives built around varied proof of learning.
+          </p>
+        </header>
+
+        {/* Scenario selector */}
+        <div style={{ marginBottom: isMobile ? 20 : 32 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.2em",
+            color:t.textLow, fontFamily:mono, marginBottom:12 }}>
+            Choose an Assignment Type
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: isMobile ? 8 : 12 }}>
+            {scenarios.map((s, i) => (
+              <button key={s.id}
+                onClick={() => { setActiveScenario(i); setActivePhase("traditional"); }}
+                style={{ background: activeScenario === i ? t.scenarioBg : t.scenarioBgOff,
+                  border: activeScenario === i ? t.scenarioBorderOn : t.scenarioBorderOff,
+                  borderRadius:12, padding: isMobile ? "12px 10px" : "16px 18px",
+                  cursor:"pointer", textAlign:"left", transition:"all 0.3s", boxShadow:t.cardShadow,
+                  position:"relative", overflow:"hidden" }}>
+                {activeScenario === i && (
+                  <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:ACCENT }} />
+                )}
+                <div style={{ fontSize: isMobile ? 20 : 24, marginBottom:6 }}>{s.icon}</div>
+                <div style={{ fontSize: isMobile ? 13 : 14, fontWeight:600, color:t.text,
+                  fontFamily:"'Space Mono', monospace", marginBottom:3, transition:"color 0.3s" }}>
+                  {s.name}
+                </div>
+                <div style={{ fontSize: isMobile ? 10 : 11, color:t.textLow, textTransform:"uppercase",
+                  letterSpacing:"0.06em", fontFamily:mono, transition:"color 0.3s" }}>
+                  {s.subject}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Scenario subtitle */}
+        <p style={{ fontSize: isMobile ? 14 : 16, fontStyle:"italic", color:ACCENT,
+          fontFamily:mono, textAlign:"center", marginBottom: isMobile ? 16 : 24 }}>
+          {scenario.subtitle}
+        </p>
+
+        {/* Phase tabs */}
+        <div style={{ display:"flex", justifyContent:"center", gap:4,
+          marginBottom: isMobile ? 20 : 32 }}>
+          {phases.map(p => (
+            <button key={p.id} onClick={() => setActivePhase(p.id)}
+              style={{ padding: isMobile ? "8px 14px" : "10px 24px",
+                border:"none", borderRadius:100,
+                background: activePhase === p.id ? `${ACCENT}15` : "transparent",
+                color: activePhase === p.id ? ACCENT : t.textLow,
+                fontSize: isMobile ? 11 : 12, fontFamily:mono,
+                textTransform:"uppercase", letterSpacing:"0.08em",
+                cursor:"pointer", transition:"all 0.3s",
+                fontWeight: activePhase === p.id ? 700 : 400 }}>
+              {p.icon} {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <PhaseContent phase={activePhase} scenario={scenario} t={t} isMobile={isMobile} />
+
+        {/* Footer */}
+        <footer style={{ textAlign:"center", marginTop: isMobile ? 40 : 64, paddingBottom:24 }}>
+          <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono,
+            letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8 }}>
+            AI Friction Scale Toolkit — High School English<br />
+            Based on Jane Beckwith's AI Friction Scale (2024)
+          </div>
+        </footer>
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
