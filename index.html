@@ -27,9 +27,51 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { border-radius: 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  #gate { position: fixed; inset: 0; z-index: 9999; background: #0a0a0f; display: flex; align-items: center; justify-content: center; }
+  #gate.hidden { display: none; }
+  #gate-inner { text-align: center; max-width: 360px; width: 90%; }
+  #gate-title { font-size: 1.5rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem; letter-spacing: 0.02em; }
+  #gate-subtitle { font-size: 1rem; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+  #gate-input { width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; border-radius: 6px; outline: none; margin-bottom: 0.75rem; transition: border-color 0.2s; }
+  #gate-input:focus { border-color: rgba(255,255,255,0.3); }
+  #gate-btn { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-family: 'Crimson Pro', serif; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; letter-spacing: 0.05em; }
+  #gate-btn:hover { background: rgba(255,255,255,0.18); }
+  #gate-error { color: #E63946; font-size: 0.875rem; margin-top: 0.5rem; min-height: 1.2em; }
 </style>
 </head>
 <body>
+<div id="gate">
+  <div id="gate-inner">
+    <div id="gate-title">AI Friction Scale</div>
+    <div id="gate-subtitle">Enter the access password to continue</div>
+    <input id="gate-input" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="gate-btn">Enter</button>
+    <div id="gate-error"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY = 'aifs_auth';
+  var PWD = 'Productivestruggle!';
+  var gate = document.getElementById('gate');
+  var input = document.getElementById('gate-input');
+  var btn = document.getElementById('gate-btn');
+  var err = document.getElementById('gate-error');
+  if(localStorage.getItem(KEY) === '1'){ gate.classList.add('hidden'); return; }
+  function attempt(){
+    if(input.value === PWD){
+      localStorage.setItem(KEY, '1');
+      gate.classList.add('hidden');
+    } else {
+      err.textContent = 'Incorrect password. Please try again.';
+      input.value = '';
+      input.focus();
+    }
+  }
+  btn.addEventListener('click', attempt);
+  input.addEventListener('keydown', function(e){ if(e.key === 'Enter') attempt(); });
+})();
+</script>
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
