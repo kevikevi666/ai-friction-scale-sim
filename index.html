@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AI Friction Scale — Interactive Simulation</title>
 <meta name="description" content="An interactive simulation of Jane Beckwith's AI Friction Scale, exploring productive struggle in education." />
 <meta property="og:title" content="The AI Friction Scale — Rethinking AI in Education" />
@@ -23,11 +23,17 @@
   gtag('config', 'G-LX3B2ZK6NS');
 </script>
 <meta name="twitter:image" content="https://aifrictionscale.com/og-image.png" />
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://www.googletagmanager.com">
 <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -37,6 +43,7 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { border-radius: 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
 <body>
@@ -46,8 +53,14 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 /* ───────── responsive hook ───────── */
 function useIsMobile(bp = 768) {
-  const [m, setM] = useState(window.innerWidth < bp);
-  useEffect(() => { const h = () => setM(window.innerWidth < bp); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, [bp]);
+  const query = `(max-width: ${bp - 1}px)`;
+  const [m, setM] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const h = (e) => setM(e.matches);
+    mql.addEventListener("change", h);
+    return () => mql.removeEventListener("change", h);
+  }, [query]);
   return m;
 }
 
@@ -684,7 +697,6 @@ function App() {
 
         // Prompt when less than 2 selected
         compareSelection.length < 2 && React.createElement("div", { style: { textAlign:"center", padding:isMobile?"40px 20px":"60px 20px" } },
-          React.createElement("div", { style: { fontSize:isMobile?36:48, marginBottom:12 } }, compareSelection.length === 0 ? "👆" : "👆"),
           React.createElement("p", { style: { fontSize:isMobile?14:16, color:t.textFaint, fontFamily:mono, transition:"color 0.5s" } },
             compareSelection.length === 0 ? "Select two levels above to compare" : "Select one more level to compare"
           ),
