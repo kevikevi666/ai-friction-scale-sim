@@ -134,8 +134,8 @@ function useTheme(dark) {
     accent: dark ? "#2A9D8F" : "#00796B",
     warn: dark ? "#F4A261" : "#E65100",
     hot: dark ? "#E63946" : "#C62828",
-    executor: dark ? "#2A9D8F" : "#00796B",
-    director: dark ? "#F4A261" : "#E65100",
+    author: dark ? "#2A9D8F" : "#00796B",
+    designer: dark ? "#F4A261" : "#E65100",
     conductor: dark ? "#E63946" : "#C62828",
   };
 }
@@ -634,9 +634,9 @@ function HamburgerMenu({ open, onToggle, darkMode, levelColor, t, onNavigate, ac
 
 const AGENCY_ROLES = [
   {
-    id: "executor", name: "Executor",
+    id: "author", name: "Author",
     tagline: "The student does the work. AI assists at moments.",
-    icon: "\u270B", colorKey: "executor",
+    icon: "\u270D\uFE0F", colorKey: "author",
     studentDoes: [
       "Writes, researches, and builds directly",
       "Makes all creative and structural decisions",
@@ -656,9 +656,9 @@ const AGENCY_ROLES = [
     frictionScaleRelation: "This is where the AI Friction Scale already lives. Levels 1 through 5 describe variations within this mode.",
   },
   {
-    id: "director", name: "Director",
+    id: "designer", name: "Designer",
     tagline: "The student defines the problem and delegates execution.",
-    icon: "\uD83C\uDFAC", colorKey: "director",
+    icon: "\uD83D\uDCD0", colorKey: "designer",
     studentDoes: [
       "Defines the problem clearly and precisely",
       "Sets constraints, scope, and quality criteria",
@@ -682,7 +682,7 @@ const AGENCY_ROLES = [
   {
     id: "conductor", name: "Conductor",
     tagline: "The student conducts an orchestra of AI agents toward a goal.",
-    icon: "\uD83C\uDFB6", colorKey: "conductor",
+    icon: "\uD83C\uDF9B\uFE0F", colorKey: "conductor",
     studentDoes: [
       "Monitors an AI agent's progress across a complex task",
       "Intervenes at critical decision points",
@@ -715,14 +715,14 @@ const AGENCY_PHASES = ["Problem Definition", "Research", "Drafting", "Revision",
 
 const AGENCY_WALKTHROUGH = {
   "history-essay": {
-    executor: [
+    author: [
       { phase: "Problem Definition", student: "Reads the prompt. Chooses to focus on nationalism, militarism, and alliance systems. Develops a thesis independently.", ai: "Not involved.", learning: "Analytical framing, thesis construction, narrowing a broad topic." },
       { phase: "Research", student: "Searches databases and reads primary sources. Takes notes. Identifies relevant quotes and evidence.", ai: "Student may ask AI to explain an unfamiliar term or translate a short passage.", learning: "Research skills, source evaluation, close reading of historical documents." },
       { phase: "Drafting", student: "Writes the full essay from their notes. Structures arguments, integrates evidence, develops analysis paragraph by paragraph.", ai: "Not involved.", learning: "Argumentative writing, evidence integration, sustaining a line of reasoning." },
       { phase: "Revision", student: "Re-reads for clarity, checks citations, strengthens transitions. May ask AI for grammar feedback.", ai: "Provides grammar or clarity suggestions on student-written text.", learning: "Self-editing, revision strategy, attention to craft." },
       { phase: "Final Product", student: "Submits a fully self-authored essay. Can explain every choice.", ai: "Minimal role.", learning: "Deep ownership. Student can defend their argument and trace their reasoning." },
     ],
-    director: [
+    designer: [
       { phase: "Problem Definition", student: "Defines the scope: 'I want to argue that alliance systems were the primary cause, with nationalism and militarism as accelerants. Use only sources from 1910-1914.'", ai: "Receives the direction. May ask clarifying questions.", learning: "Precise problem framing. The student must know enough about WWI to set meaningful constraints." },
       { phase: "Research", student: "Reviews AI-gathered sources. Decides which are relevant. Rejects two sources as too late (1918) and asks for replacements from the pre-war period.", ai: "Searches for and summarizes primary sources matching the student's criteria. Presents options.", learning: "Evaluative judgment. Source relevance assessment. The student learns to evaluate without doing the initial search." },
       { phase: "Drafting", student: "Reviews the AI-generated draft. Identifies a weak paragraph on militarism and provides specific feedback: 'This needs a concrete example, use the naval arms race between Britain and Germany.'", ai: "Produces a full draft based on the student's thesis, selected sources, and structural direction.", learning: "Critical reading of arguments. Knowing what's missing. Giving actionable feedback." },
@@ -738,14 +738,14 @@ const AGENCY_WALKTHROUGH = {
     ],
   },
   "lab-report": {
-    executor: [
+    author: [
       { phase: "Problem Definition", student: "Reviews the experiment brief. Writes a hypothesis based on their understanding of acid-base reactions.", ai: "Not involved.", learning: "Hypothesis formation. Connecting theory to prediction." },
       { phase: "Research", student: "Records all data during the experiment. Organizes measurements in a table.", ai: "Not involved.", learning: "Data collection, measurement precision, lab technique." },
       { phase: "Drafting", student: "Writes up methodology, results, and analysis sections. Creates graphs by hand or in a spreadsheet. Interprets patterns in the data.", ai: "Student may ask AI to check a calculation.", learning: "Scientific writing, data visualization, analytical reasoning from evidence." },
       { phase: "Revision", student: "Reviews for accuracy. Checks that conclusions follow from data. Fixes a calculation error they caught.", ai: "May help with formatting or grammar.", learning: "Self-correction. Understanding the relationship between data and claims." },
       { phase: "Final Product", student: "Submits a report they fully authored. Understands every number and claim.", ai: "Minimal role.", learning: "Complete lab literacy. Can reproduce the analysis and defend the conclusions." },
     ],
-    director: [
+    designer: [
       { phase: "Problem Definition", student: "Provides the experiment parameters, their data, and says: 'Write this up as a formal lab report. My hypothesis was that the equivalence point would be at pH 7, but the data shows pH 8.2. Address why.'", ai: "Receives direction and raw data.", learning: "The student must understand the discrepancy to frame the task well. Genuine analysis is required." },
       { phase: "Research", student: "Reviews the AI's explanation of why the equivalence point differs from 7.0. Asks for more detail on weak acid/strong base buffer effects.", ai: "Explains the chemistry behind the unexpected result.", learning: "Conceptual deepening through directed inquiry. The student is learning, but through asking rather than discovering." },
       { phase: "Drafting", student: "Reviews the draft report. Catches that the AI used the wrong concentration value in one calculation and corrects it.", ai: "Produces the full lab report with formatted data tables, graphs, and analysis.", learning: "Error detection in technical work. Verifying calculations against known inputs." },
@@ -860,7 +860,7 @@ function AgencyWhatChanged({ t, isMobile }) {
 
 /* ───────── Agency: Spectrum Interactive ───────── */
 function AgencySpectrumView({ t, isMobile }) {
-  const [activeRole, setActiveRole] = useState("executor");
+  const [activeRole, setActiveRole] = useState("author");
   const role = AGENCY_ROLES.find(r => r.id === activeRole);
 
   const renderList = (items, color) => React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 }},
@@ -958,8 +958,8 @@ function AgencyWalkThrough({ t, isMobile }) {
     React.createElement("div", { key: `${scenarioId}-${activePhase}`, style: {
       display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 14 : 18,
     }},
-      React.createElement(PhaseCard, { roleId: "executor", phaseData: data.executor[activePhase], color: t.executor }),
-      React.createElement(PhaseCard, { roleId: "director", phaseData: data.director[activePhase], color: t.director }),
+      React.createElement(PhaseCard, { roleId: "author", phaseData: data.author[activePhase], color: t.author }),
+      React.createElement(PhaseCard, { roleId: "designer", phaseData: data.designer[activePhase], color: t.designer }),
       React.createElement(PhaseCard, { roleId: "conductor", phaseData: data.conductor[activePhase], color: t.conductor })),
   );
 }
@@ -976,7 +976,7 @@ function AgencyAttribution({ t, isMobile }) {
       React.createElement("p", { style: { marginBottom: 14 }},
         "The Agency Spectrum is a companion framework that extends this thinking into the agentic era."),
       React.createElement("p", { style: { marginBottom: 0 }},
-        "The three-role model (Executor, Director, Conductor) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape.")),
+        "The three-role model (Author, Designer, Conductor) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape.")),
     React.createElement("div", { style: { padding: "14px 18px", borderRadius: 8, background: t.cardBg, border: t.cardBorder }},
       React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 8 }}, "References"),
       React.createElement("div", { style: { fontSize: isMobile ? 12 : 13, color: t.textMid, lineHeight: 1.8 }},
