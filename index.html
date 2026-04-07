@@ -130,6 +130,13 @@ function useTheme(dark) {
     levelColors,
     gaugeGradient,
     badgeColors,
+    // Agency Spectrum role colors
+    accent: dark ? "#2A9D8F" : "#00796B",
+    warn: dark ? "#F4A261" : "#E65100",
+    hot: dark ? "#E63946" : "#C62828",
+    executor: dark ? "#2A9D8F" : "#00796B",
+    director: dark ? "#F4A261" : "#E65100",
+    steward: dark ? "#E63946" : "#C62828",
   };
 }
 
@@ -585,6 +592,382 @@ function HamburgerMenu({ open, onToggle, darkMode, levelColor, t }) {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   AGENCY SPECTRUM — data & components
+   ═══════════════════════════════════════════════════════════════ */
+
+const AGENCY_ROLES = [
+  {
+    id: "executor", name: "Executor",
+    tagline: "The student does the work. AI assists at moments.",
+    icon: "\u270B", colorKey: "executor",
+    studentDoes: [
+      "Writes, researches, and builds directly",
+      "Makes all creative and structural decisions",
+      "Uses AI for specific, bounded help (spell-check, a single question, brainstorming seeds)",
+    ],
+    aiDoes: [
+      "Responds to direct, narrow requests",
+      "Provides information or suggestions when asked",
+      "Has no memory of the larger task or goals",
+    ],
+    learningHappens: [
+      "Craft knowledge and disciplinary skills",
+      "Productive struggle with the material itself",
+      "Building fluency through repetition and revision",
+    ],
+    teacherRole: "Designs the task. Coaches during execution. Assesses the product and the process.",
+    frictionScaleRelation: "This is where the AI Friction Scale already lives. Levels 1 through 5 describe variations within this mode.",
+  },
+  {
+    id: "director", name: "Director",
+    tagline: "The student defines the problem and delegates execution.",
+    icon: "\uD83C\uDFAC", colorKey: "director",
+    studentDoes: [
+      "Defines the problem clearly and precisely",
+      "Sets constraints, scope, and quality criteria",
+      "Evaluates AI output against their own standards",
+      "Iterates by refining direction, not by doing the work",
+    ],
+    aiDoes: [
+      "Executes multi-step plans based on student direction",
+      "Researches, drafts, builds, or analyzes as instructed",
+      "Produces complete or near-complete deliverables",
+    ],
+    learningHappens: [
+      "Problem definition and scoping",
+      "Evaluative judgment and critical analysis",
+      "Communication clarity (the prompt is the skill)",
+      "Understanding what 'good' looks like before seeing it",
+    ],
+    teacherRole: "Designs constraints that force meaningful direction-setting. Assesses the quality of the student's problem framing, not just the output.",
+    frictionScaleRelation: "Beyond the current scale. The student may produce high-quality work with low personal execution. Traditional friction metrics don't capture this.",
+  },
+  {
+    id: "steward", name: "Steward",
+    tagline: "The student oversees an AI agent working semi-autonomously.",
+    icon: "\uD83D\uDDFA\uFE0F", colorKey: "steward",
+    studentDoes: [
+      "Monitors an AI agent's progress across a complex task",
+      "Intervenes at critical decision points",
+      "Verifies accuracy, quality, and alignment with goals",
+      "Takes responsibility for the final product's integrity",
+    ],
+    aiDoes: [
+      "Plans and executes across multiple steps without prompting",
+      "Makes intermediate decisions autonomously",
+      "Uses tools, searches, and produces artifacts independently",
+      "Reports back at checkpoints or when uncertain",
+    ],
+    learningHappens: [
+      "Meta-cognitive skills: knowing what you don't know",
+      "Quality assurance and verification",
+      "Judgment under uncertainty",
+      "Accountability and intellectual ownership of delegated work",
+    ],
+    teacherRole: "Designs checkpoints and accountability structures. Teaches students how to verify, question, and take ownership of work they didn't execute themselves.",
+    frictionScaleRelation: "Entirely new territory. The student may never touch the material directly. Learning is about oversight, judgment, and responsibility.",
+  },
+];
+
+const AGENCY_SCENARIOS = [
+  { id: "history-essay", name: "Research Essay", subject: "10th Grade History", assignment: "Research the causes of World War I and write a 5-paragraph analytical essay using at least three primary sources.", icon: "\uD83D\uDCDC" },
+  { id: "lab-report", name: "Lab Report", subject: "11th Grade Chemistry", assignment: "Document your findings from the titration experiment, including hypothesis, methodology, data analysis, and conclusions.", icon: "\uD83E\uDDEA" },
+];
+
+const AGENCY_PHASES = ["Problem Definition", "Research", "Drafting", "Revision", "Final Product"];
+
+const AGENCY_WALKTHROUGH = {
+  "history-essay": {
+    executor: [
+      { phase: "Problem Definition", student: "Reads the prompt. Chooses to focus on nationalism, militarism, and alliance systems. Develops a thesis independently.", ai: "Not involved.", learning: "Analytical framing, thesis construction, narrowing a broad topic." },
+      { phase: "Research", student: "Searches databases and reads primary sources. Takes notes. Identifies relevant quotes and evidence.", ai: "Student may ask AI to explain an unfamiliar term or translate a short passage.", learning: "Research skills, source evaluation, close reading of historical documents." },
+      { phase: "Drafting", student: "Writes the full essay from their notes. Structures arguments, integrates evidence, develops analysis paragraph by paragraph.", ai: "Not involved.", learning: "Argumentative writing, evidence integration, sustaining a line of reasoning." },
+      { phase: "Revision", student: "Re-reads for clarity, checks citations, strengthens transitions. May ask AI for grammar feedback.", ai: "Provides grammar or clarity suggestions on student-written text.", learning: "Self-editing, revision strategy, attention to craft." },
+      { phase: "Final Product", student: "Submits a fully self-authored essay. Can explain every choice.", ai: "Minimal role.", learning: "Deep ownership. Student can defend their argument and trace their reasoning." },
+    ],
+    director: [
+      { phase: "Problem Definition", student: "Defines the scope: 'I want to argue that alliance systems were the primary cause, with nationalism and militarism as accelerants. Use only sources from 1910-1914.'", ai: "Receives the direction. May ask clarifying questions.", learning: "Precise problem framing. The student must know enough about WWI to set meaningful constraints." },
+      { phase: "Research", student: "Reviews AI-gathered sources. Decides which are relevant. Rejects two sources as too late (1918) and asks for replacements from the pre-war period.", ai: "Searches for and summarizes primary sources matching the student's criteria. Presents options.", learning: "Evaluative judgment. Source relevance assessment. The student learns to evaluate without doing the initial search." },
+      { phase: "Drafting", student: "Reviews the AI-generated draft. Identifies a weak paragraph on militarism and provides specific feedback: 'This needs a concrete example, use the naval arms race between Britain and Germany.'", ai: "Produces a full draft based on the student's thesis, selected sources, and structural direction.", learning: "Critical reading of arguments. Knowing what's missing. Giving actionable feedback." },
+      { phase: "Revision", student: "Reads the revised version. Adjusts tone in the introduction to be less dramatic. Approves the conclusion.", ai: "Revises based on student feedback. Produces a polished version.", learning: "Editorial judgment. Aligning output with personal voice and standards." },
+      { phase: "Final Product", student: "Submits work they directed but didn't write. Can explain the argument and source choices, but didn't practice the act of writing.", ai: "Produced the artifact.", learning: "Strong analytical skills. Weak execution skills. The student is a capable critic but hasn't built writing fluency." },
+    ],
+    steward: [
+      { phase: "Problem Definition", student: "Gives a broad prompt: 'Write a strong analytical essay on the causes of WWI for a 10th grade history class. Find good primary sources. Make it argumentative, not descriptive.'", ai: "Autonomously decides to focus on the alliance system, militarism, and nationalism. Chooses its own thesis angle.", learning: "Minimal at this stage. The student hasn't engaged with the content yet." },
+      { phase: "Research", student: "Receives a notification that the agent has found 6 sources and selected 3. Reviews the selections. Flags that one source is from a biased nationalist perspective and asks the agent to address that bias or replace it.", ai: "Independently searches, reads, and selects sources. Presents a summary and rationale for each choice.", learning: "Bias detection. Critical evaluation of curated information. This is a real skill, but different from finding sources yourself." },
+      { phase: "Drafting", student: "Checks in on progress. Reads the draft at a high level. Notices the essay is too descriptive and not argumentative enough. Redirects the agent.", ai: "Drafts the full essay autonomously. Makes structural and stylistic choices without guidance.", learning: "Pattern recognition: knowing what 'argumentative' looks like vs. 'descriptive.' Meta-level quality assessment." },
+      { phase: "Revision", student: "Reviews the final version. Checks citations against sources. Finds one misattributed quote and flags it.", ai: "Revises autonomously and produces the final version.", learning: "Verification. Fact-checking. Taking responsibility for accuracy of work you didn't produce." },
+      { phase: "Final Product", student: "Submits work they oversaw but barely touched. Can explain the argument at a high level but may struggle with details.", ai: "Did essentially all of the work.", learning: "Oversight and accountability skills, but almost no content learning, writing practice, or deep engagement with WWI." },
+    ],
+  },
+  "lab-report": {
+    executor: [
+      { phase: "Problem Definition", student: "Reviews the experiment brief. Writes a hypothesis based on their understanding of acid-base reactions.", ai: "Not involved.", learning: "Hypothesis formation. Connecting theory to prediction." },
+      { phase: "Research", student: "Records all data during the experiment. Organizes measurements in a table.", ai: "Not involved.", learning: "Data collection, measurement precision, lab technique." },
+      { phase: "Drafting", student: "Writes up methodology, results, and analysis sections. Creates graphs by hand or in a spreadsheet. Interprets patterns in the data.", ai: "Student may ask AI to check a calculation.", learning: "Scientific writing, data visualization, analytical reasoning from evidence." },
+      { phase: "Revision", student: "Reviews for accuracy. Checks that conclusions follow from data. Fixes a calculation error they caught.", ai: "May help with formatting or grammar.", learning: "Self-correction. Understanding the relationship between data and claims." },
+      { phase: "Final Product", student: "Submits a report they fully authored. Understands every number and claim.", ai: "Minimal role.", learning: "Complete lab literacy. Can reproduce the analysis and defend the conclusions." },
+    ],
+    director: [
+      { phase: "Problem Definition", student: "Provides the experiment parameters, their data, and says: 'Write this up as a formal lab report. My hypothesis was that the equivalence point would be at pH 7, but the data shows pH 8.2. Address why.'", ai: "Receives direction and raw data.", learning: "The student must understand the discrepancy to frame the task well. Genuine analysis is required." },
+      { phase: "Research", student: "Reviews the AI's explanation of why the equivalence point differs from 7.0. Asks for more detail on weak acid/strong base buffer effects.", ai: "Explains the chemistry behind the unexpected result.", learning: "Conceptual deepening through directed inquiry. The student is learning, but through asking rather than discovering." },
+      { phase: "Drafting", student: "Reviews the draft report. Catches that the AI used the wrong concentration value in one calculation and corrects it.", ai: "Produces the full lab report with formatted data tables, graphs, and analysis.", learning: "Error detection in technical work. Verifying calculations against known inputs." },
+      { phase: "Revision", student: "Approves the scientific content. Asks for the conclusion to be more specific about sources of error.", ai: "Revises to add error analysis.", learning: "Understanding what makes a strong conclusion. Meta-knowledge of scientific writing standards." },
+      { phase: "Final Product", student: "Submits a polished report. Understands the science but didn't practice the writing or graphing.", ai: "Produced most of the document.", learning: "Strong conceptual understanding. Weak lab writing skills and data visualization practice." },
+    ],
+    steward: [
+      { phase: "Problem Definition", student: "Uploads raw data and says: 'Write a complete lab report for this titration experiment. Make it thorough.'", ai: "Autonomously infers the hypothesis, identifies the experiment type, and begins structuring the report.", learning: "Very little. The student hasn't engaged with the data or the science." },
+      { phase: "Research", student: "Receives the draft. Skims it.", ai: "Independently analyzes the data, creates visualizations, calculates results, and writes the theoretical background.", learning: "Minimal unless the student actively reads and questions the content." },
+      { phase: "Drafting", student: "Notices a graph doesn't match what they remember from the experiment. Flags it.", ai: "Produced everything autonomously.", learning: "Visual pattern matching. Noticing when something 'feels wrong,' a real but limited skill." },
+      { phase: "Revision", student: "Checks that their name is on it. Glances at the conclusion.", ai: "Revises and finalizes.", learning: "Accountability in name only. No meaningful scientific learning occurred." },
+      { phase: "Final Product", student: "Submits work they cannot meaningfully explain or defend.", ai: "Did all the work.", learning: "No lab literacy gained. If asked to explain the equivalence point, the student would struggle." },
+    ],
+  },
+};
+
+/* ───────── Agency: What Changed ───────── */
+function AgencyWhatChanged({ t, isMobile }) {
+  const [phase, setPhase] = useState("idle");
+  const [chatStep, setChatStep] = useState(0);
+  const [agentStep, setAgentStep] = useState(0);
+  const timerRef = useRef(null);
+
+  const chatSteps = [
+    { role: "student", text: "What were the main causes of WWI?" },
+    { role: "ai", text: "The main causes include nationalism, militarism, alliances, and imperialism..." },
+    { role: "student", text: "Can you help me outline an essay about this?" },
+    { role: "ai", text: "Here's a possible outline: I. Introduction, II. Nationalism..." },
+  ];
+  const agentSteps = [
+    { role: "student", text: "Research WWI causes. Find primary sources. Write an analytical essay arguing alliance systems were the primary cause." },
+    { role: "agent", text: "Planning: 1) Search for primary sources 1910-1914, 2) Analyze alliance treaties, 3) Draft argumentative essay, 4) Self-review for quality" },
+    { role: "agent", text: "Searching academic databases... Found 12 sources. Selecting 4 most relevant. Reading and extracting key evidence..." },
+    { role: "agent", text: "Draft complete. 5 paragraphs, 3 primary sources cited. Thesis: 'The interlocking alliance system transformed a regional crisis into a continental war.' Ready for your review." },
+  ];
+
+  const startAnimation = useCallback(() => { setChatStep(0); setAgentStep(0); setPhase("chat"); }, []);
+
+  useEffect(() => {
+    if (phase === "idle" || phase === "done") return;
+    if (phase === "chat") {
+      if (chatStep >= chatSteps.length) { timerRef.current = setTimeout(() => setPhase("pause"), 600); return () => clearTimeout(timerRef.current); }
+      timerRef.current = setTimeout(() => setChatStep(s => s + 1), 1600);
+      return () => clearTimeout(timerRef.current);
+    }
+    if (phase === "pause") { timerRef.current = setTimeout(() => setPhase("agent"), 1200); return () => clearTimeout(timerRef.current); }
+    if (phase === "agent") {
+      if (agentStep >= agentSteps.length) { setPhase("done"); return; }
+      timerRef.current = setTimeout(() => setAgentStep(s => s + 1), 2000);
+      return () => clearTimeout(timerRef.current);
+    }
+  }, [phase, chatStep, agentStep]);
+
+  const isPlaying = phase !== "idle" && phase !== "done";
+  const hasPlayed = phase === "done";
+  const chatActive = phase === "chat" || phase === "pause" || phase === "agent" || phase === "done";
+  const agentActive = phase === "agent" || phase === "done";
+  const showTransition = phase === "pause";
+
+  const renderMessages = (steps, visibleCount, isAgent) => {
+    return steps.map((step, i) => {
+      const visible = i < visibleCount;
+      const isAI = step.role === "ai" || step.role === "agent";
+      return React.createElement("div", { key: i, style: {
+        opacity: visible ? 1 : 0.12, transform: visible ? "translateY(0)" : "translateY(8px)",
+        transition: "all 0.5s ease", display: "flex", gap: 10, marginBottom: 12, alignItems: "flex-start",
+      }},
+        React.createElement("div", { style: {
+          width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+          background: isAI ? (isAgent ? t.hot + "20" : t.accent + "20") : t.textFaint,
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+        }}, isAI ? (isAgent ? "\uD83E\uDD16" : "\uD83D\uDCAC") : "\uD83D\uDC64"),
+        React.createElement("div", { style: {
+          lineHeight: 1.6, color: t.textHigh, padding: "8px 12px", borderRadius: 8,
+          background: isAI ? (isAgent ? t.hot + "08" : t.accent + "08") : t.cardBg,
+          border: isAI ? `1px solid ${isAgent ? t.hot + "18" : t.accent + "18"}` : t.cardBorder,
+          fontFamily: isAI ? mono : "inherit",
+          fontSize: isAI ? (isMobile ? 13 : 14) : (isMobile ? 15 : 16),
+          maxWidth: "85%",
+        }}, step.text),
+      );
+    });
+  };
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What Changed"),
+    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "Most teachers think of AI as a conversation. You ask, it answers. But a new kind of AI doesn't wait for each instruction. It plans, researches, builds, and delivers, on its own."),
+    React.createElement("button", { onClick: startAnimation, disabled: isPlaying, style: {
+      fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em",
+      padding: "8px 20px", borderRadius: 6,
+      background: isPlaying ? t.textFaint : t.accent + "15",
+      border: `1px solid ${isPlaying ? t.textGhost : t.accent + "40"}`,
+      color: isPlaying ? t.textLow : t.accent, marginBottom: 20,
+      transition: "all 0.3s",
+    }}, isPlaying ? "Playing..." : hasPlayed ? "Replay" : "Watch the Difference"),
+    showTransition && React.createElement("div", { style: { textAlign: "center", padding: "10px 0", marginBottom: 12, animation: "fadeIn 0.5s ease" }},
+      React.createElement("span", { style: { fontSize: 12, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.warn }}, "Now watch the same task with agentic AI...")),
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 20 : 28 }},
+      React.createElement("div", { style: { background: t.cardBg, border: t.cardBorder, borderRadius: 12, padding: isMobile ? 14 : 20, boxShadow: t.cardShadow, opacity: chatActive ? 1 : 0.4, transition: "opacity 0.5s ease" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.accent, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }},
+          React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: t.accent }}), "Conversational AI (Today)"),
+        React.createElement("div", { style: { minHeight: 180 }}, renderMessages(chatSteps, chatStep, false)),
+        React.createElement("div", { style: { fontSize: 12, color: t.textFaint, fontFamily: mono, marginTop: 10, fontStyle: "italic" }}, "Student drives every step. AI responds to individual requests.")),
+      React.createElement("div", { style: { background: t.cardBg, border: t.cardBorder, borderRadius: 12, padding: isMobile ? 14 : 20, boxShadow: t.cardShadow, opacity: agentActive ? 1 : 0.25, transition: "opacity 0.5s ease" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.hot, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }},
+          React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: t.hot }}), "Agentic AI (Arriving Now)"),
+        React.createElement("div", { style: { minHeight: 180 }}, renderMessages(agentSteps, agentStep, true)),
+        React.createElement("div", { style: { fontSize: 12, color: t.textFaint, fontFamily: mono, marginTop: 10, fontStyle: "italic" }}, "One instruction. AI plans, executes, and delivers autonomously."))),
+  );
+}
+
+/* ───────── Agency: Spectrum Interactive ───────── */
+function AgencySpectrumView({ t, isMobile }) {
+  const [activeRole, setActiveRole] = useState("executor");
+  const role = AGENCY_ROLES.find(r => r.id === activeRole);
+
+  const renderList = (items, color) => React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 }},
+    items.map((item, i) => React.createElement("div", { key: i, style: { display: "flex", gap: 10, alignItems: "flex-start", animation: "fadeIn 0.4s ease forwards", animationDelay: `${i * 80}ms`, opacity: 0 }},
+      React.createElement("span", { style: { color, fontSize: 10, marginTop: 6, flexShrink: 0 }}, "\u25CF"),
+      React.createElement("span", { style: { fontSize: isMobile ? 15 : 16, lineHeight: 1.6, color: t.textHigh }}, item))));
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "The Spectrum"),
+    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 8, maxWidth: 680 }},
+      "When AI can do the work, the student's role changes. But it doesn't change in one way. There are three distinct modes, each with different learning implications."),
+    React.createElement("p", { style: { fontSize: isMobile ? 14 : 15, color: t.textMid, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "The question for educators is not \"should students use agentic AI?\" It's \"which mode serves this learning goal?\""),
+    React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 24, flexWrap: isMobile ? "wrap" : "nowrap" }},
+      AGENCY_ROLES.map(r => React.createElement("button", { key: r.id, onClick: () => setActiveRole(r.id), style: {
+        fontFamily: mono, fontSize: isMobile ? 11 : 12, textTransform: "uppercase", letterSpacing: "0.1em",
+        padding: isMobile ? "10px 16px" : "10px 24px", borderRadius: 8, transition: "all 0.3s",
+        background: activeRole === r.id ? t[r.colorKey] + "15" : t.btnBg,
+        border: activeRole === r.id ? `2px solid ${t[r.colorKey]}40` : t.btnBorder,
+        color: activeRole === r.id ? t[r.colorKey] : t.textMid,
+        fontWeight: activeRole === r.id ? 700 : 400, flex: isMobile ? "1 1 auto" : "0 0 auto",
+      }}, React.createElement("span", { style: { marginRight: 6 }}, r.icon), r.name))),
+    React.createElement("div", { key: role.id, style: {
+      background: t.cardBg, border: t.cardBorder, borderRadius: 16, padding: isMobile ? 18 : 28,
+      boxShadow: t.cardShadow, borderTop: `3px solid ${t[role.colorKey]}`, animation: "fadeIn 0.4s ease",
+    }},
+      React.createElement("p", { style: { fontSize: isMobile ? 17 : 20, fontWeight: 400, color: t.text, marginBottom: 20, lineHeight: 1.4, fontStyle: "italic" }}, `"${role.tagline}"`),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 20 : 24, marginBottom: 20 }},
+        React.createElement("div", null,
+          React.createElement("h4", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t[role.colorKey], marginBottom: 10 }}, "The Student"),
+          renderList(role.studentDoes, t[role.colorKey])),
+        React.createElement("div", null,
+          React.createElement("h4", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 10 }}, "The AI"),
+          renderList(role.aiDoes, t.textFaint)),
+        React.createElement("div", null,
+          React.createElement("h4", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t[role.colorKey], marginBottom: 10 }}, "Where Learning Happens"),
+          renderList(role.learningHappens, t[role.colorKey]))),
+      React.createElement("div", { style: { padding: "12px 16px", borderRadius: 8, background: t[role.colorKey] + "08", border: `1px solid ${t[role.colorKey]}18`, borderLeft: `3px solid ${t[role.colorKey]}`, marginBottom: 14 }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t[role.colorKey], marginBottom: 4 }}, "The Teacher's Role"),
+        React.createElement("p", { style: { fontSize: isMobile ? 14 : 15, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, role.teacherRole)),
+      React.createElement("div", { style: { padding: "10px 14px", borderRadius: 8, background: t.textGhost + "30" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Relation to the Friction Scale"),
+        React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.6, color: t.textMid, margin: 0, fontStyle: "italic" }}, role.frictionScaleRelation))),
+  );
+}
+
+/* ───────── Agency: Walk Through a Task ───────── */
+function AgencyWalkThrough({ t, isMobile }) {
+  const [scenarioId, setScenarioId] = useState("history-essay");
+  const [activePhase, setActivePhase] = useState(0);
+  const scenario = AGENCY_SCENARIOS.find(s => s.id === scenarioId);
+  const data = AGENCY_WALKTHROUGH[scenarioId];
+
+  const PhaseCard = ({ roleId, phaseData, color }) => {
+    const r = AGENCY_ROLES.find(r => r.id === roleId);
+    return React.createElement("div", { style: {
+      background: t.cardBg, border: t.cardBorder, borderRadius: 12,
+      padding: isMobile ? 14 : 18, boxShadow: t.cardShadow, borderTop: `2px solid ${color}`,
+      animation: "fadeIn 0.4s ease", flex: 1, minWidth: 0,
+    }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color, marginBottom: 12, fontWeight: 700 }}, `${r.icon} ${r.name}`),
+      React.createElement("div", { style: { marginBottom: 10 }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Student"),
+        React.createElement("p", { style: { fontSize: isMobile ? 13 : 14, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, phaseData.student)),
+      React.createElement("div", { style: { marginBottom: 10 }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "AI"),
+        React.createElement("p", { style: { fontSize: isMobile ? 11 : 12, lineHeight: 1.6, color: t.textMid, margin: 0, fontFamily: mono }}, phaseData.ai)),
+      React.createElement("div", { style: { padding: "8px 10px", borderRadius: 6, background: color + "08", border: `1px solid ${color}15` }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color, marginBottom: 3 }}, "Learning"),
+        React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.5, color: t.textHigh, margin: 0 }}, phaseData.learning)));
+  };
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "Walk Through a Task"),
+    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "See the same assignment play out across all three modes. At each phase, notice what the student is actually doing, and what they're learning."),
+    React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }},
+      AGENCY_SCENARIOS.map(s => React.createElement("button", { key: s.id, onClick: () => { setScenarioId(s.id); setActivePhase(0); }, style: {
+        fontFamily: mono, fontSize: 11, padding: "8px 16px", borderRadius: 6,
+        background: scenarioId === s.id ? t.accent + "15" : t.btnBg,
+        border: scenarioId === s.id ? `1px solid ${t.accent}40` : t.btnBorder,
+        color: scenarioId === s.id ? t.accent : t.textMid, transition: "all 0.3s",
+      }}, `${s.icon} ${s.name}`))),
+    React.createElement("div", { style: { padding: "10px 14px", borderRadius: 8, background: t.cardBg, border: t.cardBorder, marginBottom: 20 }},
+      React.createElement("span", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint }}, `${scenario.subject} `),
+      React.createElement("span", { style: { fontSize: isMobile ? 14 : 15, color: t.textHigh, lineHeight: 1.6 }}, scenario.assignment)),
+    React.createElement("div", { style: { display: "flex", gap: 0, marginBottom: 24, overflow: "auto", paddingBottom: 4 }},
+      AGENCY_PHASES.map((phase, i) => React.createElement("button", { key: phase, onClick: () => setActivePhase(i), style: {
+        fontFamily: mono, fontSize: isMobile ? 9 : 10, textTransform: "uppercase", letterSpacing: "0.08em",
+        padding: isMobile ? "8px 10px" : "10px 18px", background: activePhase === i ? t.text + "08" : "transparent",
+        border: "none", borderBottom: activePhase === i ? `2px solid ${t.accent}` : `2px solid transparent`,
+        color: activePhase === i ? t.text : t.textLow, cursor: "pointer", transition: "all 0.3s",
+        whiteSpace: "nowrap", fontWeight: activePhase === i ? 700 : 400,
+      }}, `${i + 1}. ${phase}`))),
+    React.createElement("div", { key: `${scenarioId}-${activePhase}`, style: {
+      display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 14 : 18,
+    }},
+      React.createElement(PhaseCard, { roleId: "executor", phaseData: data.executor[activePhase], color: t.executor }),
+      React.createElement(PhaseCard, { roleId: "director", phaseData: data.director[activePhase], color: t.director }),
+      React.createElement(PhaseCard, { roleId: "steward", phaseData: data.steward[activePhase], color: t.steward })),
+  );
+}
+
+/* ───────── Agency: Attribution ───────── */
+function AgencyAttribution({ t, isMobile }) {
+  return React.createElement("div", { style: { marginBottom: isMobile ? 20 : 32 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 20 : 26, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "A Companion Framework"),
+    React.createElement("div", { style: { maxWidth: 680, fontSize: isMobile ? 14 : 16, color: t.textHigh, lineHeight: 1.8, marginBottom: 20 }},
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "The AI Friction Scale, developed by Jane Beckwith (2025) and building on the AI Assessment Scale by Perkins, Furze, Roe, and MacVaugh, provides a powerful framework for understanding levels of AI involvement in student work. It was designed for conversational AI, the ask-and-answer model that most educators know."),
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "Agentic AI introduces new dimensions that the original scale was not designed to address. When AI can plan, use tools, and execute multi-step tasks autonomously, the question shifts from \"how much AI\" to \"who is steering.\""),
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "The Agency Spectrum is a companion framework that extends this thinking into the agentic era. It builds on Lee, Sarkar, Tankelevitch, and colleagues' concept of \"task stewardship\" (2025), which describes the shift from task execution to task oversight as AI takes on more knowledge work. Jared Colley's work surfacing task stewardship for educators was a key influence."),
+      React.createElement("p", { style: { marginBottom: 0 }},
+        "The three-role model (Executor, Director, Steward) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape.")),
+    React.createElement("div", { style: { padding: "14px 18px", borderRadius: 8, background: t.cardBg, border: t.cardBorder }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 8 }}, "References"),
+      React.createElement("div", { style: { fontSize: isMobile ? 12 : 13, color: t.textMid, lineHeight: 1.8 }},
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Beckwith, J. (2025). The AI Friction Scale."),
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Perkins, M., Furze, L., Roe, J., & MacVaugh, J. The AI Assessment Scale."),
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Lee, B., Sarkar, A., Tankelevitch, L., Drosos, I., Rintel, S., Banks, R., & Wilson, A. (2025). Task stewardship and the impact of generative AI on critical thinking."),
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Colley, J. Task stewardship in educational contexts."),
+        React.createElement("p", { style: { margin: 0 }}, "Farrant, K. (2026). The Agency Spectrum: A framework for teaching in the agentic era."))),
+  );
+}
+
+/* ───────── Agency Tab (container) ───────── */
+function AgencyTab({ t, isMobile }) {
+  return React.createElement("div", { style: { animation: "fadeIn 0.4s ease" }},
+    React.createElement("div", { style: { marginBottom: isMobile ? 24 : 36 }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textFaint, marginBottom: 6 }}, "A Companion Framework"),
+      React.createElement("h2", { style: { fontSize: isMobile ? 24 : 38, fontWeight: 300, lineHeight: 1.1, marginBottom: 10 }},
+        "The ", React.createElement("span", { style: { fontWeight: 700, fontStyle: "italic", color: t.accent }}, "Agency"), " Spectrum"),
+      React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, fontWeight: 300, color: t.textHigh, lineHeight: 1.6, maxWidth: 640 }},
+        "When AI can do the work, what should students learn? A framework for teaching in the agentic era.")),
+    React.createElement(AgencyWhatChanged, { t, isMobile }),
+    React.createElement(AgencySpectrumView, { t, isMobile }),
+    React.createElement(AgencyWalkThrough, { t, isMobile }),
+    React.createElement(AgencyAttribution, { t, isMobile }),
+  );
+}
+
 /* ───────── Main ───────── */
 function App() {
   const isMobile = useIsMobile();
@@ -666,11 +1049,11 @@ function App() {
 
       // Tabs
       React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:4, marginBottom:isMobile?18:32 } },
-        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"}].map(tab =>
+        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"},{id:"agency",label:"Agency"}].map(tab =>
           React.createElement("button", { key:tab.id, onClick:() => setActiveTab(tab.id), style: {
             padding:isMobile?"8px 14px":"10px 24px", border:"none", borderRadius:100,
-            background:activeTab===tab.id?level.color+"15":"transparent",
-            color:activeTab===tab.id?level.color:t.textLow,
+            background:activeTab===tab.id?(tab.id==="agency"?t.accent:level.color)+"15":"transparent",
+            color:activeTab===tab.id?(tab.id==="agency"?t.accent:level.color):t.textLow,
             fontSize:isMobile?11:12, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.08em",
             cursor:"pointer", transition:"all 0.3s", fontWeight:activeTab===tab.id?700:400,
           } }, tab.label)
@@ -904,6 +1287,9 @@ function App() {
           ),
         ),
       ),
+
+      // ═══ AGENCY TAB ═══
+      activeTab === "agency" && React.createElement(AgencyTab, { t, isMobile }),
 
       React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
 
