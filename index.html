@@ -291,6 +291,7 @@ function FrictionGauge({ value, color, size = 200, t }) {
 function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }) {
   const trackRef = useRef(null);
   const [dragging, setDragging] = useState(false);
+  const [hoveredTick, setHoveredTick] = useState(null);
   const count = levels.length;
   const thumbSize = isMobile ? 32 : 36;
   const halfThumb = thumbSize / 2;
@@ -362,21 +363,45 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
         background: `linear-gradient(90deg, ${levels.map((l, i) => l.color + " " + levelTrackPct(i) + "%").join(", ")})`,
         opacity: 0.85,
       } }),
-      // Level tick marks
+      // Level tick marks (vertical lines + colored dot below)
       levels.map((l, i) => {
         const isNearest = interp.nearestIndex === i;
+        const isHov = hoveredTick === i && !dragging;
+        const lifted = isNearest || isHov;
         return React.createElement("div", { key: l.id,
           onClick: (e) => { e.stopPropagation(); onFrictionChange(l.friction); },
+          onMouseEnter: () => !isMobile && setHoveredTick(i),
+          onMouseLeave: () => !isMobile && setHoveredTick(null),
           style: {
             position: "absolute", left: levelTrackPct(i) + "%",
-            top: "50%", transform: "translate(-50%, -50%)",
-            width: isNearest ? 16 : 12, height: isNearest ? 16 : 12,
-            borderRadius: "50%", background: l.color,
-            border: "2px solid " + t.bg,
-            boxShadow: isNearest ? `0 0 0 2px ${l.color}, 0 2px 8px ${l.color}40` : "none",
-            transition: "all 0.2s", cursor: "pointer", zIndex: isNearest ? 2 : 1,
+            top: "50%", transform: `translateX(-50%) scale(${isHov && !isNearest ? 1.35 : 1})`,
+            cursor: "pointer", zIndex: lifted ? 2 : 1,
+            transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
           }
-        });
+        },
+          // Vertical tick line
+          React.createElement("div", { style: {
+            width: lifted ? 3 : 2, height: lifted ? 28 : 22,
+            borderRadius: 2, background: lifted ? l.color : t.textFaint,
+            opacity: lifted ? 1 : 0.5,
+            transition: "all 0.2s",
+            position: "absolute", top: "50%", transform: "translateY(-50%)",
+          } }),
+          // Colored dot below tick
+          React.createElement("div", { style: {
+            width: lifted ? 8 : 6, height: lifted ? 8 : 6,
+            borderRadius: "50%", background: l.color,
+            opacity: lifted ? 0.9 : 0.5,
+            transition: "all 0.2s",
+            position: "absolute", top: lifted ? 20 : 17, left: "50%", transform: "translateX(-50%)",
+          } }),
+          // Level name tooltip on hover
+          isHov && !isNearest && React.createElement("div", { style: {
+            position: "absolute", bottom: isMobile ? 20 : 22, left: "50%", transform: "translateX(-50%)",
+            fontSize: 9, fontFamily: mono, fontWeight: 600, color: l.color,
+            whiteSpace: "nowrap", letterSpacing: "0.05em",
+          } }, l.name),
+        );
       }),
       // Draggable thumb
       React.createElement("div", { style: {
