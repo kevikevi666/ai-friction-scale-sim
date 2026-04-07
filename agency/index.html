@@ -88,79 +88,35 @@ function useTheme(dark) {
 /* ───────── data: the three roles ───────── */
 const ROLES = [
   {
-    id: "author",
-    name: "Author",
+    id: "author", name: "Author",
     tagline: "The student does the work. AI assists at moments.",
-    icon: "\u270D\uFE0F",
-    colorKey: "author",
-    studentDoes: [
-      "Writes, researches, and builds directly",
-      "Makes all creative and structural decisions",
-      "Uses AI for specific, bounded help (spell-check, a single question, brainstorming seeds)",
-    ],
-    aiDoes: [
-      "Responds to direct, narrow requests",
-      "Provides information or suggestions when asked",
-      "Has no memory of the larger task or goals",
-    ],
-    learningHappens: [
-      "Craft knowledge and disciplinary skills",
-      "Productive struggle with the material itself",
-      "Building fluency through repetition and revision",
-    ],
+    icon: "\u270D\uFE0F", colorKey: "author",
+    snapshot: "A 10th grader is writing a history essay on WWI. She has a blank doc, her textbook, and three primary sources she found in the library database. She asks ChatGPT what \"entente\" means, gets her answer, and goes back to writing. Twenty minutes later she's stuck on her second paragraph and reworks her thesis twice before it clicks.",
+    innerVoice: "This is hard, but I think my argument is getting stronger.",
+    skillsGrowing: ["Writing fluency", "Research", "Argumentation", "Persistence", "Close reading"],
+    skillsNot: ["Delegation", "AI evaluation", "Problem scoping"],
     teacherRole: "Designs the task. Coaches during execution. Assesses the product and the process.",
     frictionScaleRelation: "This is where the AI Friction Scale already lives. Levels 1 through 5 describe variations within this mode.",
   },
   {
-    id: "designer",
-    name: "Designer",
+    id: "designer", name: "Designer",
     tagline: "The student defines the problem and delegates execution.",
-    icon: "\uD83D\uDCD0",
-    colorKey: "designer",
-    studentDoes: [
-      "Defines the problem clearly and precisely",
-      "Sets constraints, scope, and quality criteria",
-      "Evaluates AI output against their own standards",
-      "Iterates by refining direction, not by doing the work",
-    ],
-    aiDoes: [
-      "Executes multi-step plans based on student direction",
-      "Researches, drafts, builds, or analyzes as instructed",
-      "Produces complete or near-complete deliverables",
-    ],
-    learningHappens: [
-      "Problem definition and scoping",
-      "Evaluative judgment and critical analysis",
-      "Communication clarity (the prompt is the skill)",
-      "Understanding what 'good' looks like before seeing it",
-    ],
+    icon: "\uD83D\uDCD0", colorKey: "designer",
+    snapshot: "A 10th grader opens Claude and types: \"I want to argue that the alliance system was the primary cause of WWI. Use only sources from 1910 to 1914. Write a formal, argumentative essay, not descriptive.\" She reviews the draft, marks the second paragraph as weak, and sends it back with specific feedback: \"Add the naval arms race as a concrete example here.\"",
+    innerVoice: "I know what I want this to say. I need to be more specific about what's missing.",
+    skillsGrowing: ["Problem definition", "Critical evaluation", "Editorial judgment", "Communication clarity"],
+    skillsNot: ["Writing fluency", "Research process", "Sustained drafting"],
     teacherRole: "Designs constraints that force meaningful direction-setting. Assesses the quality of the student's problem framing, not just the output.",
     frictionScaleRelation: "Beyond the current scale. The student may produce high-quality work with low personal execution. Traditional friction metrics don't capture this.",
   },
   {
-    id: "conductor",
-    name: "Conductor",
+    id: "conductor", name: "Conductor",
     tagline: "The student conducts an orchestra of AI agents toward a goal.",
-    icon: "\uD83C\uDF9B\uFE0F",
-    colorKey: "conductor",
-    studentDoes: [
-      "Monitors an AI agent's progress across a complex task",
-      "Intervenes at critical decision points",
-      "Verifies accuracy, quality, and alignment with goals",
-      "Takes responsibility for the final product's integrity",
-    ],
-    aiDoes: [
-      "Plans and executes across multiple steps without prompting",
-      "Makes intermediate decisions autonomously",
-      "Uses tools, searches, and produces artifacts independently",
-      "Reports back at checkpoints or when uncertain",
-    ],
-    learningHappens: [
-      "Meta-cognitive skills: knowing what you don't know",
-      "Quality assurance and verification",
-      "Judgment under uncertainty",
-      "Accountability and intellectual ownership of delegated work",
-    ],
+    icon: "\uD83C\uDF9B\uFE0F", colorKey: "conductor",
+    snapshot: "A 10th grader tells an AI agent: \"Write a strong analytical essay on WWI causes for my history class. Find good primary sources. Make it argumentative.\" She checks back 10 minutes later, skims the draft, notices it reads more like a summary than an argument, and flags it. She also catches a source from 1920 and rejects it as too late.",
+    innerVoice: "Something's off with the tone. And that source is too late.",
+    skillsGrowing: ["Pattern recognition", "Quality monitoring", "Bias detection", "Verification"],
+    skillsNot: ["Writing", "Research", "Argumentation", "Deep content engagement"],
     teacherRole: "Designs checkpoints and accountability structures. Teaches students how to verify, question, and take ownership of work they didn't execute themselves.",
     frictionScaleRelation: "Entirely new territory. The student may never touch the material directly. Learning is about orchestration, judgment, and responsibility.",
   },
@@ -453,44 +409,27 @@ function WhatChanged({ t, isMobile }) {
 function AgencySpectrum({ t, isMobile }) {
   const [activeRole, setActiveRole] = useState("author");
   const role = ROLES.find(r => r.id === activeRole);
+  const color = t[role.colorKey];
 
-  const renderList = (items, color) => {
-    return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } },
-      items.map((item, i) =>
-        React.createElement("div", {
-          key: i,
-          style: {
-            display: "flex", gap: 10, alignItems: "flex-start",
-            animation: "fadeIn 0.4s ease forwards",
-            animationDelay: `${i * 80}ms`,
-            opacity: 0,
-          }
-        },
-          React.createElement("span", {
-            style: { color: color, fontSize: 10, marginTop: 6, flexShrink: 0 }
-          }, "\u25CF"),
-          React.createElement("span", {
-            style: { fontSize: isMobile ? 15 : 16, lineHeight: 1.6, color: t.textHigh }
-          }, item),
-        )
-      )
-    );
-  };
+  const SkillTag = ({ label, active }) => React.createElement("span", {
+    style: {
+      display: "inline-block", padding: "4px 10px", borderRadius: 100, fontSize: isMobile ? 11 : 12,
+      fontFamily: mono, letterSpacing: "0.02em", marginRight: 6, marginBottom: 6,
+      background: active ? color + "18" : t.textGhost + "20",
+      color: active ? color : t.textFaint,
+      border: `1px solid ${active ? color + "30" : "transparent"}`,
+      transition: "all 0.3s",
+    }
+  }, label);
 
   return React.createElement("section", {
     style: { marginBottom: isMobile ? 48 : 72 }
   },
     React.createElement("h2", {
-      style: {
-        fontSize: isMobile ? 11 : 12, fontFamily: mono, textTransform: "uppercase",
-        letterSpacing: "0.15em", color: t.textLow, marginBottom: 12,
-      }
+      style: { fontSize: isMobile ? 11 : 12, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 12 }
     }, "Section 02"),
     React.createElement("h3", {
-      style: {
-        fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text,
-        marginBottom: 10, lineHeight: 1.2,
-      }
+      style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }
     }, "The Agency Spectrum"),
     React.createElement("p", {
       style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 8, maxWidth: 680 }
@@ -501,109 +440,97 @@ function AgencySpectrum({ t, isMobile }) {
 
     // Role selector pills
     React.createElement("div", {
-      style: {
-        display: "flex", gap: 8, marginBottom: 28,
-        flexWrap: isMobile ? "wrap" : "nowrap",
-      }
+      style: { display: "flex", gap: 8, marginBottom: 28, flexWrap: isMobile ? "wrap" : "nowrap" }
     },
-      ROLES.map(r =>
-        React.createElement("button", {
-          key: r.id,
-          onClick: () => setActiveRole(r.id),
-          style: {
-            fontFamily: mono, fontSize: isMobile ? 11 : 12, textTransform: "uppercase",
-            letterSpacing: "0.1em", padding: isMobile ? "10px 16px" : "10px 24px",
-            borderRadius: 8, cursor: "pointer", transition: "all 0.3s",
-            background: activeRole === r.id ? t[r.colorKey] + "15" : t.btnBg,
-            border: activeRole === r.id ? `2px solid ${t[r.colorKey]}40` : t.btnBorder,
-            color: activeRole === r.id ? t[r.colorKey] : t.textMid,
-            fontWeight: activeRole === r.id ? 700 : 400,
-            flex: isMobile ? "1 1 auto" : "0 0 auto",
-          }
-        },
-          React.createElement("span", { style: { marginRight: 6 } }, r.icon),
-          r.name,
-        )
-      )
+      ROLES.map(r => React.createElement("button", {
+        key: r.id, onClick: () => setActiveRole(r.id),
+        style: {
+          fontFamily: mono, fontSize: isMobile ? 11 : 12, textTransform: "uppercase",
+          letterSpacing: "0.1em", padding: isMobile ? "10px 16px" : "10px 24px",
+          borderRadius: 8, cursor: "pointer", transition: "all 0.3s",
+          background: activeRole === r.id ? t[r.colorKey] + "15" : t.btnBg,
+          border: activeRole === r.id ? `2px solid ${t[r.colorKey]}40` : t.btnBorder,
+          color: activeRole === r.id ? t[r.colorKey] : t.textMid,
+          fontWeight: activeRole === r.id ? 700 : 400, flex: isMobile ? "1 1 auto" : "0 0 auto",
+        }
+      }, React.createElement("span", { style: { marginRight: 6 } }, r.icon), r.name)),
     ),
 
-    // Active role detail card
+    // Role detail card
     React.createElement("div", {
       key: role.id,
       style: {
         background: t.cardBg, border: t.cardBorder, borderRadius: 16,
         padding: isMobile ? 20 : 32, boxShadow: t.cardShadow,
-        borderTop: `3px solid ${t[role.colorKey]}`,
-        animation: "fadeIn 0.4s ease",
+        borderTop: `3px solid ${color}`, animation: "fadeIn 0.4s ease",
       }
     },
       // Tagline
       React.createElement("p", {
-        style: {
-          fontSize: isMobile ? 18 : 22, fontWeight: 400, color: t.text,
-          marginBottom: 24, lineHeight: 1.4, fontStyle: "italic",
-        }
+        style: { fontSize: isMobile ? 17 : 20, fontWeight: 400, color: t.text, marginBottom: 20, lineHeight: 1.4, fontStyle: "italic" }
       }, `"${role.tagline}"`),
 
-      // Three columns of info
-      React.createElement("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-          gap: isMobile ? 24 : 28,
-          marginBottom: 24,
-        }
-      },
-        // Student does
-        React.createElement("div", null,
-          React.createElement("h4", {
-            style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t[role.colorKey], marginBottom: 12 }
-          }, "The Student"),
-          renderList(role.studentDoes, t[role.colorKey]),
-        ),
-        // AI does
-        React.createElement("div", null,
-          React.createElement("h4", {
-            style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 12 }
-          }, "The AI"),
-          renderList(role.aiDoes, t.textFaint),
-        ),
-        // Learning happens
-        React.createElement("div", null,
-          React.createElement("h4", {
-            style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t[role.colorKey], marginBottom: 12 }
-          }, "Where Learning Happens"),
-          renderList(role.learningHappens, t[role.colorKey]),
-        ),
+      // Classroom snapshot
+      React.createElement("div", { style: { marginBottom: 20 } },
+        React.createElement("div", {
+          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: color, marginBottom: 8 }
+        }, "In the Classroom"),
+        React.createElement("p", {
+          style: { fontSize: isMobile ? 15 : 17, lineHeight: 1.75, color: t.textHigh, margin: 0 }
+        }, role.snapshot),
       ),
 
-      // Teacher role callout
+      // Student inner voice
       React.createElement("div", {
-        style: {
-          padding: "14px 18px", borderRadius: 8,
-          background: t[role.colorKey] + "08",
-          border: `1px solid ${t[role.colorKey]}18`,
-          borderLeft: `3px solid ${t[role.colorKey]}`,
-          marginBottom: 16,
-        }
+        style: { padding: isMobile ? "14px 16px" : "16px 20px", borderRadius: 10, marginBottom: 20, background: color + "06", borderLeft: `3px solid ${color}40` }
       },
         React.createElement("div", {
-          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t[role.colorKey], marginBottom: 6 }
+          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: color, marginBottom: 6 }
+        }, "What the Student Is Thinking"),
+        React.createElement("p", {
+          style: { fontSize: isMobile ? 16 : 18, lineHeight: 1.5, color: t.text, margin: 0, fontStyle: "italic", fontWeight: 400 }
+        }, `"${role.innerVoice}"`),
+      ),
+
+      // Skill profile
+      React.createElement("div", {
+        style: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 20, marginBottom: 20 }
+      },
+        React.createElement("div", null,
+          React.createElement("div", {
+            style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: color, marginBottom: 10 }
+          }, "Skills Developing"),
+          React.createElement("div", { style: { display: "flex", flexWrap: "wrap" } },
+            role.skillsGrowing.map((s, i) => React.createElement(SkillTag, { key: i, label: s, active: true })))),
+        React.createElement("div", null,
+          React.createElement("div", {
+            style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 10 }
+          }, "Not Practiced Here"),
+          React.createElement("div", { style: { display: "flex", flexWrap: "wrap" } },
+            role.skillsNot.map((s, i) => React.createElement(SkillTag, { key: i, label: s, active: false })))),
+      ),
+
+      // Teacher's role
+      React.createElement("div", {
+        style: { padding: "12px 16px", borderRadius: 8, background: color + "08", border: `1px solid ${color}18`, borderLeft: `3px solid ${color}`, marginBottom: 14 }
+      },
+        React.createElement("div", {
+          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: color, marginBottom: 4 }
         }, "The Teacher's Role"),
         React.createElement("p", {
-          style: { fontSize: isMobile ? 15 : 16, lineHeight: 1.6, color: t.textHigh, margin: 0 }
+          style: { fontSize: isMobile ? 14 : 15, lineHeight: 1.6, color: t.textHigh, margin: 0 }
         }, role.teacherRole),
       ),
 
       // Friction scale relation
       React.createElement("div", {
-        style: { padding: "12px 16px", borderRadius: 8, background: t.textGhost + "30", }
+        style: { padding: "10px 14px", borderRadius: 8, background: t.textGhost + "30" }
       },
         React.createElement("div", {
-          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 4 }
+          style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }
         }, "Relation to the Friction Scale"),
         React.createElement("p", {
-          style: { fontSize: isMobile ? 13 : 14, lineHeight: 1.6, color: t.textMid, margin: 0, fontStyle: "italic" }
+          style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.6, color: t.textMid, margin: 0, fontStyle: "italic" }
         }, role.frictionScaleRelation),
       ),
     ),
