@@ -81,7 +81,7 @@ function useTheme(dark) {
     // Role colors
     executor: dark ? "#2A9D8F" : "#00796B",
     director: dark ? "#F4A261" : "#E65100",
-    steward: dark ? "#E63946" : "#C62828",
+    conductor: dark ? "#E63946" : "#C62828",
   };
 }
 
@@ -138,11 +138,11 @@ const ROLES = [
     frictionScaleRelation: "Beyond the current scale. The student may produce high-quality work with low personal execution. Traditional friction metrics don't capture this.",
   },
   {
-    id: "steward",
-    name: "Steward",
-    tagline: "The student oversees an AI agent working semi-autonomously.",
-    icon: "\uD83D\uDDFA\uFE0F",
-    colorKey: "steward",
+    id: "conductor",
+    name: "Conductor",
+    tagline: "The student conducts an orchestra of AI agents toward a goal.",
+    icon: "\uD83C\uDFB6",
+    colorKey: "conductor",
     studentDoes: [
       "Monitors an AI agent's progress across a complex task",
       "Intervenes at critical decision points",
@@ -162,7 +162,7 @@ const ROLES = [
       "Accountability and intellectual ownership of delegated work",
     ],
     teacherRole: "Designs checkpoints and accountability structures. Teaches students how to verify, question, and take ownership of work they didn't execute themselves.",
-    frictionScaleRelation: "Entirely new territory. The student may never touch the material directly. Learning is about oversight, judgment, and responsibility.",
+    frictionScaleRelation: "Entirely new territory. The student may never touch the material directly. Learning is about orchestration, judgment, and responsibility.",
   },
 ];
 
@@ -202,7 +202,7 @@ const WALKTHROUGH_DATA = {
       { phase: "Revision", student: "Reads the revised version. Adjusts tone in the introduction to be less dramatic. Approves the conclusion.", ai: "Revises based on student feedback. Produces a polished version.", learning: "Editorial judgment. Aligning output with personal voice and standards." },
       { phase: "Final Product", student: "Submits work they directed but didn't write. Can explain the argument and source choices, but didn't practice the act of writing.", ai: "Produced the artifact.", learning: "Strong analytical skills. Weak execution skills. The student is a capable critic but hasn't built writing fluency." },
     ],
-    steward: [
+    conductor: [
       { phase: "Problem Definition", student: "Gives a broad prompt: 'Write a strong analytical essay on the causes of WWI for a 10th grade history class. Find good primary sources. Make it argumentative, not descriptive.'", ai: "Autonomously decides to focus on the alliance system, militarism, and nationalism. Chooses its own thesis angle.", learning: "Minimal at this stage. The student hasn't engaged with the content yet." },
       { phase: "Research", student: "Receives a notification that the agent has found 6 sources and selected 3. Reviews the selections. Flags that one source is from a biased nationalist perspective and asks the agent to address that bias or replace it.", ai: "Independently searches, reads, and selects sources. Presents a summary and rationale for each choice.", learning: "Bias detection. Critical evaluation of curated information. This is a real skill, but different from finding sources yourself." },
       { phase: "Drafting", student: "Checks in on progress. Reads the draft at a high level. Notices the essay is too descriptive and not argumentative enough. Redirects the agent.", ai: "Drafts the full essay autonomously. Makes structural and stylistic choices without guidance.", learning: "Pattern recognition: knowing what 'argumentative' looks like vs. 'descriptive.' Meta-level quality assessment." },
@@ -225,7 +225,7 @@ const WALKTHROUGH_DATA = {
       { phase: "Revision", student: "Approves the scientific content. Asks for the conclusion to be more specific about sources of error.", ai: "Revises to add error analysis.", learning: "Understanding what makes a strong conclusion. Meta-knowledge of scientific writing standards." },
       { phase: "Final Product", student: "Submits a polished report. Understands the science but didn't practice the writing or graphing.", ai: "Produced most of the document.", learning: "Strong conceptual understanding. Weak lab writing skills and data visualization practice." },
     ],
-    steward: [
+    conductor: [
       { phase: "Problem Definition", student: "Uploads raw data and says: 'Write a complete lab report for this titration experiment. Make it thorough.'", ai: "Autonomously infers the hypothesis, identifies the experiment type, and begins structuring the report.", learning: "Very little. The student hasn't engaged with the data or the science." },
       { phase: "Research", student: "Receives the draft. Skims it.", ai: "Independently analyzes the data, creates visualizations, calculates results, and writes the theoretical background.", learning: "Minimal unless the student actively reads and questions the content." },
       { phase: "Drafting", student: "Notices a graph doesn't match what they remember from the experiment. Flags it.", ai: "Produced everything autonomously.", learning: "Visual pattern matching. Noticing when something 'feels wrong,' a real but limited skill." },
@@ -739,7 +739,7 @@ function WalkThrough({ t, isMobile }) {
     },
       React.createElement(PhaseCard, { roleId: "executor", phaseData: data.executor[activePhase], color: t.executor }),
       React.createElement(PhaseCard, { roleId: "director", phaseData: data.director[activePhase], color: t.director }),
-      React.createElement(PhaseCard, { roleId: "steward", phaseData: data.steward[activePhase], color: t.steward }),
+      React.createElement(PhaseCard, { roleId: "conductor", phaseData: data.conductor[activePhase], color: t.conductor }),
     ),
   );
 }
@@ -774,7 +774,7 @@ function Attribution({ t, isMobile }) {
         "The Agency Spectrum is a companion framework that extends this thinking into the agentic era."
       ),
       React.createElement("p", { style: { marginBottom: 0 } },
-        "The three-role model (Executor, Director, Steward) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape."
+        "The three-role model (Executor, Director, Conductor) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape."
       ),
     ),
 
