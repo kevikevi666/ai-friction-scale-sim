@@ -1028,9 +1028,38 @@ function App() {
     React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
     React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
 
-    React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t }),
+    // ═══ AGENCY STANDALONE PAGE ═══
+    activeTab === "agency" && React.createElement("div", {
+      style: { position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "24px 16px" : "48px 32px" }
+    },
+      // Top bar: back link + theme toggle
+      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }},
+        React.createElement("button", {
+          onClick: () => setActiveTab("scale"),
+          style: {
+            fontSize: 11, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em",
+            color: t.textLow, background: "none", border: "none", cursor: "pointer",
+            transition: "color 0.3s", padding: 0,
+          },
+          onMouseEnter: (e) => e.target.style.color = t.accent,
+          onMouseLeave: (e) => e.target.style.color = t.textLow,
+        }, "\u2190 The AI Friction Scale"),
+        React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
+      ),
+      React.createElement(AgencyTab, { t, isMobile }),
+      // Agency footer
+      React.createElement("footer", { style: { textAlign: "center", marginTop: isMobile ? 28 : 48, paddingBottom: 24 }},
+        React.createElement("div", { style: { fontSize: 9, color: t.textGhost, fontFamily: mono, letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1.8 }},
+          "The Agency Spectrum (2026)", React.createElement("br"),
+          "A companion to Jane Beckwith's AI Friction Scale", React.createElement("br"),
+          "By ", React.createElement("a", { href: "mailto:kevinfarrant@gmail.com", style: { color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" }}, "Kevin Farrant")),
+      ),
+    ),
 
-    React.createElement("div", { style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
+    // ═══ FRICTION SCALE PAGES ═══
+    activeTab !== "agency" && React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t }),
+
+    activeTab !== "agency" && React.createElement("div", { style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
 
       // Theme toggle row
       React.createElement("div", { style: { display:"flex", justifyContent:"flex-end", marginBottom: 8 } },
@@ -1285,9 +1314,6 @@ function App() {
           ),
         ),
       ),
-
-      // ═══ AGENCY TAB ═══
-      activeTab === "agency" && React.createElement(AgencyTab, { t, isMobile }),
 
       React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
 
