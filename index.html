@@ -498,7 +498,7 @@ function SimulationTimeline({ level, isRunning, onComplete, isMobile, t }) {
 }
 
 /* ───────── Hamburger Menu ───────── */
-function HamburgerMenu({ open, onToggle, darkMode, levelColor, t }) {
+function HamburgerMenu({ open, onToggle, darkMode, levelColor, t, onNavigate, activeTab }) {
   const barColor = darkMode ? "rgba(253,255,243,0.9)" : "rgba(26,26,46,0.75)";
   const drawerBg = darkMode ? "rgba(10,10,15,0.98)" : "rgba(245,245,240,0.98)";
 
@@ -561,20 +561,37 @@ function HamburgerMenu({ open, onToggle, darkMode, levelColor, t }) {
       React.createElement("div", { style:{ flex:1, padding:"0 12px", overflowY:"auto" }},
         React.createElement("div", { style:{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono, padding:"0 12px 10px" }}, "Tools"),
 
-        // Friction Scale — current page
-        React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10,
-          background: darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-          borderLeft:`3px solid ${levelColor}`, marginBottom:4 }},
-          React.createElement("span", { style:{ fontSize:20 }}, "⚖️"),
+        // Friction Scale
+        React.createElement("button", { onClick: () => { onNavigate("scale"); onToggle(); }, style:{
+          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
+          background: activeTab !== "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
+          borderLeft: activeTab !== "agency" ? `3px solid ${levelColor}` : "3px solid transparent",
+          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
+        }},
+          React.createElement("span", { style:{ fontSize:20 }}, "\u2696\uFE0F"),
           React.createElement("div", null,
-            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color:t.text, fontFamily:"'Space Mono', monospace" }}, "AI Friction Scale"),
-            React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
+            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab !== "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "AI Friction Scale"),
+            activeTab !== "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
+          ),
+        ),
+
+        // Agency Spectrum
+        React.createElement("button", { onClick: () => { onNavigate("agency"); onToggle(); }, style:{
+          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
+          background: activeTab === "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
+          borderLeft: activeTab === "agency" ? `3px solid ${t.accent}` : "3px solid transparent",
+          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
+        }},
+          React.createElement("span", { style:{ fontSize:20 }}, "\uD83C\uDFAF"),
+          React.createElement("div", null,
+            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab === "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "The Agency Spectrum"),
+            activeTab === "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
           ),
         ),
 
         // Coming soon
         React.createElement("div", { style:{ padding:"16px 14px 8px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono }}, "Coming Soon"),
-        ...[["📖","English"],["📐","Mathematics"],["🔬","Science"],["📜","History"]].map(([icon, label]) =>
+        ...[["\uD83D\uDCD6","English"],["\uD83D\uDCD0","Mathematics"],["\uD83D\uDD2C","Science"],["\uD83D\uDCDC","History"]].map(([icon, label]) =>
           React.createElement("div", { key:label, style:{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:10, opacity:0.35 }},
             React.createElement("span", { style:{ fontSize:18 }}, icon),
             React.createElement("div", { style:{ fontSize:13, color:t.textMid, fontFamily:"'Space Mono', monospace" }}, label),
@@ -1028,22 +1045,15 @@ function App() {
     React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
     React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
 
+    // Hamburger menu (always visible)
+    React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t, onNavigate: (tab) => setActiveTab(tab), activeTab }),
+
     // ═══ AGENCY STANDALONE PAGE ═══
     activeTab === "agency" && React.createElement("div", {
       style: { position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "24px 16px" : "48px 32px" }
     },
-      // Top bar: back link + theme toggle
-      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }},
-        React.createElement("button", {
-          onClick: () => setActiveTab("scale"),
-          style: {
-            fontSize: 11, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em",
-            color: t.textLow, background: "none", border: "none", cursor: "pointer",
-            transition: "color 0.3s", padding: 0,
-          },
-          onMouseEnter: (e) => e.target.style.color = t.accent,
-          onMouseLeave: (e) => e.target.style.color = t.textLow,
-        }, "\u2190 The AI Friction Scale"),
+      // Theme toggle top-right
+      React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 8 }},
         React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
       ),
       React.createElement(AgencyTab, { t, isMobile }),
@@ -1057,8 +1067,6 @@ function App() {
     ),
 
     // ═══ FRICTION SCALE PAGES ═══
-    activeTab !== "agency" && React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t }),
-
     activeTab !== "agency" && React.createElement("div", { style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
 
       // Theme toggle row
@@ -1076,11 +1084,11 @@ function App() {
 
       // Tabs
       React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:4, marginBottom:isMobile?18:32 } },
-        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"},{id:"agency",label:"Agency"}].map(tab =>
+        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"}].map(tab =>
           React.createElement("button", { key:tab.id, onClick:() => setActiveTab(tab.id), style: {
             padding:isMobile?"8px 14px":"10px 24px", border:"none", borderRadius:100,
-            background:activeTab===tab.id?(tab.id==="agency"?t.accent:level.color)+"15":"transparent",
-            color:activeTab===tab.id?(tab.id==="agency"?t.accent:level.color):t.textLow,
+            background:activeTab===tab.id?level.color+"15":"transparent",
+            color:activeTab===tab.id?level.color:t.textLow,
             fontSize:isMobile?11:12, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.08em",
             cursor:"pointer", transition:"all 0.3s", fontWeight:activeTab===tab.id?700:400,
           } }, tab.label)
