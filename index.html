@@ -1171,7 +1171,7 @@ function App() {
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState(() =>
-    typeof window !== "undefined" && window.location.hash === "#agency" ? "agency" : "scale"
+    typeof window !== "undefined" && window.location.pathname.startsWith("/agency") ? "agency" : "scale"
   );
   const [hoveredLevel, setHoveredLevel] = useState(null);
   const [compareSelection, setCompareSelection] = useState([]);
