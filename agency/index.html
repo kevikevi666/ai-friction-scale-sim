@@ -541,19 +541,26 @@ function AgencySpectrum({ t, isMobile }) {
 function WalkThrough({ t, isMobile }) {
   const [scenarioId, setScenarioId] = useState("history-essay");
   const [activePhase, setActivePhase] = useState(0);
+  const [hoveredCard, setHoveredCard] = useState(null);
   const scenario = SCENARIOS.find(s => s.id === scenarioId);
   const data = WALKTHROUGH_DATA[scenarioId];
 
   const PhaseCard = ({ roleId, phaseData, color }) => {
     const roleName = ROLES.find(r => r.id === roleId).name;
     const roleIcon = ROLES.find(r => r.id === roleId).icon;
+    const isHovered = hoveredCard === roleId;
     return React.createElement("div", {
+      onMouseEnter: () => setHoveredCard(roleId),
+      onMouseLeave: () => setHoveredCard(null),
       style: {
         background: t.cardBg, border: t.cardBorder, borderRadius: 12,
-        padding: isMobile ? 14 : 20, boxShadow: t.cardShadow,
+        padding: isMobile ? 14 : 20,
+        boxShadow: isHovered ? "0 12px 40px rgba(0,0,0,0.22)" : t.cardShadow,
         borderTop: `2px solid ${color}`,
         animation: "fadeIn 0.4s ease",
         flex: 1, minWidth: 0,
+        transform: isHovered ? "translateY(-5px) scale(1.02)" : "translateY(0) scale(1)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
       }
     },
       React.createElement("div", {

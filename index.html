@@ -788,8 +788,8 @@ function AgencyWhatChanged({ t, isMobile }) {
   };
 
   return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
-    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What Changed"),
-    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What Changed"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
       "Most teachers think of AI as a conversation. You ask, it answers. But a new kind of AI doesn't wait for each instruction. It plans, researches, builds, and delivers, on its own."),
     React.createElement("button", { onClick: startAnimation, disabled: isPlaying, style: {
       fontFamily: mono, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em",
@@ -833,10 +833,10 @@ function AgencySpectrumView({ t, isMobile }) {
   }, label);
 
   return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
-    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "The Spectrum"),
-    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 8, maxWidth: 680 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "The Spectrum"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 8, maxWidth: 680 }},
       "When AI can do the work, the student's role changes. But it doesn't change in one way. There are three distinct modes, each with different learning implications."),
-    React.createElement("p", { style: { fontSize: isMobile ? 14 : 15, color: t.textMid, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+    React.createElement("p", { style: { fontSize: isMobile ? 14 : 16, color: t.textMid, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
       "The question for educators is not \"should students use agentic AI?\" It's \"which mode serves this learning goal?\""),
 
     // Role selector pills
@@ -921,18 +921,18 @@ function AgencyWalkThrough({ t, isMobile }) {
       React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color, marginBottom: 12, fontWeight: 700 }}, `${r.icon} ${r.name}`),
       React.createElement("div", { style: { marginBottom: 10 }},
         React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Student"),
-        React.createElement("p", { style: { fontSize: isMobile ? 13 : 14, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, phaseData.student)),
+        React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, phaseData.student)),
       React.createElement("div", { style: { marginBottom: 10 }},
         React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "AI"),
-        React.createElement("p", { style: { fontSize: isMobile ? 11 : 12, lineHeight: 1.6, color: t.textMid, margin: 0, fontFamily: mono }}, phaseData.ai)),
+        React.createElement("p", { style: { fontSize: isMobile ? 13 : 14, lineHeight: 1.6, color: t.textMid, margin: 0, fontFamily: mono }}, phaseData.ai)),
       React.createElement("div", { style: { padding: "8px 10px", borderRadius: 6, background: color + "08", border: `1px solid ${color}15` }},
         React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color, marginBottom: 3 }}, "Learning"),
         React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.5, color: t.textHigh, margin: 0 }}, phaseData.learning)));
   };
 
   return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
-    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 30, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "Walk Through a Task"),
-    React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "Walk Through a Task"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
       "See the same assignment play out across all three modes. At each phase, notice what the student is actually doing, and what they're learning."),
     React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }},
       AGENCY_SCENARIOS.map(s => React.createElement("button", { key: s.id, onClick: () => { setScenarioId(s.id); setActivePhase(0); }, style: {
@@ -964,8 +964,8 @@ function AgencyWalkThrough({ t, isMobile }) {
 /* ───────── Agency: Attribution ───────── */
 function AgencyAttribution({ t, isMobile }) {
   return React.createElement("div", { style: { marginBottom: isMobile ? 20 : 32 }},
-    React.createElement("h3", { style: { fontSize: isMobile ? 20 : 26, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "A Companion Framework"),
-    React.createElement("div", { style: { maxWidth: 680, fontSize: isMobile ? 14 : 16, color: t.textHigh, lineHeight: 1.8, marginBottom: 20 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 28, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "A Companion Framework"),
+    React.createElement("div", { style: { maxWidth: 680, fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.8, marginBottom: 20 }},
       React.createElement("p", { style: { marginBottom: 14 }},
         "The AI Friction Scale, developed by Jane Beckwith (2025) and building on the AI Assessment Scale by Perkins, Furze, Roe, and MacVaugh, provides a powerful framework for understanding levels of AI involvement in student work. It was designed for conversational AI, the ask-and-answer model that most educators know."),
       React.createElement("p", { style: { marginBottom: 14 }},
@@ -976,7 +976,7 @@ function AgencyAttribution({ t, isMobile }) {
         "The three-role model (Author, Designer, Conductor) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape.")),
     React.createElement("div", { style: { padding: "14px 18px", borderRadius: 8, background: t.cardBg, border: t.cardBorder }},
       React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 8 }}, "References"),
-      React.createElement("div", { style: { fontSize: isMobile ? 12 : 13, color: t.textMid, lineHeight: 1.8 }},
+      React.createElement("div", { style: { fontSize: isMobile ? 13 : 14, color: t.textMid, lineHeight: 1.8 }},
         React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Beckwith, J. (2025). The AI Friction Scale."),
         React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Perkins, M., Furze, L., Roe, J., & MacVaugh, J. The AI Assessment Scale."),
         React.createElement("p", { style: { margin: 0 }}, "Farrant, K. (2026). The Agency Spectrum: A framework for teaching in the agentic era."))),
@@ -988,9 +988,9 @@ function AgencyTab({ t, isMobile }) {
   return React.createElement("div", { style: { animation: "fadeIn 0.4s ease" }},
     React.createElement("div", { style: { marginBottom: isMobile ? 24 : 36 }},
       React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textFaint, marginBottom: 6 }}, "A Companion Framework"),
-      React.createElement("h2", { style: { fontSize: isMobile ? 24 : 38, fontWeight: 300, lineHeight: 1.1, marginBottom: 10 }},
+      React.createElement("h2", { style: { fontSize: isMobile ? 32 : 52, fontWeight: 300, lineHeight: 1.1, marginBottom: 10 }},
         "The ", React.createElement("span", { style: { fontWeight: 700, fontStyle: "italic", color: t.accent }}, "Agency"), " Spectrum"),
-      React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, fontWeight: 300, color: t.textHigh, lineHeight: 1.6, maxWidth: 640 }},
+      React.createElement("p", { style: { fontSize: isMobile ? 18 : 22, fontWeight: 300, color: t.textHigh, lineHeight: 1.6, maxWidth: 640 }},
         "When AI can do the work, what should students learn? A framework for teaching in the agentic era.")),
     React.createElement(AgencyWhatChanged, { t, isMobile }),
     React.createElement(AgencySpectrumView, { t, isMobile }),
