@@ -381,9 +381,8 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
           onMouseLeave: () => !isMobile && setHoveredTick(null),
           style: {
             position: "absolute", left: levelTrackPct(i) + "%",
-            top: "50%", transform: `translateX(-50%) scale(${isHov && !isNearest ? 1.35 : 1})`,
+            top: "50%", transform: "translateX(-50%)",
             cursor: "pointer", zIndex: lifted ? 2 : 1,
-            transition: "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
           }
         },
           // Vertical tick line
@@ -392,7 +391,7 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
             borderRadius: 2, background: lifted ? l.color : t.textFaint,
             opacity: lifted ? 1 : 0.5,
             transition: "all 0.2s",
-            position: "absolute", top: "50%", transform: "translateY(-50%)",
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
           } }),
           // Colored dot below tick
           React.createElement("div", { style: {
@@ -400,14 +399,8 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
             borderRadius: "50%", background: l.color,
             opacity: lifted ? 0.9 : 0.5,
             transition: "all 0.2s",
-            position: "absolute", top: lifted ? 20 : 17, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
           } }),
-          // Level name tooltip on hover
-          isHov && !isNearest && React.createElement("div", { style: {
-            position: "absolute", bottom: isMobile ? 20 : 22, left: "50%", transform: "translateX(-50%)",
-            fontSize: 9, fontFamily: mono, fontWeight: 600, color: l.color,
-            whiteSpace: "nowrap", letterSpacing: "0.05em",
-          } }, l.name),
         );
       }),
       // Draggable thumb
@@ -428,6 +421,8 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
     React.createElement("div", { style: { position: "relative", height: isMobile ? 28 : 32, margin: "4px " + halfThumb + "px 0" } },
       levels.map((l, i) => {
         const isNearest = interp.nearestIndex === i;
+        const isLabelHov = hoveredTick === i && !dragging;
+        const highlighted = isNearest || isLabelHov;
         return React.createElement("div", { key: l.id + "-label", style: {
           position: "absolute",
           left: levelTrackPct(i) + "%",
@@ -435,9 +430,10 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
           textAlign: "center",
         } },
           React.createElement("div", { style: {
-            fontSize: isMobile ? 8 : 10, fontFamily: mono, fontWeight: isNearest ? 700 : 400,
-            color: isNearest ? l.color : t.textFaint, letterSpacing: "0.05em",
-            whiteSpace: "nowrap", transition: "color 0.3s",
+            fontSize: isMobile ? (highlighted ? 11 : 8) : (highlighted ? 13 : 10),
+            fontFamily: mono, fontWeight: highlighted ? 700 : 400,
+            color: highlighted ? l.color : t.textFaint, letterSpacing: "0.05em",
+            whiteSpace: "nowrap", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
           } }, l.name),
         );
       }),
@@ -570,7 +566,6 @@ function HamburgerMenu({ open, onToggle, darkMode, levelColor, t, onNavigate, ac
 
       // Drawer header
       React.createElement("div", { style:{ padding:"72px 24px 20px" }},
-        React.createElement("div", { style:{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.2em", color:t.textFaint, fontFamily:mono, marginBottom:6 }}, "AI Friction Scale"),
         React.createElement("div", { style:{ fontSize:20, fontWeight:300, color:t.text }},
           "Teacher ", React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:levelColor }}, "Toolkit")
         ),
