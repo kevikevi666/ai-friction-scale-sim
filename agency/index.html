@@ -678,6 +678,221 @@ function WalkThrough({ t, isMobile }) {
   );
 }
 
+/* ───────── Section 4: Terminal Simulation ───────── */
+const TERMINAL_LINES = [
+  { type: "prompt",     text: '$ agent run --task "write-history-essay" --grade 10',                              delay: 0 },
+  { type: "blank",                                                                                                 delay: 400 },
+  { type: "agent",      text: "[AGENT] Analyzing task...",                                                         delay: 700 },
+  { type: "agent",      text: "[AGENT] Planning execution:",                                                       delay: 1300 },
+  { type: "step",       text: "  1  Define research scope and thesis angle",                                       delay: 1700 },
+  { type: "step",       text: "  2  Search primary sources (1910\u20131914 only)",                                  delay: 2000 },
+  { type: "step",       text: "  3  Evaluate and select 3 sources",                                               delay: 2300 },
+  { type: "step",       text: "  4  Draft argumentative essay",                                                    delay: 2600 },
+  { type: "step",       text: "  5  Self-review and refine",                                                       delay: 2900 },
+  { type: "blank",                                                                                                 delay: 3300 },
+  { type: "agent",      text: "[AGENT] Searching databases...",                                                    delay: 3500 },
+  { type: "found",      text: '  \u2192  "The Outbreak of War, 1914"  (Grey, E., 1914)',                           delay: 4200 },
+  { type: "found",      text: "  \u2192  Austria-Hungary's ultimatum to Serbia  (July 1914)",                      delay: 4900 },
+  { type: "found",      text: '  \u2192  "European Alliance Networks"  (Fischer, F., 1912)',                       delay: 5600 },
+  { type: "success",    text: "  \u2713  3 primary sources selected",                                              delay: 6100 },
+  { type: "blank",                                                                                                 delay: 6500 },
+  { type: "agent",      text: "[AGENT] Drafting essay...",                                                         delay: 6700 },
+  { type: "info",       text: '  thesis  "The interlocking alliance system transformed a regional crisis into a continental war."', delay: 7300 },
+  { type: "progress",   label: "  introduction    ",                                                               delay: 7900 },
+  { type: "progress",   label: "  body paragraphs ",                                                               delay: 9000 },
+  { type: "progress",   label: "  conclusion      ",                                                               delay: 10100 },
+  { type: "blank",                                                                                                 delay: 11000 },
+  { type: "agent",      text: "[AGENT] Self-reviewing...",                                                         delay: 11200 },
+  { type: "success",    text: "  \u2713  Argumentative structure confirmed",                                       delay: 11800 },
+  { type: "success",    text: "  \u2713  3 primary sources cited",                                                 delay: 12300 },
+  { type: "success",    text: "  \u2713  ~620 words, 5 paragraphs",                                               delay: 12800 },
+  { type: "blank",                                                                                                 delay: 13300 },
+  { type: "checkIn",    text: "[AGENT] \u26a1 check-in \u2014 student input needed",                               delay: 13600 },
+  { type: "checkInMsg", text: "  Draft complete. Thesis focuses on alliance systems.",                              delay: 14300 },
+  { type: "checkInMsg", text: "  Add nationalism as a secondary cause, or keep it tight?",                         delay: 15000 },
+  { type: "blank",                                                                                                 delay: 15700 },
+  { type: "prompt",     text: "$ Keep it tight. Alliance systems only.",                                           delay: 16400 },
+  { type: "blank",                                                                                                 delay: 17000 },
+  { type: "success",    text: "[AGENT] \u2713 Final draft delivered.",                                             delay: 17300 },
+  { type: "cursor",                                                                                                delay: 17800 },
+];
+
+function TerminalSim({ t, isMobile }) {
+  const [phase, setPhase] = useState("idle");
+  const [visibleLines, setVisibleLines] = useState([]);
+  const [progressFilled, setProgressFilled] = useState({});
+  const [cursorOn, setCursorOn] = useState(true);
+  const timersRef = useRef([]);
+  const containerRef = useRef(null);
+
+  const isDark = t.bg === "#0a0a0f";
+  const term = {
+    bg:        isDark ? "#0d1117"                : "#f6f8fa",
+    titleBg:   isDark ? "#161b22"                : "#eaeef2",
+    titleText: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)",
+    border:    isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)",
+    prompt:    isDark ? "#e6edf3"                : "#24292f",
+    agent:     isDark ? "#2A9D8F"                : "#00796B",
+    step:      isDark ? "#79c0ff"                : "#0550ae",
+    found:     isDark ? "#79c0ff"                : "#0550ae",
+    success:   isDark ? "#3fb950"                : "#1a7f37",
+    checkIn:   isDark ? "#f4a261"                : "#953800",
+    info:      isDark ? "rgba(230,237,243,0.45)" : "rgba(36,41,47,0.5)",
+    dim:       isDark ? "rgba(230,237,243,0.3)"  : "rgba(36,41,47,0.35)",
+    barBg:     isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
+    barFill:   isDark ? "#2A9D8F"                : "#00796B",
+  };
+
+  useEffect(() => {
+    const iv = setInterval(() => setCursorOn(c => !c), 530);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    }
+  }, [visibleLines]);
+
+  const clearTimers = () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; };
+
+  const start = useCallback(() => {
+    clearTimers();
+    setVisibleLines([]);
+    setProgressFilled({});
+    setPhase("playing");
+    TERMINAL_LINES.forEach((line, idx) => {
+      const t1 = setTimeout(() => {
+        setVisibleLines(prev => [...prev, { ...line, idx }]);
+      }, line.delay);
+      timersRef.current.push(t1);
+      if (line.type === "progress") {
+        const t2 = setTimeout(() => {
+          setProgressFilled(prev => ({ ...prev, [idx]: true }));
+        }, line.delay + 900);
+        timersRef.current.push(t2);
+      }
+    });
+    const t3 = setTimeout(() => setPhase("done"), TERMINAL_LINES[TERMINAL_LINES.length - 1].delay + 400);
+    timersRef.current.push(t3);
+  }, []);
+
+  useEffect(() => () => clearTimers(), []);
+
+  const isPlaying = phase === "playing";
+  const hasPlayed = phase !== "idle";
+
+  const Cursor = () => React.createElement("span", {
+    style: { opacity: cursorOn ? 1 : 0, transition: "opacity 0.1s", color: term.prompt }
+  }, "\u2588");
+
+  const renderLine = (line, i) => {
+    const key = `${line.idx}-${i}`;
+    if (line.type === "blank") return React.createElement("div", { key, style: { height: 8 } });
+
+    if (line.type === "cursor") return React.createElement("div", { key, style: {
+      fontFamily: mono, fontSize: isMobile ? 12 : 14, color: term.prompt,
+    }}, "$ ", React.createElement(Cursor));
+
+    if (line.type === "progress") {
+      const filled = progressFilled[line.idx];
+      return React.createElement("div", { key, style: {
+        display: "flex", alignItems: "center", gap: 10, marginBottom: 3,
+        fontFamily: mono, fontSize: isMobile ? 11 : 13,
+      }},
+        React.createElement("span", { style: { color: term.dim, minWidth: isMobile ? 128 : 158 }}, line.label),
+        React.createElement("div", { style: {
+          height: 5, width: isMobile ? 88 : 128, borderRadius: 3,
+          background: term.barBg, overflow: "hidden", flexShrink: 0,
+        }},
+          React.createElement("div", { style: {
+            height: "100%", width: filled ? "100%" : "0%",
+            background: term.barFill, borderRadius: 3, transition: "width 0.85s ease",
+          }})
+        ),
+        React.createElement("span", { style: {
+          fontSize: 11, color: term.success, fontFamily: mono,
+          opacity: filled ? 1 : 0, transition: "opacity 0.4s 0.5s",
+        }}, "done"),
+      );
+    }
+
+    const colorMap = {
+      prompt:     term.prompt,
+      agent:      term.agent,
+      step:       term.step,
+      found:      term.found,
+      success:    term.success,
+      info:       term.info,
+      checkIn:    term.checkIn,
+      checkInMsg: term.checkIn,
+    };
+
+    return React.createElement("div", { key, style: {
+      fontFamily: mono, fontSize: isMobile ? 12 : 13, lineHeight: 1.75,
+      color: colorMap[line.type] || term.prompt,
+      animation: "typeStep 0.15s ease",
+    }}, line.text);
+  };
+
+  return React.createElement("section", { style: { marginBottom: isMobile ? 48 : 72 }},
+    React.createElement("h2", { style: {
+      fontSize: isMobile ? 11 : 12, fontFamily: mono, textTransform: "uppercase",
+      letterSpacing: "0.15em", color: t.textLow, marginBottom: 12,
+    }}, "Section 04"),
+    React.createElement("h3", { style: {
+      fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2,
+    }}, "See It Run"),
+    React.createElement("p", { style: {
+      fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 28, maxWidth: 680,
+    }}, "This is what an AI agent looks like when it takes an assignment and runs. Watch the full workflow. Then ask: where is the student in this picture?"),
+
+    React.createElement("button", {
+      onClick: start, disabled: isPlaying,
+      style: {
+        fontFamily: mono, fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+        letterSpacing: "0.12em", padding: "12px 28px", borderRadius: 8, marginBottom: 24,
+        background: isPlaying ? t.textFaint : t.accent,
+        border: `1px solid ${isPlaying ? t.textGhost : t.accent}`,
+        color: isPlaying ? t.textLow : (isDark ? "#0a0a0f" : "#fff"),
+        cursor: isPlaying ? "default" : "pointer",
+        transition: "all 0.3s", boxShadow: isPlaying ? "none" : `0 2px 12px ${t.accent}40`,
+      }
+    }, isPlaying ? "Running..." : hasPlayed ? "\u21BB Run Again" : "\u25B6 Run the Agent"),
+
+    React.createElement("div", { style: {
+      borderRadius: 12, overflow: "hidden",
+      boxShadow: isDark ? "0 12px 48px rgba(0,0,0,0.65)" : "0 8px 40px rgba(0,0,0,0.12)",
+      border: `1px solid ${term.border}`,
+    }},
+      React.createElement("div", { style: {
+        background: term.titleBg, padding: "10px 16px",
+        display: "flex", alignItems: "center", gap: 7,
+      }},
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ff5f57", flexShrink: 0 }}),
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e", flexShrink: 0 }}),
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#28c840", flexShrink: 0 }}),
+        React.createElement("div", { style: {
+          flex: 1, textAlign: "center", fontSize: 12, fontFamily: mono, color: term.titleText,
+        }}, "agent \u2014 10th-grade-history"),
+      ),
+      React.createElement("div", {
+        ref: containerRef,
+        style: {
+          background: term.bg, padding: isMobile ? "16px 18px" : "24px 28px",
+          minHeight: 280, maxHeight: 460, overflowY: "auto",
+        }
+      },
+        phase === "idle"
+          ? React.createElement("div", { style: {
+              fontFamily: mono, fontSize: isMobile ? 12 : 14, color: term.prompt,
+            }}, "$ ", React.createElement(Cursor))
+          : visibleLines.map((line, i) => renderLine(line, i)),
+      ),
+    ),
+  );
+}
+
 /* ───────── Section 5: Attribution ───────── */
 function Attribution({ t, isMobile }) {
   return React.createElement("section", {
@@ -808,6 +1023,7 @@ function App() {
     React.createElement(WhatChanged, { t, isMobile }),
     React.createElement(AgencySpectrum, { t, isMobile }),
     React.createElement(WalkThrough, { t, isMobile }),
+    React.createElement(TerminalSim, { t, isMobile }),
     React.createElement(Attribution, { t, isMobile }),
 
     // Footer
