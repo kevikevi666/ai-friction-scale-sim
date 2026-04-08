@@ -434,6 +434,7 @@ function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }
             fontFamily: mono, fontWeight: highlighted ? 700 : 400,
             color: highlighted ? l.color : t.textFaint, letterSpacing: "0.05em",
             whiteSpace: "nowrap", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            opacity: isMobile ? (highlighted ? 1 : 0) : 1,
           } }, l.name),
         );
       }),
@@ -1184,6 +1185,34 @@ function App() {
     });
   };
 
+  const SWIPE_TABS = ["scale", "simulate", "compare"];
+  const touchStartXRef = useRef(null);
+  const lastWheelRef = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(dx) < 50) return;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (dx < 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (dx > 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
+  const handleWheel = (e) => {
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 30) return;
+    const now = Date.now();
+    if (now - lastWheelRef.current < 600) return;
+    lastWheelRef.current = now;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (e.deltaX > 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (e.deltaX < 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
+
   const t = useTheme(darkMode);
 
   // Build levels with theme colors
@@ -1244,7 +1273,7 @@ function App() {
     ),
 
     // ═══ FRICTION SCALE PAGES ═══
-    activeTab !== "agency" && React.createElement("div", { style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
+    activeTab !== "agency" && React.createElement("div", { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onWheel: handleWheel, style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
 
       // Theme toggle row
       React.createElement("div", { style: { display:"flex", justifyContent:"flex-end", marginBottom: 8 } },
