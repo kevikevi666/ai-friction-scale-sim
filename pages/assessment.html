@@ -253,6 +253,18 @@ function HamburgerMenu({ open, onToggle, dark, t }) {
             </div>
           </a>
 
+          <a href="/agency"
+            style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10,
+              borderLeft:"3px solid transparent", textDecoration:"none", marginBottom:4, transition:"background 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <span style={{ fontSize:20 }}>🤖</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:t.textMid, fontFamily:spc }}>The Agency Spectrum</div>
+              <div style={{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}>Three roles in AI work</div>
+            </div>
+          </a>
+
           <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, marginBottom:4,
             background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
             borderLeft:`3px solid ${ACCENT}` }}>
