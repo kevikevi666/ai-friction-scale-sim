@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Friction Scale — Interactive Simulation</title>
+<meta name="description" content="An interactive simulation of Jane Beckwith's AI Friction Scale, exploring productive struggle in education." />
+<meta property="og:title" content="The AI Friction Scale — Rethinking AI in Education" />
+<meta property="og:description" content="An interactive simulation exploring productive struggle and AI use in education. Based on Jane Beckwith's AI Friction Scale." />
+<meta property="og:image" content="https://aifrictionscale.com/og-image.png" />
+<meta property="og:url" content="https://aifrictionscale.com" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The AI Friction Scale — Rethinking AI in Education" />
+<meta name="twitter:description" content="An interactive simulation exploring productive struggle and AI use in education." />
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LX3B2ZK6NS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LX3B2ZK6NS');
+</script>
+<meta name="twitter:image" content="https://aifrictionscale.com/og-image.png" />
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="48x48" />
+<link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.5s, color 0.5s; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ───────── responsive hook ───────── */
+function useIsMobile(bp = 768) {
+  const query = `(max-width: ${bp - 1}px)`;
+  const [m, setM] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const h = (e) => setM(e.matches);
+    mql.addEventListener("change", h);
+    return () => mql.removeEventListener("change", h);
+  }, [query]);
+  return m;
+}
+
+/* ───────── theme helper ───────── */
+function useTheme(dark) {
+  const LIGHT_LEVELS = [
+    { color:"#C62828", glow:"rgba(198,40,40,0.3)" },
+    { color:"#D84315", glow:"rgba(216,67,21,0.3)" },
+    { color:"#E65100", glow:"rgba(230,81,0,0.3)" },
+    { color:"#00796B", glow:"rgba(0,121,107,0.3)" },
+    { color:"#37474F", glow:"rgba(55,71,79,0.3)" },
+  ];
+  const DARK_LEVELS = [
+    { color:"#E63946", glow:"rgba(230,57,70,0.4)" },
+    { color:"#E76F51", glow:"rgba(231,111,81,0.4)" },
+    { color:"#F4A261", glow:"rgba(244,162,97,0.4)" },
+    { color:"#2A9D8F", glow:"rgba(42,157,143,0.4)" },
+    { color:"#264653", glow:"rgba(38,70,83,0.4)" },
+  ];
+  const levelColors = dark ? DARK_LEVELS : LIGHT_LEVELS;
+  // Productive friction should read from low (greenish) to high (red).
+  const gaugeGradient = dark
+    ? ["#2A9D8F","#2A9D8F","#F4A261","#E76F51","#E63946"]
+    : ["#00796B","#00796B","#E65100","#D84315","#C62828"];
+  const badgeColors = dark
+    ? { optimal:"#2A9D8F", caution:"#F4A261", reconsider:"#E63946" }
+    : { optimal:"#00796B", caution:"#E65100", reconsider:"#C62828" };
+  return {
+    bg: dark ? "#0a0a0f" : "#f5f5f0",
+    text: dark ? "#fff" : "#1a1a2e",
+    textHigh: dark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.6)",
+    textMid: dark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)",
+    textLow: dark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+    textFaint: dark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
+    textGhost: dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
+    textSkip: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)",
+    cardBg: dark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.7)",
+    cardBorder: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    cardShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
+    barTrack: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+    btnBg: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+    btnBorder: dark ? "1px solid rgba(255,255,255,0.04)" : "1px solid rgba(0,0,0,0.06)",
+    btnBorderActive: "30",
+    btnTextInactive: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
+    scenarioBg: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+    scenarioBgOff: dark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.6)",
+    scenarioBorderOn: dark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)",
+    scenarioBorderOff: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    pillBorderOff: dark ? "2px solid rgba(255,255,255,0.06)" : "2px solid rgba(0,0,0,0.08)",
+    pillBgOff: dark ? "transparent" : "rgba(255,255,255,0.6)",
+    pillTextOff: dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+    disabledBg: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+    disabledText: dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
+    gaugeTrack: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+    noiseOpacity: dark ? 0.03 : 0.015,
+    scrollThumb: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
+    timelineConn: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    timelineConnSkip: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+    timelineCircle: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
+    timelineCircleSkip: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+    timelineCircleBorder: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)",
+    timelineCircleBorderSkip: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)",
+    analysisBg: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+    analysisBorder: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+    levelColors,
+    gaugeGradient,
+    badgeColors,
+    // Agency Spectrum role colors
+    accent: dark ? "#2A9D8F" : "#00796B",
+    warn: dark ? "#F4A261" : "#E65100",
+    hot: dark ? "#E63946" : "#C62828",
+    author: dark ? "#2A9D8F" : "#00796B",
+    designer: dark ? "#F4A261" : "#E65100",
+    conductor: dark ? "#E63946" : "#C62828",
+  };
+}
+
+/* ───────── data ───────── */
+const LEVELS_BASE = [
+  { id:1, name:"NO AI", subtitle:"Maximum Friction", friction:100,
+    description:"The learner works entirely without AI. All thinking, drafting, revising, and creating is done by the student. This is where the deepest productive struggle occurs.",
+    studentBehavior:"Writes from scratch, researches independently, confronts confusion head-on, develops original arguments through trial and error.",
+    learningOutcome:"Deep retention, strong metacognition, authentic skill-building, high ownership of work.",
+    cognitiveDemand:95, retention:92, authenticity:100, efficiency:15, icon:"🧠" },
+  { id:2, name:"AI FOR IDEATION", subtitle:"High Friction", friction:75,
+    description:"AI is used only for brainstorming and generating initial ideas. The student takes those sparks and does all the substantive work of developing, organizing, and writing.",
+    studentBehavior:"Uses AI to brainstorm topics or angles, then independently selects, develops, and crafts the work from those seeds.",
+    learningOutcome:"Strong creative foundation with maintained productive struggle in execution.",
+    cognitiveDemand:78, retention:82, authenticity:85, efficiency:35, icon:"💡" },
+  { id:3, name:"AI FOR STRUCTURE", subtitle:"Moderate Friction", friction:50,
+    description:"AI assists with planning, outlining, and organizing ideas. The student provides the substance, thinking, and voice, while AI helps scaffold the architecture.",
+    studentBehavior:"Generates outlines or structural suggestions with AI, then fills in all content, arguments, and analysis independently.",
+    learningOutcome:"Balanced learning: organizational skills partially offloaded, but critical thinking preserved.",
+    cognitiveDemand:58, retention:65, authenticity:65, efficiency:55, icon:"🏗️" },
+  { id:4, name:"AI FOR FEEDBACK", subtitle:"Low Friction", friction:25,
+    description:"AI provides feedback, editing suggestions, and refinement on student-generated work. The student creates first, then uses AI as a revision partner.",
+    studentBehavior:"Produces a complete draft independently, then uses AI for grammar, clarity, argumentation feedback, and iterative improvement.",
+    learningOutcome:"Good revision skills, but risk of over-reliance on external validation.",
+    cognitiveDemand:42, retention:55, authenticity:55, efficiency:72, icon:"✏️" },
+  { id:5, name:"FULL AI", subtitle:"Minimum Friction", friction:0,
+    description:"AI generates the majority of the work. The student's role shifts to prompting, curating, and evaluating AI output. Productive struggle is minimal.",
+    studentBehavior:"Prompts AI to generate content, reviews and selects output, makes minor edits. The cognitive heavy-lifting is done by the machine.",
+    learningOutcome:"Efficiency maximized, but deep learning, skill-building, and ownership are significantly reduced.",
+    cognitiveDemand:15, retention:22, authenticity:12, efficiency:95, icon:"🤖" },
+];
+
+/* ───────── transitional copy between levels ───────── */
+const TRANSITIONS = [
+  { from: 1, to: 2, description: "The learner is beginning to open the door to AI, but only a crack. Brainstorming seeds may come from AI, yet the real intellectual labor, developing ideas, drafting, and revising, remains firmly with the student. Productive struggle is still the dominant experience.",
+    studentBehavior: "May glance at AI-generated prompts or starter ideas, but quickly moves into independent work. Most cognitive effort is still self-directed.",
+    learningOutcome: "Nearly full retention and skill-building, with a slight efficiency gain from the initial ideation boost." },
+  { from: 2, to: 3, description: "AI involvement is expanding beyond brainstorming into light structural support. The student still drives the substance and voice, but AI is starting to help organize and shape the work. The balance of productive friction is shifting.",
+    studentBehavior: "Uses AI for both idea generation and rough organizational scaffolding, then takes over to flesh out content, build arguments, and refine independently.",
+    learningOutcome: "Strong learning with some organizational load offloaded. Critical thinking remains engaged, though the student is practicing less of the planning process independently." },
+  { from: 3, to: 4, description: "The student is leaning more heavily on AI as a collaborative partner. Beyond structure, AI is now providing direct feedback on student work. The student still creates first, but refinement is increasingly shared with the tool.",
+    studentBehavior: "Drafts content independently but turns to AI earlier and more often for feedback, suggestions, and revision guidance. Some self-editing instincts may start to atrophy.",
+    learningOutcome: "Solid foundational learning from the initial creation, but growing dependence on external feedback. Revision skills are practiced through AI dialogue rather than internal reflection." },
+  { from: 4, to: 5, description: "AI is taking on a significant share of the cognitive work. The student is transitioning from creator to curator, spending more time prompting, evaluating, and assembling AI output than generating original thought.",
+    studentBehavior: "Relies on AI for substantial portions of drafting and revision. Original input narrows to prompting strategy and surface-level edits. Deep engagement with the material decreases noticeably.",
+    learningOutcome: "Efficiency climbs sharply, but retention, authenticity, and deep understanding decline. The student risks learning more about AI prompting than about the subject itself." },
+];
+
+const SCENARIOS = [
+  { id:"essay", name:"Analytical Essay", icon:"📝", subject:"English/Humanities", description:"Write a 5-paragraph analytical essay on a literary work" },
+  { id:"lab", name:"Lab Report", icon:"🔬", subject:"Science", description:"Document findings from a chemistry experiment" },
+  { id:"code", name:"Coding Project", icon:"💻", subject:"Computer Science", description:"Build a functional web application from requirements" },
+  { id:"art", name:"Design Project", icon:"🎨", subject:"Art & Design", description:"Create a poster for a school event with original artwork" },
+  { id:"research", name:"Research Paper", icon:"📚", subject:"Social Studies", description:"Investigate a historical event with primary sources" },
+  { id:"math", name:"Problem Set", icon:"📐", subject:"Mathematics", description:"Solve multi-step calculus problems showing all work" },
+];
+
+const mono = "'JetBrains Mono', monospace";
+
+/* ───────── continuous interpolation ───────── */
+function interpolateAtFriction(friction, levels) {
+  // friction is 0-100, levels are sorted by friction descending (100, 75, 50, 25, 0)
+  // Clamp
+  const f = Math.max(0, Math.min(100, friction));
+
+  // Find bracketing levels
+  let lo = levels[levels.length - 1], hi = levels[0];
+  for (let i = 0; i < levels.length - 1; i++) {
+    if (f <= levels[i].friction && f >= levels[i + 1].friction) {
+      hi = levels[i]; lo = levels[i + 1]; break;
+    }
+  }
+
+  // Exact match on a level
+  const exact = levels.find(l => l.friction === f);
+  if (exact) return { ...exact, isExact: true, nearestIndex: levels.indexOf(exact), zone: null };
+
+  // Interpolation factor (0 = lo, 1 = hi)
+  const range = hi.friction - lo.friction;
+  const frac = range === 0 ? 0 : (f - lo.friction) / range;
+
+  const lerp = (a, b) => Math.round(a + (b - a) * frac);
+  const parseHex = (hex) => [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
+  const lerpColor = (c1, c2) => {
+    const a = parseHex(c1), b = parseHex(c2);
+    const r = a.map((v, i) => Math.round(v + (b[i] - v) * frac));
+    return `#${r.map(v => v.toString(16).padStart(2,"0")).join("")}`;
+  };
+
+  // Find transition copy
+  const trans = TRANSITIONS.find(t => t.from === hi.id && t.to === lo.id);
+  const nearestIdx = frac >= 0.5 ? levels.indexOf(hi) : levels.indexOf(lo);
+
+  return {
+    id: frac >= 0.5 ? hi.id : lo.id,
+    name: frac >= 0.5 ? hi.name : lo.name,
+    subtitle: frac >= 0.5 ? hi.subtitle : lo.subtitle,
+    icon: frac >= 0.5 ? hi.icon : lo.icon,
+    friction: f,
+    color: lerpColor(lo.color || "#888", hi.color || "#888"),
+    glow: lerpColor(lo.glow || "#888", hi.glow || "#888"),
+    cognitiveDemand: lerp(lo.cognitiveDemand, hi.cognitiveDemand),
+    retention: lerp(lo.retention, hi.retention),
+    authenticity: lerp(lo.authenticity, hi.authenticity),
+    efficiency: lerp(lo.efficiency, hi.efficiency),
+    description: trans ? trans.description : hi.description,
+    studentBehavior: trans ? trans.studentBehavior : hi.studentBehavior,
+    learningOutcome: trans ? trans.learningOutcome : hi.learningOutcome,
+    isExact: false,
+    nearestIndex: nearestIdx,
+    zone: `Between ${hi.name} and ${lo.name}`,
+  };
+}
+
+/* ───────── Toggle Switch ───────── */
+function ThemeToggle({ dark, onToggle }) {
+  return React.createElement("button", {
+    onClick: onToggle,
+    "aria-label": dark ? "Switch to light mode" : "Switch to dark mode",
+    style: {
+      position: "relative", width: 56, height: 28, borderRadius: 14, border: "none", cursor: "pointer",
+      background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
+      transition: "background 0.3s", padding: 0, display: "flex", alignItems: "center",
+    }
+  },
+    React.createElement("div", { style: {
+      position: "absolute", left: dark ? 30 : 4, width: 20, height: 20, borderRadius: "50%",
+      background: dark ? "#1a1a2e" : "#f5f5f0",
+      transition: "left 0.3s, background 0.3s",
+      display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+    } }, dark ? "🌙" : "☀️"),
+  );
+}
+
+/* ───────── Gauge (used in Compare tab) ───────── */
+function FrictionGauge({ value, color, size = 200, t }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d"); const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr; canvas.height = size * 0.65 * dpr;
+    ctx.scale(dpr, dpr); canvas.style.width = size + "px"; canvas.style.height = size * 0.65 + "px";
+    const cx = size / 2, cy = size * 0.55, r = size * 0.38;
+    ctx.clearRect(0, 0, size, size * 0.65);
+    ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,2*Math.PI); ctx.lineWidth = size*0.08; ctx.strokeStyle = t.gaugeTrack; ctx.lineCap = "round"; ctx.stroke();
+    const grad = ctx.createLinearGradient(0,cy,size,cy);
+    grad.addColorStop(0,t.gaugeGradient[0]); grad.addColorStop(0.25,t.gaugeGradient[1]); grad.addColorStop(0.5,t.gaugeGradient[2]); grad.addColorStop(0.75,t.gaugeGradient[3]); grad.addColorStop(1,t.gaugeGradient[4]);
+    const p = value / 100;
+    ctx.beginPath(); ctx.arc(cx,cy,r,Math.PI,Math.PI+p*Math.PI); ctx.lineWidth = size*0.08; ctx.strokeStyle = grad; ctx.lineCap = "round"; ctx.stroke();
+    const na = Math.PI+p*Math.PI, nl = r*0.7;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+nl*Math.cos(na),cy+nl*Math.sin(na)); ctx.lineWidth = 3; ctx.strokeStyle = color; ctx.lineCap = "round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,6,0,2*Math.PI); ctx.fillStyle = color; ctx.fill();
+  }, [value, color, size, t]);
+  return React.createElement("canvas", { ref: canvasRef });
+}
+
+/* ───────── Friction Slider ───────── */
+function FrictionSlider({ frictionValue, onFrictionChange, levels, isMobile, t }) {
+  const trackRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [hoveredTick, setHoveredTick] = useState(null);
+  const count = levels.length;
+  const thumbSize = isMobile ? 32 : 36;
+  const halfThumb = thumbSize / 2;
+
+  // Slider left = friction 100 (NO AI), right = friction 0 (FULL AI)
+  // Track percentage (0-100 left-to-right) maps to friction (100-0)
+  const frictionToTrackPct = (f) => 100 - f;
+  const levelTrackPct = (i) => frictionToTrackPct(levels[i].friction);
+
+  const frictionFromPointer = (clientX) => {
+    const rect = trackRef.current.getBoundingClientRect();
+    const inner = rect.width - halfThumb * 2;
+    const trackPct = Math.max(0, Math.min(100, ((clientX - rect.left - halfThumb) / inner) * 100));
+    const raw = Math.round(100 - trackPct);
+    // Magnetic snap: if within 5 points of a level, lock to it
+    for (let i = 0; i < levels.length; i++) {
+      if (Math.abs(raw - levels[i].friction) <= 5) return levels[i].friction;
+    }
+    return raw;
+  };
+
+  const handlePointerDown = (e) => {
+    e.preventDefault();
+    setDragging(true);
+    onFrictionChange(frictionFromPointer(e.clientX));
+    trackRef.current.setPointerCapture(e.pointerId);
+  };
+  const handlePointerMove = (e) => {
+    if (!dragging) return;
+    onFrictionChange(frictionFromPointer(e.clientX));
+  };
+  const handlePointerUp = () => setDragging(false);
+
+  const interp = interpolateAtFriction(frictionValue, levels);
+  const thumbTrackPct = frictionToTrackPct(frictionValue);
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 18 : 32 } },
+    // Level icon and name display
+    React.createElement("div", { style: { textAlign: "center", marginBottom: isMobile ? 14 : 20 } },
+      React.createElement("div", { style: { fontSize: isMobile ? 32 : 44, marginBottom: 4, transition: "transform 0.3s", transform: dragging ? "scale(1.1)" : "scale(1)" } }, interp.icon),
+      React.createElement("div", { style: { fontSize: isMobile ? 16 : 20, fontWeight: 700, color: interp.color, fontFamily: mono, letterSpacing: "0.05em" } }, interp.name),
+      React.createElement("div", { style: { fontSize: isMobile ? 11 : 13, color: t.textLow, fontFamily: mono, marginTop: 2 } }, interp.subtitle),
+      React.createElement("div", { style: { fontSize: isMobile ? 28 : 36, fontWeight: 700, color: interp.color, fontFamily: mono, marginTop: 4 } }, frictionValue + "%"),
+      React.createElement("div", { style: { fontSize: 10, color: t.textLow, textTransform: "uppercase", letterSpacing: "0.15em", fontFamily: mono } }, "Productive Friction"),
+    ),
+    // Slider track container
+    React.createElement("div", {
+      ref: trackRef,
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: handlePointerUp,
+      onPointerCancel: handlePointerUp,
+      style: {
+        position: "relative", height: isMobile ? 56 : 64, cursor: "pointer",
+        touchAction: "none", userSelect: "none", WebkitUserSelect: "none",
+        margin: "0 " + halfThumb + "px",
+      }
+    },
+      // Track background
+      React.createElement("div", { style: {
+        position: "absolute", left: 0, right: 0,
+        top: "50%", transform: "translateY(-50%)", height: isMobile ? 8 : 10, borderRadius: 5,
+        background: t.barTrack,
+      } }),
+      // Track gradient fill
+      React.createElement("div", { style: {
+        position: "absolute", left: 0, right: 0,
+        top: "50%", transform: "translateY(-50%)", height: isMobile ? 8 : 10, borderRadius: 5,
+        background: `linear-gradient(90deg, ${levels.map((l, i) => l.color + " " + levelTrackPct(i) + "%").join(", ")})`,
+        opacity: 0.85,
+      } }),
+      // Level tick marks (vertical lines + colored dot below)
+      levels.map((l, i) => {
+        const isNearest = interp.nearestIndex === i;
+        const isHov = hoveredTick === i && !dragging;
+        const lifted = isNearest || isHov;
+        return React.createElement("div", { key: l.id,
+          onClick: (e) => { e.stopPropagation(); onFrictionChange(l.friction); },
+          onMouseEnter: () => !isMobile && setHoveredTick(i),
+          onMouseLeave: () => !isMobile && setHoveredTick(null),
+          style: {
+            position: "absolute", left: levelTrackPct(i) + "%",
+            top: "50%", transform: "translateX(-50%)",
+            cursor: "pointer", zIndex: lifted ? 2 : 1,
+          }
+        },
+          // Vertical tick line
+          React.createElement("div", { style: {
+            width: lifted ? 3 : 2, height: lifted ? 28 : 22,
+            borderRadius: 2, background: lifted ? l.color : t.textFaint,
+            opacity: lifted ? 1 : 0.5,
+            transition: "all 0.2s",
+            position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+          } }),
+          // Colored dot below tick
+          React.createElement("div", { style: {
+            width: lifted ? 8 : 6, height: lifted ? 8 : 6,
+            borderRadius: "50%", background: l.color,
+            opacity: lifted ? 0.9 : 0.5,
+            transition: "all 0.2s",
+            position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+          } }),
+        );
+      }),
+      // Draggable thumb
+      React.createElement("div", { style: {
+        position: "absolute",
+        left: thumbTrackPct + "%",
+        top: "50%", transform: "translate(-50%, -50%)",
+        width: thumbSize, height: thumbSize, borderRadius: "50%",
+        background: interp.color,
+        border: `3px solid ${t.bg}`,
+        boxShadow: `0 0 0 3px ${interp.color}50, 0 4px 16px ${interp.color}40`,
+        transition: dragging ? "none" : "all 0.15s ease-out",
+        zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: isMobile ? 15 : 17, cursor: dragging ? "grabbing" : "grab",
+      } }, interp.icon),
+    ),
+    // Level labels below track
+    React.createElement("div", { style: { position: "relative", height: isMobile ? 28 : 32, margin: "4px " + halfThumb + "px 0" } },
+      levels.map((l, i) => {
+        const isNearest = interp.nearestIndex === i;
+        const isLabelHov = hoveredTick === i && !dragging;
+        const highlighted = isNearest || isLabelHov;
+        return React.createElement("div", { key: l.id + "-label", style: {
+          position: "absolute",
+          left: levelTrackPct(i) + "%",
+          transform: "translateX(-50%)",
+          textAlign: "center",
+        } },
+          React.createElement("div", { style: {
+            fontSize: isMobile ? (highlighted ? 11 : 8) : (highlighted ? 13 : 10),
+            fontFamily: mono, fontWeight: highlighted ? 700 : 400,
+            color: highlighted ? l.color : t.textFaint, letterSpacing: "0.05em",
+            whiteSpace: "nowrap", transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            opacity: isMobile ? (highlighted ? 1 : 0) : 1,
+          } }, l.name),
+        );
+      }),
+    ),
+  );
+}
+
+/* ───────── Animated bar ───────── */
+function AnimatedBar({ value, color, delay = 0, label, t }) {
+  const [w, setW] = useState(0);
+  useEffect(() => { const tm = setTimeout(() => setW(value), 100+delay); return () => clearTimeout(tm); }, [value, delay]);
+  return React.createElement("div", { style: { marginBottom: 12 } },
+    React.createElement("div", { style: { display:"flex", justifyContent:"space-between", marginBottom:4 } },
+      React.createElement("span", { style: { fontSize:13, color:t.textMid, letterSpacing:"0.05em", textTransform:"uppercase", fontFamily:mono } }, label),
+      React.createElement("span", { style: { fontSize:13, color, fontFamily:mono, fontWeight:700 } }, value + "%"),
+    ),
+    React.createElement("div", { style: { height:6, background:t.barTrack, borderRadius:3, overflow:"hidden" } },
+      React.createElement("div", { style: { height:"100%", width:w+"%", background:`linear-gradient(90deg, ${color}, ${color}aa)`, borderRadius:3, transition:"width 1s cubic-bezier(0.16,1,0.3,1)", boxShadow:`0 0 12px ${color}33` } }),
+    ),
+  );
+}
+
+/* ───────── Timeline ───────── */
+function SimulationTimeline({ level, isRunning, onComplete, isMobile, t }) {
+  const [step, setStep] = useState(-1);
+  const steps = [{label:"Encounter",icon:"📋"},{label:"Confusion",icon:"😕"},{label:"Struggle",icon:"🔥"},{label:"Breakthrough",icon:"⚡"},{label:"Understanding",icon:"🎯"}];
+  const frictionSteps = Math.max(1, Math.ceil((level.friction/100)*5));
+  useEffect(() => {
+    if (!isRunning) { setStep(-1); return; }
+    let c = 0;
+    const iv = setInterval(() => { if (c < frictionSteps) { setStep(c); c++; } else { clearInterval(iv); onComplete && onComplete(); } }, 800);
+    return () => clearInterval(iv);
+  }, [isRunning, frictionSteps]);
+
+  return React.createElement("div", { style: { position:"relative", padding:"20px 0", overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch" } },
+    React.createElement("div", { style: { display:"flex", alignItems:"center", minWidth:isMobile?380:"auto" } },
+      steps.map((s, i) => {
+        const isActive = i <= step, isSkipped = i >= frictionSteps;
+        return React.createElement("div", { key: i, style: { flex:1, display:"flex", flexDirection:"column", alignItems:"center", position:"relative" } },
+          i > 0 && React.createElement("div", { style: { position:"absolute", top:18, left:"-50%", right:"50%", height:2, background:isActive?level.color:isSkipped?t.timelineConnSkip:t.timelineConn, transition:"background 0.5s" } }),
+          React.createElement("div", { style: {
+            width:isMobile?34:40, height:isMobile?34:40, borderRadius:"50%",
+            background:isActive?level.color+"18":isSkipped?t.timelineCircleSkip:t.timelineCircle,
+            border:`2px solid ${isActive?level.color:isSkipped?t.timelineCircleBorderSkip:t.timelineCircleBorder}`,
+            display:"flex", alignItems:"center", justifyContent:"center", fontSize:isMobile?14:18,
+            transition:"all 0.5s", opacity:isSkipped?0.25:1, position:"relative", zIndex:1,
+            boxShadow:isActive?`0 0 20px ${level.glow}`:"none",
+          } }, isSkipped ? "⏭️" : s.icon),
+          React.createElement("span", { style: {
+            fontSize:isMobile?7:9, marginTop:6, color:isActive?level.color:isSkipped?t.textSkip:t.textLow,
+            textTransform:"uppercase", letterSpacing:"0.08em", fontFamily:mono, textAlign:"center",
+            textDecoration:isSkipped?"line-through":"none", transition:"all 0.5s",
+          } }, s.label),
+        );
+      }),
+    ),
+  );
+}
+
+/* ───────── scroll-hide hook ───────── */
+function useScrollHide(threshold = 10) {
+  const [visible, setVisible] = useState(true);
+  const lastY = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY.current) < threshold) return;
+      setVisible(y < lastY.current || y < 60);
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+  return visible;
+}
+
+/* ───────── Hamburger Menu ───────── */
+function HamburgerMenu({ open, onToggle, darkMode, levelColor, t, onNavigate, activeTab, visible }) {
+  const barColor = darkMode ? "rgba(253,255,243,0.9)" : "rgba(26,26,46,0.75)";
+  const drawerBg = darkMode ? "rgba(10,10,15,0.98)" : "rgba(245,245,240,0.98)";
+
+  return React.createElement(React.Fragment, null,
+
+    // Floating toggle button
+    React.createElement("button", {
+      onClick: onToggle,
+      "aria-label": open ? "Close menu" : "Open menu",
+      style: {
+        position:"fixed", top:20, left:20, zIndex:600,
+        width:30, height:30, background:"none", border:"none", cursor:"pointer",
+        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+        gap:7, padding:0,
+        transform: open ? "rotate(-90deg)" : (visible ? "rotate(0deg)" : "translateX(-60px)"),
+        opacity: open ? 1 : (visible ? 1 : 0),
+        pointerEvents: open || visible ? "auto" : "none",
+        transition:"transform 0.3s, opacity 0.3s",
+      }
+    },
+      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5, position:"relative", zIndex:1,
+        transform: open ? "translateY(21px) rotate(-60deg)" : "none",
+        transformOrigin: open ? "left center" : "center",
+        transition:"transform 0.3s",
+      }}),
+      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5, position:"relative", zIndex:2,
+        transform: open ? "translateY(10px) rotate(60deg)" : "none",
+        transformOrigin: open ? "right center" : "center",
+        transition:"transform 0.3s",
+      }}),
+      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5,
+        transition:"opacity 0.3s",
+      }}),
+    ),
+
+    // Backdrop
+    open && React.createElement("div", {
+      onClick: onToggle,
+      style: { position:"fixed", inset:0, zIndex:400, background:"rgba(0,0,0,0.35)", backdropFilter:"blur(2px)" }
+    }),
+
+    // Slide-out drawer
+    React.createElement("div", { style: {
+      position:"fixed", top:0, left:0, bottom:0, zIndex:500,
+      width:272, background:drawerBg, backdropFilter:"blur(20px)",
+      borderRight: darkMode ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+      transform: open ? "translateX(0)" : "translateX(-100%)",
+      transition:"transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+      display:"flex", flexDirection:"column",
+      boxShadow: open ? "4px 0 40px rgba(0,0,0,0.2)" : "none",
+    }},
+
+      // Drawer header
+      React.createElement("div", { style:{ padding:"72px 24px 20px" }},
+        React.createElement("div", { style:{ fontSize:20, fontWeight:300, color:t.text }},
+          "Teacher ", React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:levelColor }}, "Toolkit")
+        ),
+      ),
+
+      // Nav items
+      React.createElement("div", { style:{ flex:1, padding:"0 12px", overflowY:"auto" }},
+        React.createElement("div", { style:{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono, padding:"0 12px 10px" }}, "Tools"),
+
+        // Friction Scale
+        React.createElement("button", { onClick: () => { onNavigate("scale"); onToggle(); }, style:{
+          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
+          background: activeTab !== "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
+          borderLeft: activeTab !== "agency" ? `3px solid ${levelColor}` : "3px solid transparent",
+          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
+        }},
+          React.createElement("span", { style:{ fontSize:20 }}, "\u2696\uFE0F"),
+          React.createElement("div", null,
+            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab !== "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "AI Friction Scale"),
+            activeTab !== "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
+          ),
+        ),
+
+        // Agency Spectrum
+        React.createElement("button", { onClick: () => { onNavigate("agency"); onToggle(); }, style:{
+          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
+          background: activeTab === "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
+          borderLeft: activeTab === "agency" ? `3px solid ${t.accent}` : "3px solid transparent",
+          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
+        }},
+          React.createElement("span", { style:{ fontSize:20 }}, "\uD83E\uDD16"),
+          React.createElement("div", null,
+            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab === "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "The Agency Spectrum"),
+            activeTab === "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
+          ),
+        ),
+
+        // Assessment Check
+        React.createElement("button", { onClick: () => { window.location.href = "/pages/assessment.html"; }, style:{
+          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
+          background:"transparent", borderLeft:"3px solid transparent",
+          border:"none", cursor:"pointer", textAlign:"left", marginBottom:4,
+        },
+          onMouseEnter: e => e.currentTarget.style.background = darkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+          onMouseLeave: e => e.currentTarget.style.background = "transparent",
+        },
+          React.createElement("span", { style:{ fontSize:20 }}, "\u2705"),
+          React.createElement("div", null,
+            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color:t.textMid, fontFamily:"'Space Mono', monospace" }}, "Assessment Check"),
+            React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Student self-check tool"),
+          ),
+        ),
+
+        // Coming soon
+        React.createElement("div", { style:{ padding:"16px 14px 8px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono }}, "Coming Soon"),
+        ...[["\uD83D\uDCD6","English"],["\uD83D\uDCD0","Mathematics"],["\uD83D\uDD2C","Science"],["\uD83D\uDCDC","History"]].map(([icon, label]) =>
+          React.createElement("div", { key:label, style:{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:10, opacity:0.35 }},
+            React.createElement("span", { style:{ fontSize:18 }}, icon),
+            React.createElement("div", { style:{ fontSize:13, color:t.textMid, fontFamily:"'Space Mono', monospace" }}, label),
+          )
+        ),
+      ),
+
+      // Drawer footer
+      React.createElement("div", { style:{ padding:"16px 24px", borderTop: darkMode ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.06)" }},
+        React.createElement("div", { style:{ fontSize:10, color:t.textFaint, fontFamily:mono, lineHeight:1.7 }},
+          "AI Friction Scale", React.createElement("br"), "Original framework by Jane Beckwith", React.createElement("br"), "Holland Hall (2025)"
+        ),
+      ),
+    ),
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AGENCY SPECTRUM — data & components
+   ═══════════════════════════════════════════════════════════════ */
+
+const AGENCY_ROLES = [
+  {
+    id: "author", name: "Author",
+    tagline: "The student does the work. AI assists at moments.",
+    icon: "\u270D\uFE0F", colorKey: "author",
+    snapshot: "A 10th grader is writing a history essay on WWI. She has a blank doc, her textbook, and three primary sources she found in the library database. She asks ChatGPT what \"entente\" means, gets her answer, and goes back to writing. Twenty minutes later she's stuck on her second paragraph and reworks her thesis twice before it clicks.",
+    innerVoice: "This is hard, but I think my argument is getting stronger.",
+    skillsGrowing: ["Writing fluency", "Research", "Argumentation", "Persistence", "Close reading"],
+    skillsNot: ["Delegation", "AI evaluation", "Problem scoping"],
+    teacherRole: "Designs the task. Coaches during execution. Assesses the product and the process.",
+    frictionScaleRelation: "This is where the AI Friction Scale already lives. Levels 1 through 5 describe variations within this mode.",
+  },
+  {
+    id: "designer", name: "Designer",
+    tagline: "The student defines the problem and delegates execution.",
+    icon: "\uD83D\uDCD0", colorKey: "designer",
+    snapshot: "A 10th grader opens Claude and types: \"I want to argue that the alliance system was the primary cause of WWI. Use only sources from 1910 to 1914. Write a formal, argumentative essay, not descriptive.\" She reviews the draft, marks the second paragraph as weak, and sends it back with specific feedback: \"Add the naval arms race as a concrete example here.\"",
+    innerVoice: "I know what I want this to say. I need to be more specific about what's missing.",
+    skillsGrowing: ["Problem definition", "Critical evaluation", "Editorial judgment", "Communication clarity"],
+    skillsNot: ["Writing fluency", "Research process", "Sustained drafting"],
+    teacherRole: "Designs constraints that force meaningful direction-setting. Assesses the quality of the student's problem framing, not just the output.",
+    frictionScaleRelation: "Beyond the current scale. The student may produce high-quality work with low personal execution. Traditional friction metrics don't capture this.",
+  },
+  {
+    id: "conductor", name: "Conductor",
+    tagline: "The student conducts an orchestra of AI agents toward a goal.",
+    icon: "\uD83C\uDF9B\uFE0F", colorKey: "conductor",
+    snapshot: "A 10th grader tells an AI agent: \"Write a strong analytical essay on WWI causes for my history class. Find good primary sources. Make it argumentative.\" She checks back 10 minutes later, skims the draft, notices it reads more like a summary than an argument, and flags it. She also catches a source from 1920 and rejects it as too late.",
+    innerVoice: "Something's off with the tone. And that source is too late.",
+    skillsGrowing: ["Pattern recognition", "Quality monitoring", "Bias detection", "Verification"],
+    skillsNot: ["Writing", "Research", "Argumentation", "Deep content engagement"],
+    teacherRole: "Designs checkpoints and accountability structures. Teaches students how to verify, question, and take ownership of work they didn't execute themselves.",
+    frictionScaleRelation: "Entirely new territory. The student may never touch the material directly. Learning is about orchestration, judgment, and responsibility.",
+  },
+];
+
+const AGENCY_SCENARIOS = [
+  { id: "history-essay", name: "Research Essay", subject: "10th Grade History", assignment: "Research the causes of World War I and write a 5-paragraph analytical essay using at least three primary sources.", icon: "\uD83D\uDCDC" },
+  { id: "lab-report", name: "Lab Report", subject: "11th Grade Chemistry", assignment: "Document your findings from the titration experiment, including hypothesis, methodology, data analysis, and conclusions.", icon: "\uD83E\uDDEA" },
+];
+
+const AGENCY_PHASES = ["Problem Definition", "Research", "Drafting", "Revision", "Final Product"];
+
+const AGENCY_WALKTHROUGH = {
+  "history-essay": {
+    author: [
+      { phase: "Problem Definition", student: "Reads the prompt. Chooses to focus on nationalism, militarism, and alliance systems. Develops a thesis independently.", ai: "Not involved.", learning: "Analytical framing, thesis construction, narrowing a broad topic." },
+      { phase: "Research", student: "Searches databases and reads primary sources. Takes notes. Identifies relevant quotes and evidence.", ai: "Student may ask AI to explain an unfamiliar term or translate a short passage.", learning: "Research skills, source evaluation, close reading of historical documents." },
+      { phase: "Drafting", student: "Writes the full essay from their notes. Structures arguments, integrates evidence, develops analysis paragraph by paragraph.", ai: "Not involved.", learning: "Argumentative writing, evidence integration, sustaining a line of reasoning." },
+      { phase: "Revision", student: "Re-reads for clarity, checks citations, strengthens transitions. May ask AI for grammar feedback.", ai: "Provides grammar or clarity suggestions on student-written text.", learning: "Self-editing, revision strategy, attention to craft." },
+      { phase: "Final Product", student: "Submits a fully self-authored essay. Can explain every choice.", ai: "Minimal role.", learning: "Deep ownership. Student can defend their argument and trace their reasoning." },
+    ],
+    designer: [
+      { phase: "Problem Definition", student: "Defines the scope: 'I want to argue that alliance systems were the primary cause, with nationalism and militarism as accelerants. Use only sources from 1910-1914.'", ai: "Receives the direction. May ask clarifying questions.", learning: "Precise problem framing. The student must know enough about WWI to set meaningful constraints." },
+      { phase: "Research", student: "Reviews AI-gathered sources. Decides which are relevant. Rejects two sources as too late (1918) and asks for replacements from the pre-war period.", ai: "Searches for and summarizes primary sources matching the student's criteria. Presents options.", learning: "Evaluative judgment. Source relevance assessment. The student learns to evaluate without doing the initial search." },
+      { phase: "Drafting", student: "Reviews the AI-generated draft. Identifies a weak paragraph on militarism and provides specific feedback: 'This needs a concrete example, use the naval arms race between Britain and Germany.'", ai: "Produces a full draft based on the student's thesis, selected sources, and structural direction.", learning: "Critical reading of arguments. Knowing what's missing. Giving actionable feedback." },
+      { phase: "Revision", student: "Reads the revised version. Adjusts tone in the introduction to be less dramatic. Approves the conclusion.", ai: "Revises based on student feedback. Produces a polished version.", learning: "Editorial judgment. Aligning output with personal voice and standards." },
+      { phase: "Final Product", student: "Submits work they directed but didn't write. Can explain the argument and source choices, but didn't practice the act of writing.", ai: "Produced the artifact.", learning: "Strong analytical skills. Weak execution skills. The student is a capable critic but hasn't built writing fluency." },
+    ],
+    conductor: [
+      { phase: "Problem Definition", student: "Gives a broad prompt: 'Write a strong analytical essay on the causes of WWI for a 10th grade history class. Find good primary sources. Make it argumentative, not descriptive.'", ai: "Autonomously decides to focus on the alliance system, militarism, and nationalism. Chooses its own thesis angle.", learning: "Minimal at this stage. The student hasn't engaged with the content yet." },
+      { phase: "Research", student: "Receives a notification that the agent has found 6 sources and selected 3. Reviews the selections. Flags that one source is from a biased nationalist perspective and asks the agent to address that bias or replace it.", ai: "Independently searches, reads, and selects sources. Presents a summary and rationale for each choice.", learning: "Bias detection. Critical evaluation of curated information. This is a real skill, but different from finding sources yourself." },
+      { phase: "Drafting", student: "Checks in on progress. Reads the draft at a high level. Notices the essay is too descriptive and not argumentative enough. Redirects the agent.", ai: "Drafts the full essay autonomously. Makes structural and stylistic choices without guidance.", learning: "Pattern recognition: knowing what 'argumentative' looks like vs. 'descriptive.' Meta-level quality assessment." },
+      { phase: "Revision", student: "Reviews the final version. Checks citations against sources. Finds one misattributed quote and flags it.", ai: "Revises autonomously and produces the final version.", learning: "Verification. Fact-checking. Taking responsibility for accuracy of work you didn't produce." },
+      { phase: "Final Product", student: "Submits work they oversaw but barely touched. Can explain the argument at a high level but may struggle with details.", ai: "Did essentially all of the work.", learning: "Oversight and accountability skills, but almost no content learning, writing practice, or deep engagement with WWI." },
+    ],
+  },
+  "lab-report": {
+    author: [
+      { phase: "Problem Definition", student: "Reviews the experiment brief. Writes a hypothesis based on their understanding of acid-base reactions.", ai: "Not involved.", learning: "Hypothesis formation. Connecting theory to prediction." },
+      { phase: "Research", student: "Records all data during the experiment. Organizes measurements in a table.", ai: "Not involved.", learning: "Data collection, measurement precision, lab technique." },
+      { phase: "Drafting", student: "Writes up methodology, results, and analysis sections. Creates graphs by hand or in a spreadsheet. Interprets patterns in the data.", ai: "Student may ask AI to check a calculation.", learning: "Scientific writing, data visualization, analytical reasoning from evidence." },
+      { phase: "Revision", student: "Reviews for accuracy. Checks that conclusions follow from data. Fixes a calculation error they caught.", ai: "May help with formatting or grammar.", learning: "Self-correction. Understanding the relationship between data and claims." },
+      { phase: "Final Product", student: "Submits a report they fully authored. Understands every number and claim.", ai: "Minimal role.", learning: "Complete lab literacy. Can reproduce the analysis and defend the conclusions." },
+    ],
+    designer: [
+      { phase: "Problem Definition", student: "Provides the experiment parameters, their data, and says: 'Write this up as a formal lab report. My hypothesis was that the equivalence point would be at pH 7, but the data shows pH 8.2. Address why.'", ai: "Receives direction and raw data.", learning: "The student must understand the discrepancy to frame the task well. Genuine analysis is required." },
+      { phase: "Research", student: "Reviews the AI's explanation of why the equivalence point differs from 7.0. Asks for more detail on weak acid/strong base buffer effects.", ai: "Explains the chemistry behind the unexpected result.", learning: "Conceptual deepening through directed inquiry. The student is learning, but through asking rather than discovering." },
+      { phase: "Drafting", student: "Reviews the draft report. Catches that the AI used the wrong concentration value in one calculation and corrects it.", ai: "Produces the full lab report with formatted data tables, graphs, and analysis.", learning: "Error detection in technical work. Verifying calculations against known inputs." },
+      { phase: "Revision", student: "Approves the scientific content. Asks for the conclusion to be more specific about sources of error.", ai: "Revises to add error analysis.", learning: "Understanding what makes a strong conclusion. Meta-knowledge of scientific writing standards." },
+      { phase: "Final Product", student: "Submits a polished report. Understands the science but didn't practice the writing or graphing.", ai: "Produced most of the document.", learning: "Strong conceptual understanding. Weak lab writing skills and data visualization practice." },
+    ],
+    conductor: [
+      { phase: "Problem Definition", student: "Uploads raw data and says: 'Write a complete lab report for this titration experiment. Make it thorough.'", ai: "Autonomously infers the hypothesis, identifies the experiment type, and begins structuring the report.", learning: "Very little. The student hasn't engaged with the data or the science." },
+      { phase: "Research", student: "Receives the draft. Skims it.", ai: "Independently analyzes the data, creates visualizations, calculates results, and writes the theoretical background.", learning: "Minimal unless the student actively reads and questions the content." },
+      { phase: "Drafting", student: "Notices a graph doesn't match what they remember from the experiment. Flags it.", ai: "Produced everything autonomously.", learning: "Visual pattern matching. Noticing when something 'feels wrong,' a real but limited skill." },
+      { phase: "Revision", student: "Checks that their name is on it. Glances at the conclusion.", ai: "Revises and finalizes.", learning: "Accountability in name only. No meaningful scientific learning occurred." },
+      { phase: "Final Product", student: "Submits work they cannot meaningfully explain or defend.", ai: "Did all the work.", learning: "No lab literacy gained. If asked to explain the equivalence point, the student would struggle." },
+    ],
+  },
+};
+
+/* ───────── Agency: What Changed ───────── */
+function AgencyWhatChanged({ t, isMobile }) {
+  const [phase, setPhase] = useState("idle");
+  const [chatStep, setChatStep] = useState(0);
+  const [agentStep, setAgentStep] = useState(0);
+  const timerRef = useRef(null);
+
+  const chatSteps = [
+    { role: "student", text: "What were the main causes of WWI?" },
+    { role: "ai", text: "The main causes include nationalism, militarism, alliances, and imperialism..." },
+    { role: "student", text: "Can you help me outline an essay about this?" },
+    { role: "ai", text: "Here's a possible outline: I. Introduction, II. Nationalism..." },
+  ];
+  const agentSteps = [
+    { role: "student", text: "Research WWI causes. Find primary sources. Write an analytical essay arguing alliance systems were the primary cause." },
+    { role: "agent", text: "Planning: 1) Search for primary sources 1910-1914, 2) Analyze alliance treaties, 3) Draft argumentative essay, 4) Self-review for quality" },
+    { role: "agent", text: "Searching academic databases... Found 12 sources. Selecting 4 most relevant. Reading and extracting key evidence..." },
+    { role: "agent", text: "Draft complete. 5 paragraphs, 3 primary sources cited. Thesis: 'The interlocking alliance system transformed a regional crisis into a continental war.' Ready for your review." },
+  ];
+
+  const startAnimation = useCallback(() => { setChatStep(0); setAgentStep(0); setPhase("chat"); }, []);
+
+  useEffect(() => {
+    if (phase === "idle" || phase === "done") return;
+    if (phase === "chat") {
+      if (chatStep >= chatSteps.length) { timerRef.current = setTimeout(() => setPhase("pause"), 600); return () => clearTimeout(timerRef.current); }
+      timerRef.current = setTimeout(() => setChatStep(s => s + 1), 1600);
+      return () => clearTimeout(timerRef.current);
+    }
+    if (phase === "pause") { timerRef.current = setTimeout(() => setPhase("agent"), 1200); return () => clearTimeout(timerRef.current); }
+    if (phase === "agent") {
+      if (agentStep >= agentSteps.length) { setPhase("done"); return; }
+      timerRef.current = setTimeout(() => setAgentStep(s => s + 1), 2000);
+      return () => clearTimeout(timerRef.current);
+    }
+  }, [phase, chatStep, agentStep]);
+
+  const isPlaying = phase !== "idle" && phase !== "done";
+  const hasPlayed = phase === "done";
+  const chatActive = phase === "chat" || phase === "pause" || phase === "agent" || phase === "done";
+  const agentActive = phase === "agent" || phase === "done";
+  const showTransition = phase === "pause";
+
+  const renderMessages = (steps, visibleCount, isAgent) => {
+    return steps.map((step, i) => {
+      const visible = i < visibleCount;
+      const isAI = step.role === "ai" || step.role === "agent";
+      return React.createElement("div", { key: i, style: {
+        opacity: visible ? 1 : 0.12, transform: visible ? "translateY(0)" : "translateY(8px)",
+        transition: "all 0.5s ease", display: "flex", gap: 10, marginBottom: 12, alignItems: "flex-start",
+      }},
+        React.createElement("div", { style: {
+          width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+          background: isAI ? (isAgent ? t.hot + "20" : t.accent + "20") : t.textFaint,
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+        }}, isAI ? (isAgent ? "\uD83E\uDD16" : "\uD83D\uDCAC") : "\uD83D\uDC64"),
+        React.createElement("div", { style: {
+          lineHeight: 1.6, color: t.textHigh, padding: "8px 12px", borderRadius: 8,
+          background: isAI ? (isAgent ? t.hot + "08" : t.accent + "08") : t.cardBg,
+          border: isAI ? `1px solid ${isAgent ? t.hot + "18" : t.accent + "18"}` : t.cardBorder,
+          fontFamily: isAI ? mono : "inherit",
+          fontSize: isAI ? (isMobile ? 13 : 14) : (isMobile ? 15 : 16),
+          maxWidth: "85%",
+        }}, step.text),
+      );
+    });
+  };
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What Changed"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "Most teachers think of AI as a conversation. You ask, it answers. But a new kind of AI doesn't wait for each instruction. It plans, researches, builds, and delivers, on its own."),
+    React.createElement("button", { onClick: startAnimation, disabled: isPlaying, style: {
+      fontFamily: mono, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em",
+      padding: "12px 28px", borderRadius: 8,
+      background: isPlaying ? t.textFaint : t.accent,
+      border: `1px solid ${isPlaying ? t.textGhost : t.accent}`,
+      color: isPlaying ? t.textLow : (t.bg === "#0a0a0f" ? "#0a0a0f" : "#fff"), marginBottom: 20,
+      transition: "all 0.3s", boxShadow: isPlaying ? "none" : `0 2px 12px ${t.accent}40`,
+    }}, isPlaying ? "Playing..." : hasPlayed ? "\u21BB Replay" : "\u25B6 Watch the Difference"),
+    showTransition && React.createElement("div", { style: { textAlign: "center", padding: "10px 0", marginBottom: 12, animation: "fadeIn 0.5s ease" }},
+      React.createElement("span", { style: { fontSize: 12, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.warn }}, "Now watch the same task with agentic AI...")),
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 20 : 28 }},
+      React.createElement("div", { style: { background: t.cardBg, border: t.cardBorder, borderRadius: 12, padding: isMobile ? 14 : 20, boxShadow: t.cardShadow, opacity: chatActive ? 1 : 0.4, transition: "opacity 0.5s ease" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.accent, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }},
+          React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: t.accent }}), "Conversational AI (Today)"),
+        React.createElement("div", { style: { minHeight: 180 }}, renderMessages(chatSteps, chatStep, false)),
+        React.createElement("div", { style: { fontSize: 12, color: t.textFaint, fontFamily: mono, marginTop: 10, fontStyle: "italic" }}, "Student drives every step. AI responds to individual requests.")),
+      React.createElement("div", { style: { background: t.cardBg, border: t.cardBorder, borderRadius: 12, padding: isMobile ? 14 : 20, boxShadow: t.cardShadow, opacity: agentActive ? 1 : 0.25, transition: "opacity 0.5s ease" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.hot, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }},
+          React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: t.hot }}), "Agentic AI (Arriving Now)"),
+        React.createElement("div", { style: { minHeight: 180 }}, renderMessages(agentSteps, agentStep, true)),
+        React.createElement("div", { style: { fontSize: 12, color: t.textFaint, fontFamily: mono, marginTop: 10, fontStyle: "italic" }}, "One instruction. AI plans, executes, and delivers autonomously."))),
+  );
+}
+
+/* ───────── Agency: Spectrum Interactive ───────── */
+function AgencySpectrumView({ t, isMobile }) {
+  const [activeRole, setActiveRole] = useState("author");
+  const role = AGENCY_ROLES.find(r => r.id === activeRole);
+  const color = t[role.colorKey];
+
+  const SkillTag = ({ label, active }) => React.createElement("span", {
+    style: {
+      display: "inline-block", padding: "4px 10px", borderRadius: 100, fontSize: isMobile ? 11 : 12,
+      fontFamily: mono, letterSpacing: "0.02em", marginRight: 6, marginBottom: 6,
+      background: active ? color + "18" : t.textGhost + "20",
+      color: active ? color : t.textFaint,
+      border: `1px solid ${active ? color + "30" : "transparent"}`,
+      transition: "all 0.3s",
+    }
+  }, label);
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "The Spectrum"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 8, maxWidth: 680 }},
+      "When AI can do the work, the student's role changes. But it doesn't change in one way. There are three distinct modes, each with different learning implications."),
+    React.createElement("p", { style: { fontSize: isMobile ? 14 : 16, color: t.textMid, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "The question for educators is not \"should students use agentic AI?\" It's \"which mode serves this learning goal?\""),
+
+    // Role selector pills
+    React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 24, flexWrap: isMobile ? "wrap" : "nowrap" }},
+      AGENCY_ROLES.map(r => React.createElement("button", { key: r.id, onClick: () => setActiveRole(r.id), style: {
+        fontFamily: mono, fontSize: isMobile ? 11 : 12, textTransform: "uppercase", letterSpacing: "0.1em",
+        padding: isMobile ? "10px 16px" : "10px 24px", borderRadius: 8, transition: "all 0.3s",
+        background: activeRole === r.id ? t[r.colorKey] + "15" : t.btnBg,
+        border: activeRole === r.id ? `2px solid ${t[r.colorKey]}40` : t.btnBorder,
+        color: activeRole === r.id ? t[r.colorKey] : t.textMid,
+        fontWeight: activeRole === r.id ? 700 : 400, flex: isMobile ? "1 1 auto" : "0 0 auto",
+      }}, React.createElement("span", { style: { marginRight: 6 }}, r.icon), r.name))),
+
+    // Role detail card
+    React.createElement("div", { key: role.id, style: {
+      background: t.cardBg, border: t.cardBorder, borderRadius: 16, padding: isMobile ? 18 : 28,
+      boxShadow: t.cardShadow, borderTop: `3px solid ${color}`, animation: "fadeIn 0.4s ease",
+    }},
+
+      // Tagline
+      React.createElement("p", { style: { fontSize: isMobile ? 17 : 20, fontWeight: 400, color: t.text, marginBottom: 20, lineHeight: 1.4, fontStyle: "italic" }}, `"${role.tagline}"`),
+
+      // Classroom snapshot
+      React.createElement("div", { style: { marginBottom: 20 }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: color, marginBottom: 8 }}, "In the Classroom"),
+        React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, lineHeight: 1.75, color: t.textHigh, margin: 0 }}, role.snapshot),
+      ),
+
+      // Student inner voice
+      React.createElement("div", { style: {
+        padding: isMobile ? "14px 16px" : "16px 20px", borderRadius: 10, marginBottom: 20,
+        background: color + "06", borderLeft: `3px solid ${color}40`,
+      }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: color, marginBottom: 6 }}, "What the Student Is Thinking"),
+        React.createElement("p", { style: {
+          fontSize: isMobile ? 16 : 18, lineHeight: 1.5, color: t.text, margin: 0,
+          fontStyle: "italic", fontWeight: 400,
+        }}, `"${role.innerVoice}"`),
+      ),
+
+      // Skill profile
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 16 : 20, marginBottom: 20 }},
+        // Skills growing
+        React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: color, marginBottom: 10 }}, "Skills Developing"),
+          React.createElement("div", { style: { display: "flex", flexWrap: "wrap" }},
+            role.skillsGrowing.map((s, i) => React.createElement(SkillTag, { key: i, label: s, active: true })))),
+        // Skills not
+        React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 10 }}, "Not Practiced Here"),
+          React.createElement("div", { style: { display: "flex", flexWrap: "wrap" }},
+            role.skillsNot.map((s, i) => React.createElement(SkillTag, { key: i, label: s, active: false })))),
+      ),
+
+      // Teacher's role
+      React.createElement("div", { style: { padding: "12px 16px", borderRadius: 8, background: color + "08", border: `1px solid ${color}18`, borderLeft: `3px solid ${color}`, marginBottom: 14 }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: color, marginBottom: 4 }}, "The Teacher's Role"),
+        React.createElement("p", { style: { fontSize: isMobile ? 14 : 15, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, role.teacherRole)),
+
+      // Friction scale relation
+      React.createElement("div", { style: { padding: "10px 14px", borderRadius: 8, background: t.textGhost + "30" }},
+        React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Relation to the Friction Scale"),
+        React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.6, color: t.textMid, margin: 0, fontStyle: "italic" }}, role.frictionScaleRelation)),
+    ),
+  );
+}
+
+/* ───────── Agency: Walk Through a Task ───────── */
+function AgencyWalkThrough({ t, isMobile }) {
+  const [scenarioId, setScenarioId] = useState("history-essay");
+  const [activePhase, setActivePhase] = useState(0);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const scenario = AGENCY_SCENARIOS.find(s => s.id === scenarioId);
+  const data = AGENCY_WALKTHROUGH[scenarioId];
+
+  const PhaseCard = ({ roleId, phaseData, color }) => {
+    const r = AGENCY_ROLES.find(r => r.id === roleId);
+    const isHovered = hoveredCard === roleId;
+    return React.createElement("div", {
+      onMouseEnter: () => setHoveredCard(roleId),
+      onMouseLeave: () => setHoveredCard(null),
+      style: {
+      background: t.cardBg, border: t.cardBorder, borderRadius: 12,
+      padding: isMobile ? 14 : 18,
+      boxShadow: isHovered ? "0 12px 40px rgba(0,0,0,0.22)" : t.cardShadow,
+      borderTop: `2px solid ${color}`,
+      animation: "fadeIn 0.4s ease", flex: 1, minWidth: 0,
+      transform: isHovered ? "translateY(-5px) scale(1.02)" : "translateY(0) scale(1)",
+      transition: "transform 0.25s ease, box-shadow 0.25s ease",
+    }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color, marginBottom: 12, fontWeight: 700 }}, `${r.icon} ${r.name}`),
+      React.createElement("div", { style: { marginBottom: 10 }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Student"),
+        React.createElement("p", { style: { fontSize: isMobile ? 15 : 17, lineHeight: 1.6, color: t.textHigh, margin: 0 }}, phaseData.student)),
+      React.createElement("div", { style: { marginBottom: 10 }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "AI"),
+        React.createElement("p", { style: { fontSize: isMobile ? 13 : 14, lineHeight: 1.6, color: t.textMid, margin: 0, fontFamily: mono }}, phaseData.ai)),
+      React.createElement("div", { style: { padding: "8px 10px", borderRadius: 6, background: color + "08", border: `1px solid ${color}15` }},
+        React.createElement("div", { style: { fontSize: 9, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color, marginBottom: 3 }}, "Learning"),
+        React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.5, color: t.textHigh, margin: 0 }}, phaseData.learning)));
+  };
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "Walk Through a Task"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 24, maxWidth: 680 }},
+      "See the same assignment play out across all three modes. At each phase, notice what the student is actually doing, and what they're learning."),
+    React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }},
+      AGENCY_SCENARIOS.map(s => React.createElement("button", { key: s.id, onClick: () => { setScenarioId(s.id); setActivePhase(0); }, style: {
+        fontFamily: mono, fontSize: 11, padding: "8px 16px", borderRadius: 6,
+        background: scenarioId === s.id ? t.accent + "15" : t.btnBg,
+        border: scenarioId === s.id ? `1px solid ${t.accent}40` : t.btnBorder,
+        color: scenarioId === s.id ? t.accent : t.textMid, transition: "all 0.3s",
+      }}, `${s.icon} ${s.name}`))),
+    React.createElement("div", { style: { padding: "10px 14px", borderRadius: 8, background: t.cardBg, border: t.cardBorder, marginBottom: 20 }},
+      React.createElement("span", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint }}, `${scenario.subject} `),
+      React.createElement("span", { style: { fontSize: isMobile ? 14 : 15, color: t.textHigh, lineHeight: 1.6 }}, scenario.assignment)),
+    React.createElement("div", { style: { display: "flex", gap: 0, marginBottom: 24, overflow: "auto", paddingBottom: 4 }},
+      AGENCY_PHASES.map((phase, i) => React.createElement("button", { key: phase, onClick: () => setActivePhase(i), style: {
+        fontFamily: mono, fontSize: isMobile ? 9 : 10, textTransform: "uppercase", letterSpacing: "0.08em",
+        padding: isMobile ? "8px 10px" : "10px 18px", background: activePhase === i ? t.text + "08" : "transparent",
+        border: "none", borderBottom: activePhase === i ? `2px solid ${t.accent}` : `2px solid transparent`,
+        color: activePhase === i ? t.text : t.textLow, cursor: "pointer", transition: "all 0.3s",
+        whiteSpace: "nowrap", fontWeight: activePhase === i ? 700 : 400,
+      }}, `${i + 1}. ${phase}`))),
+    React.createElement("div", { key: `${scenarioId}-${activePhase}`, style: {
+      display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: isMobile ? 14 : 18,
+    }},
+      React.createElement(PhaseCard, { roleId: "author", phaseData: data.author[activePhase], color: t.author }),
+      React.createElement(PhaseCard, { roleId: "designer", phaseData: data.designer[activePhase], color: t.designer }),
+      React.createElement(PhaseCard, { roleId: "conductor", phaseData: data.conductor[activePhase], color: t.conductor })),
+  );
+}
+
+/* ───────── Agency: Attribution ───────── */
+function AgencyAttribution({ t, isMobile }) {
+  return React.createElement("div", { style: { marginBottom: isMobile ? 20 : 32 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 22 : 28, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "A Companion Framework"),
+    React.createElement("div", { style: { maxWidth: 680, fontSize: isMobile ? 15 : 17, color: t.textHigh, lineHeight: 1.8, marginBottom: 20 }},
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "The AI Friction Scale, developed by Jane Beckwith (2025) and building on the AI Assessment Scale by Perkins, Furze, Roe, and MacVaugh, provides a powerful framework for understanding levels of AI involvement in student work. It was designed for conversational AI, the ask-and-answer model that most educators know."),
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "Agentic AI introduces new dimensions that the original scale was not designed to address. When AI can plan, use tools, and execute multi-step tasks autonomously, the question shifts from \"how much AI\" to \"who is steering.\""),
+      React.createElement("p", { style: { marginBottom: 14 }},
+        "The Agency Spectrum is a companion framework that extends this thinking into the agentic era."),
+      React.createElement("p", { style: { marginBottom: 0 }},
+        "The three-role model (Author, Designer, Conductor) and the walkthrough simulation are original contributions by Kevin Farrant, designed to make these ideas practical for classroom teachers navigating a rapidly changing landscape.")),
+    React.createElement("div", { style: { padding: "14px 18px", borderRadius: 8, background: t.cardBg, border: t.cardBorder }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.12em", color: t.textFaint, marginBottom: 8 }}, "References"),
+      React.createElement("div", { style: { fontSize: isMobile ? 13 : 14, color: t.textMid, lineHeight: 1.8 }},
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Beckwith, J. (2025). The AI Friction Scale."),
+        React.createElement("p", { style: { margin: "0 0 3px 0" }}, "Perkins, M., Furze, L., Roe, J., & MacVaugh, J. The AI Assessment Scale."),
+        React.createElement("p", { style: { margin: 0 }}, "Farrant, K. (2026). The Agency Spectrum: A framework for teaching in the agentic era."))),
+  );
+}
+
+/* ───────── Agency: Terminal Simulation ───────── */
+const TERMINAL_LINES = [
+  { type: "prompt",     text: '$ agent run --task "write-history-essay" --grade 10',                              delay: 0 },
+  { type: "blank",                                                                                                 delay: 400 },
+  { type: "agent",      text: "[AGENT] Analyzing task...",                                                         delay: 700 },
+  { type: "agent",      text: "[AGENT] Planning execution:",                                                       delay: 1300 },
+  { type: "step",       text: "  1  Define research scope and thesis angle",                                       delay: 1700 },
+  { type: "step",       text: "  2  Search primary sources (1910\u20131914 only)",                                  delay: 2000 },
+  { type: "step",       text: "  3  Evaluate and select 3 sources",                                               delay: 2300 },
+  { type: "step",       text: "  4  Draft argumentative essay",                                                    delay: 2600 },
+  { type: "step",       text: "  5  Self-review and refine",                                                       delay: 2900 },
+  { type: "blank",                                                                                                 delay: 3300 },
+  { type: "agent",      text: "[AGENT] Searching databases...",                                                    delay: 3500 },
+  { type: "found",      text: '  \u2192  "The Outbreak of War, 1914"  (Grey, E., 1914)',                           delay: 4200 },
+  { type: "found",      text: "  \u2192  Austria-Hungary\u2019s ultimatum to Serbia  (July 1914)",                 delay: 4900 },
+  { type: "found",      text: '  \u2192  "European Alliance Networks"  (Fischer, F., 1912)',                       delay: 5600 },
+  { type: "success",    text: "  \u2713  3 primary sources selected",                                              delay: 6100 },
+  { type: "blank",                                                                                                 delay: 6500 },
+  { type: "agent",      text: "[AGENT] Drafting essay...",                                                         delay: 6700 },
+  { type: "info",       text: '  thesis  "The interlocking alliance system transformed a regional crisis into a continental war."', delay: 7300 },
+  { type: "progress",   label: "  introduction    ",                                                               delay: 7900 },
+  { type: "progress",   label: "  body paragraphs ",                                                               delay: 9000 },
+  { type: "progress",   label: "  conclusion      ",                                                               delay: 10100 },
+  { type: "blank",                                                                                                 delay: 11000 },
+  { type: "agent",      text: "[AGENT] Self-reviewing...",                                                         delay: 11200 },
+  { type: "success",    text: "  \u2713  Argumentative structure confirmed",                                       delay: 11800 },
+  { type: "success",    text: "  \u2713  3 primary sources cited",                                                 delay: 12300 },
+  { type: "success",    text: "  \u2713  ~620 words, 5 paragraphs",                                               delay: 12800 },
+  { type: "blank",                                                                                                 delay: 13300 },
+  { type: "checkIn",    text: "[AGENT] \u26a1 check-in \u2014 student input needed",                               delay: 13600 },
+  { type: "checkInMsg", text: "  Draft complete. Thesis focuses on alliance systems.",                              delay: 14300 },
+  { type: "checkInMsg", text: "  Add nationalism as a secondary cause, or keep it tight?",                         delay: 15000 },
+  { type: "blank",                                                                                                 delay: 15700 },
+  { type: "prompt",     text: "$ Keep it tight. Alliance systems only.",                                           delay: 16400 },
+  { type: "blank",                                                                                                 delay: 17000 },
+  { type: "success",    text: "[AGENT] \u2713 Final draft delivered.",                                             delay: 17300 },
+  { type: "cursor",                                                                                                delay: 17800 },
+];
+
+function AgencyTerminalSim({ t, isMobile }) {
+  const [phase, setPhase] = useState("idle");
+  const [visibleLines, setVisibleLines] = useState([]);
+  const [progressFilled, setProgressFilled] = useState({});
+  const [cursorOn, setCursorOn] = useState(true);
+  const timersRef = useRef([]);
+  const containerRef = useRef(null);
+
+  const isDark = t.bg === "#0a0a0f";
+  const term = {
+    bg:        isDark ? "#0d1117"                : "#f6f8fa",
+    titleBg:   isDark ? "#161b22"                : "#eaeef2",
+    titleText: isDark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.4)",
+    border:    isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)",
+    prompt:    isDark ? "#e6edf3"                : "#24292f",
+    agent:     isDark ? "#2A9D8F"                : "#00796B",
+    step:      isDark ? "#79c0ff"                : "#0550ae",
+    found:     isDark ? "#79c0ff"                : "#0550ae",
+    success:   isDark ? "#3fb950"                : "#1a7f37",
+    checkIn:   isDark ? "#f4a261"                : "#953800",
+    info:      isDark ? "rgba(230,237,243,0.45)" : "rgba(36,41,47,0.5)",
+    dim:       isDark ? "rgba(230,237,243,0.3)"  : "rgba(36,41,47,0.35)",
+    barBg:     isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.07)",
+    barFill:   isDark ? "#2A9D8F"                : "#00796B",
+  };
+
+  useEffect(() => {
+    const iv = setInterval(() => setCursorOn(c => !c), 530);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight;
+  }, [visibleLines]);
+
+  const clearTimers = () => { timersRef.current.forEach(clearTimeout); timersRef.current = []; };
+
+  const start = useCallback(() => {
+    clearTimers();
+    setVisibleLines([]);
+    setProgressFilled({});
+    setPhase("playing");
+    TERMINAL_LINES.forEach((line, idx) => {
+      const t1 = setTimeout(() => setVisibleLines(prev => [...prev, { ...line, idx }]), line.delay);
+      timersRef.current.push(t1);
+      if (line.type === "progress") {
+        const t2 = setTimeout(() => setProgressFilled(prev => ({ ...prev, [idx]: true })), line.delay + 900);
+        timersRef.current.push(t2);
+      }
+    });
+    const t3 = setTimeout(() => setPhase("done"), TERMINAL_LINES[TERMINAL_LINES.length - 1].delay + 400);
+    timersRef.current.push(t3);
+  }, []);
+
+  useEffect(() => () => clearTimers(), []);
+
+  const isPlaying = phase === "playing";
+  const hasPlayed = phase !== "idle";
+
+  const Cursor = () => React.createElement("span", {
+    style: { opacity: cursorOn ? 1 : 0, transition: "opacity 0.1s", color: term.prompt }
+  }, "\u2588");
+
+  const renderLine = (line, i) => {
+    const key = `${line.idx}-${i}`;
+    if (line.type === "blank") return React.createElement("div", { key, style: { height: 8 } });
+    if (line.type === "cursor") return React.createElement("div", { key, style: { fontFamily: mono, fontSize: isMobile ? 12 : 14, color: term.prompt }}, "$ ", React.createElement(Cursor));
+    if (line.type === "progress") {
+      const filled = progressFilled[line.idx];
+      return React.createElement("div", { key, style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 3, fontFamily: mono, fontSize: isMobile ? 11 : 13 }},
+        React.createElement("span", { style: { color: term.dim, minWidth: isMobile ? 128 : 158 }}, line.label),
+        React.createElement("div", { style: { height: 5, width: isMobile ? 88 : 128, borderRadius: 3, background: term.barBg, overflow: "hidden", flexShrink: 0 }},
+          React.createElement("div", { style: { height: "100%", width: filled ? "100%" : "0%", background: term.barFill, borderRadius: 3, transition: "width 0.85s ease" }})),
+        React.createElement("span", { style: { fontSize: 11, color: term.success, fontFamily: mono, opacity: filled ? 1 : 0, transition: "opacity 0.4s 0.5s" }}, "done"),
+      );
+    }
+    const colorMap = { prompt: term.prompt, agent: term.agent, step: term.step, found: term.found, success: term.success, info: term.info, checkIn: term.checkIn, checkInMsg: term.checkIn };
+    return React.createElement("div", { key, style: { fontFamily: mono, fontSize: isMobile ? 12 : 13, lineHeight: 1.75, color: colorMap[line.type] || term.prompt, animation: "fadeIn 0.15s ease" }}, line.text);
+  };
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "See It Run"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 28, maxWidth: 680 }},
+      "This is what an AI agent looks like when it takes an assignment and runs. Watch the full workflow. Then ask: where is the student in this picture?"),
+    React.createElement("button", { onClick: start, disabled: isPlaying, style: {
+      fontFamily: mono, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em",
+      padding: "12px 28px", borderRadius: 8, marginBottom: 24,
+      background: isPlaying ? t.textFaint : t.accent,
+      border: `1px solid ${isPlaying ? t.textGhost : t.accent}`,
+      color: isPlaying ? t.textLow : (isDark ? "#0a0a0f" : "#fff"),
+      cursor: isPlaying ? "default" : "pointer",
+      transition: "all 0.3s", boxShadow: isPlaying ? "none" : `0 2px 12px ${t.accent}40`,
+    }}, isPlaying ? "Running..." : hasPlayed ? "\u21BB Run Again" : "\u25B6 Run the Agent"),
+    React.createElement("div", { style: { borderRadius: 12, overflow: "hidden", boxShadow: isDark ? "0 12px 48px rgba(0,0,0,0.65)" : "0 8px 40px rgba(0,0,0,0.12)", border: `1px solid ${term.border}` }},
+      React.createElement("div", { style: { background: term.titleBg, padding: "10px 16px", display: "flex", alignItems: "center", gap: 7 }},
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ff5f57", flexShrink: 0 }}),
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e", flexShrink: 0 }}),
+        React.createElement("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#28c840", flexShrink: 0 }}),
+        React.createElement("div", { style: { flex: 1, textAlign: "center", fontSize: 12, fontFamily: mono, color: term.titleText }}, "agent \u2014 10th-grade-history"),
+      ),
+      React.createElement("div", { ref: containerRef, style: { background: term.bg, padding: isMobile ? "16px 18px" : "24px 28px", minHeight: 280, maxHeight: 460, overflowY: "auto" }},
+        phase === "idle"
+          ? React.createElement("div", { style: { fontFamily: mono, fontSize: isMobile ? 12 : 14, color: term.prompt }}, "$ ", React.createElement(Cursor))
+          : visibleLines.map((line, i) => renderLine(line, i)),
+      ),
+    ),
+  );
+}
+
+/* ───────── Agency Tab (container) ───────── */
+function AgencyTab({ t, isMobile }) {
+  return React.createElement("div", { style: { animation: "fadeIn 0.4s ease" }},
+    React.createElement("div", { style: { marginBottom: isMobile ? 24 : 36 }},
+      React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textFaint, marginBottom: 6 }}, "A Companion Framework"),
+      React.createElement("h2", { style: { fontSize: isMobile ? 32 : 52, fontWeight: 300, lineHeight: 1.1, marginBottom: 10 }},
+        "The ", React.createElement("span", { style: { fontWeight: 700, fontStyle: "italic", color: t.accent }}, "Agency"), " Spectrum"),
+      React.createElement("p", { style: { fontSize: isMobile ? 18 : 22, fontWeight: 300, color: t.textHigh, lineHeight: 1.6, maxWidth: 640 }},
+        "When AI can do the work, what should students learn? A framework for teaching in the agentic era.")),
+    React.createElement(AgencyWhatChanged, { t, isMobile }),
+    React.createElement(AgencySpectrumView, { t, isMobile }),
+    React.createElement(AgencyWalkThrough, { t, isMobile }),
+    React.createElement(AgencyTerminalSim, { t, isMobile }),
+    React.createElement(AgencyAttribution, { t, isMobile }),
+  );
+}
+
+/* ───────── Main ───────── */
+function App() {
+  const isMobile = useIsMobile();
+  const [darkMode, setDarkMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState(0);
+  const [frictionValue, setFrictionValue] = useState(100);
+  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simComplete, setSimComplete] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState(() =>
+    typeof window !== "undefined" && window.location.pathname.startsWith("/agency") ? "agency" : "scale"
+  );
+  const [hoveredLevel, setHoveredLevel] = useState(null);
+  const [compareSelection, setCompareSelection] = useState([]);
+
+  const toggleCompare = (idx) => {
+    setCompareSelection(prev => {
+      if (prev.includes(idx)) return prev.filter(i => i !== idx);
+      if (prev.length >= 2) return prev;
+      return [...prev, idx];
+    });
+  };
+
+  const SWIPE_TABS = ["scale", "simulate", "compare"];
+  const touchStartXRef = useRef(null);
+  const lastWheelRef = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (Math.abs(dx) < 50) return;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (dx < 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (dx > 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
+  const handleWheel = (e) => {
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 30) return;
+    const now = Date.now();
+    if (now - lastWheelRef.current < 600) return;
+    lastWheelRef.current = now;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (e.deltaX > 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (e.deltaX < 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
+
+  const t = useTheme(darkMode);
+
+  // Build levels with theme colors
+  const LEVELS = LEVELS_BASE.map((l, i) => ({ ...l, color: t.levelColors[i].color, glow: t.levelColors[i].glow }));
+
+  const level = LEVELS[selectedLevel];
+  const displayLevel = hoveredLevel !== null ? LEVELS[hoveredLevel] : level;
+  const pad = isMobile ? 16 : 28;
+  const menuVisible = useScrollHide();
+
+  // Update body bg
+  useEffect(() => { document.body.style.background = t.bg; document.body.style.color = t.text; }, [darkMode]);
+
+  const runSimulation = () => { setIsSimulating(true); setSimComplete(false); setShowAnalysis(false); };
+  const handleSimComplete = () => { setIsSimulating(false); setSimComplete(true); };
+
+  const analyzeLocally = () => {
+    setIsAnalyzing(true); setShowAnalysis(true);
+    const scenario = SCENARIOS.find(s => s.id === selectedScenario);
+    const analyses = {
+      1: { recommendation:"OPTIMAL", reasoning:`Level 1 (No AI) is ideal for ${scenario.name} when the goal is deep skill-building. Students will experience maximum productive struggle, leading to strong retention and authentic learning.`, teacherTip:"Scaffold the difficulty with check-ins and peer collaboration rather than AI tools.", studentPrompt:"What moment of confusion led to your biggest breakthrough in this assignment?", frictionInsight:"The frustration you feel before a breakthrough is your brain literally building new neural pathways." },
+      2: { recommendation:"OPTIMAL", reasoning:`Level 2 (AI for Ideation) works well for ${scenario.name}. Students get a creative spark from AI but do all the heavy cognitive lifting themselves, preserving productive struggle.`, teacherTip:"Have students document which AI-generated ideas they chose and why, building metacognitive awareness.", studentPrompt:"How did your final work differ from the initial ideas AI helped you brainstorm?", frictionInsight:"Using AI for ideation only means students still own the transformation from idea to finished work." },
+      3: { recommendation:"CAUTION", reasoning:`Level 3 (AI for Structure) is a middle ground for ${scenario.name}. Organizational skills are partially offloaded, which may be appropriate for some learners but reduces a key area of cognitive development.`, teacherTip:"Ask students to create their own outline first, then compare it with an AI-generated one to build structural thinking.", studentPrompt:"If you had organized this work without AI help, what would you have done differently?", frictionInsight:"Structure is where many students give up. Preserving that friction builds the executive function skills they need most." },
+      4: { recommendation:"CAUTION", reasoning:`Level 4 (AI for Feedback) for ${scenario.name} means students produce work independently but may become dependent on AI validation rather than developing self-assessment skills.`, teacherTip:"Alternate between AI feedback and peer feedback to help students develop their own critical eye.", studentPrompt:"Can you now identify the same issues AI flagged before it points them out?", frictionInsight:"The ability to evaluate your own work is a skill that only develops through practice, not through outsourcing." },
+      5: { recommendation:"RECONSIDER", reasoning:`Level 5 (Full AI) for ${scenario.name} dramatically reduces learning. While efficient, the student misses nearly all productive struggle, resulting in minimal skill development and retention.`, teacherTip:"If using Level 5, pair it with a metacognitive reflection where students critique and rebuild the AI output from scratch.", studentPrompt:"If AI disappeared tomorrow, could you complete this assignment on your own? What gaps remain?", frictionInsight:"Efficiency without learning is just outsourcing. The question is whether the student is growing or just producing." },
+    };
+    setTimeout(() => {
+      const a = analyses[level.id];
+      setAiAnalysis({ ...a, optimalLevel: level.id <= 2 ? level.id : Math.max(1, level.id - 1) });
+      setIsAnalyzing(false);
+    }, 1500);
+  };
+
+  return React.createElement("div", { style: { minHeight:"100vh", background:t.bg, color:t.text, fontFamily:"'Crimson Pro', Georgia, serif", position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" } },
+    // BG
+    React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
+    React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
+
+    // Hamburger menu (always visible)
+    React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t, onNavigate: (tab) => setActiveTab(tab), activeTab, visible: menuVisible }),
+
+    // ═══ AGENCY STANDALONE PAGE ═══
+    activeTab === "agency" && React.createElement("div", {
+      style: { position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "24px 16px" : "48px 32px" }
+    },
+      // Theme toggle top-right
+      React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 8 }},
+        React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
+      ),
+      React.createElement(AgencyTab, { t, isMobile }),
+      // Agency footer
+      React.createElement("footer", { style: { textAlign: "center", marginTop: isMobile ? 28 : 48, paddingBottom: 24 }},
+        React.createElement("div", { style: { fontSize: 9, color: t.textGhost, fontFamily: mono, letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1.8 }},
+          "The Agency Spectrum (2026)", React.createElement("br"),
+          "A companion to Jane Beckwith's AI Friction Scale", React.createElement("br"),
+          "By ", React.createElement("a", { href: "mailto:kevinfarrant@gmail.com", style: { color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" }}, "Kevin Farrant")),
+      ),
+    ),
+
+    // ═══ FRICTION SCALE PAGES ═══
+    activeTab !== "agency" && React.createElement("div", { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onWheel: handleWheel, style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
+
+      // Theme toggle row
+      React.createElement("div", { style: { display:"flex", justifyContent:"flex-end", marginBottom: 8 } },
+        React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
+      ),
+
+      // Header
+      React.createElement("header", { style: { textAlign:"center", marginBottom:isMobile?20:40 } },
+        React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.3em", color:level.color, fontFamily:mono, marginBottom:10, transition:"color 0.5s" } }, "Interactive Simulation"),
+        React.createElement("h1", { style: { fontSize:isMobile?26:48, fontWeight:300, letterSpacing:"-0.02em", lineHeight:1.1, margin:"0 0 8px 0" } },
+          "The AI ", React.createElement("span", { style: { fontWeight:700, fontStyle:"italic", color:level.color, transition:"color 0.5s" } }, "Friction"), " Scale"
+        ),
+      ),
+
+      // Tabs
+      React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:4, marginBottom:isMobile?18:32 } },
+        [{id:"scale",label:"The Scale"},{id:"simulate",label:"Simulate"},{id:"compare",label:"Compare"}].map(tab =>
+          React.createElement("button", { key:tab.id, onClick:() => setActiveTab(tab.id), style: {
+            padding:isMobile?"8px 14px":"10px 24px", border:"none", borderRadius:100,
+            background:activeTab===tab.id?level.color+"15":"transparent",
+            color:activeTab===tab.id?level.color:t.textLow,
+            fontSize:isMobile?11:12, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.08em",
+            cursor:"pointer", transition:"all 0.3s", fontWeight:activeTab===tab.id?700:400,
+          } }, tab.label)
+        ),
+      ),
+
+      // ═══ SCALE TAB ═══
+      activeTab === "scale" && (() => {
+        const interp = interpolateAtFriction(frictionValue, LEVELS);
+        const zoneLabel = interp.isExact ? `Level ${interp.id}: ${interp.name}` : interp.zone;
+        return React.createElement("div", null,
+          React.createElement(FrictionSlider, { frictionValue, onFrictionChange: (f) => { setFrictionValue(f); setSelectedLevel(interp.nearestIndex); }, levels: LEVELS, isMobile, t }),
+
+          React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24 } },
+            React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+              React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:interp.color, fontFamily:mono, margin:"0 0 10px 0" } }, zoneLabel),
+              React.createElement("p", { style: { fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, interp.description),
+            ),
+            React.createElement("div", { style: { display:"flex", flexDirection:"column", gap:14 } },
+              React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 16px 0", transition:"color 0.5s" } }, "Learning Impact Metrics"),
+                React.createElement(AnimatedBar, { value:interp.cognitiveDemand, color:interp.color, delay:0, label:"Cognitive Demand", t }),
+                React.createElement(AnimatedBar, { value:interp.retention, color:interp.color, delay:100, label:"Knowledge Retention", t }),
+                React.createElement(AnimatedBar, { value:interp.authenticity, color:interp.color, delay:200, label:"Work Authenticity", t }),
+                React.createElement(AnimatedBar, { value:interp.efficiency, color:"#6c757d", delay:300, label:"Task Efficiency", t }),
+              ),
+              React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, flex:1, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 10px 0", transition:"color 0.5s" } }, "Student Behavior"),
+                React.createElement("p", { style: { fontSize:15, lineHeight:1.7, color:t.textMid, margin:"0 0 14px 0", transition:"color 0.5s" } }, interp.studentBehavior),
+                React.createElement("div", { style: { padding:"12px 14px", background:interp.color+"08", border:`1px solid ${interp.color}18`, borderRadius:8, borderLeft:`3px solid ${interp.color}` } },
+                  React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:interp.color, fontFamily:mono, marginBottom:4 } }, "Learning Outcome"),
+                  React.createElement("p", { style: { fontSize:14, lineHeight:1.6, color:t.textMid, margin:0, transition:"color 0.5s" } }, interp.learningOutcome),
+                ),
+              ),
+            ),
+          ),
+        );
+      })(),
+
+      // ═══ SIMULATE TAB ═══
+      activeTab === "simulate" && React.createElement("div", null,
+        React.createElement("div", { style: { marginBottom:22 } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0", transition:"color 0.5s" } }, "1. Choose an Assignment Scenario"),
+          React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3, 1fr)", gap:isMobile?8:10 } },
+            SCENARIOS.map(s =>
+              React.createElement("button", { key:s.id, onClick:() => setSelectedScenario(s.id), style: {
+                background:selectedScenario===s.id?t.scenarioBg:t.scenarioBgOff,
+                border:selectedScenario===s.id?t.scenarioBorderOn:t.scenarioBorderOff,
+                borderRadius:12, padding:isMobile?"12px 10px":"14px 16px", cursor:"pointer", textAlign:"left", transition:"all 0.3s",
+                boxShadow:t.cardShadow,
+              } },
+                React.createElement("div", { style: { fontSize:isMobile?18:22, marginBottom:4 } }, s.icon),
+                React.createElement("div", { style: { fontSize:isMobile?11:13, color:t.text, fontWeight:600, marginBottom:2, fontFamily:"'Space Mono', monospace", transition:"color 0.5s" } }, s.name),
+                React.createElement("div", { style: { fontSize:isMobile?9:11, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.06em", fontFamily:mono, transition:"color 0.5s" } }, s.subject),
+              )
+            ),
+          ),
+        ),
+        React.createElement("div", { style: { marginBottom:22 } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0", transition:"color 0.5s" } }, "2. Set the AI Friction Level"),
+          React.createElement("div", { style: { display:"flex", gap:8, overflowX:isMobile?"auto":"visible", WebkitOverflowScrolling:"touch", paddingBottom:isMobile?4:0, marginLeft:isMobile?-14:undefined, marginRight:isMobile?-14:undefined, paddingLeft:isMobile?14:undefined, paddingRight:isMobile?14:undefined } },
+            LEVELS.map((l,i) =>
+              React.createElement("button", { key:l.id, onClick:() => setSelectedLevel(i), style: {
+                padding:isMobile?"8px 12px":"10px 18px", borderRadius:100, whiteSpace:"nowrap",
+                border:selectedLevel===i?`2px solid ${l.color}`:t.pillBorderOff,
+                background:selectedLevel===i?l.color+"12":t.pillBgOff, color:selectedLevel===i?l.color:t.pillTextOff,
+                fontSize:isMobile?11:13, fontFamily:mono, cursor:"pointer", transition:"all 0.3s", fontWeight:600, flex:"0 0 auto",
+              } }, l.icon + " " + l.name)
+            ),
+          ),
+        ),
+        React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, marginBottom:18, boxShadow:t.cardShadow, transition:"all 0.5s" } },
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 6px 0", transition:"color 0.5s" } }, "3. Run the Learning Simulation"),
+          React.createElement("p", { style: { fontSize:isMobile?14:15, color:t.textLow, margin:"0 0 14px 0", lineHeight:1.6, transition:"color 0.5s" } }, `Watch how a student moves through learning at Friction Level ${level.id}. Skipped steps = cognitive work offloaded to AI.`),
+          React.createElement(SimulationTimeline, { level, isRunning:isSimulating, onComplete:handleSimComplete, isMobile, t }),
+          React.createElement("div", { style: { display:"flex", gap:10, marginTop:14, flexWrap:"wrap" } },
+            React.createElement("button", { onClick:runSimulation, disabled:isSimulating||!selectedScenario, style: {
+              padding:isMobile?"10px 18px":"12px 28px", borderRadius:100, border:"none",
+              background:!selectedScenario?t.disabledBg:level.color,
+              color:!selectedScenario?t.disabledText:"#fff",
+              fontSize:isMobile?11:12, fontFamily:mono, fontWeight:700, cursor:!selectedScenario?"not-allowed":"pointer",
+              textTransform:"uppercase", letterSpacing:"0.1em", transition:"all 0.3s",
+            } }, isSimulating ? "Simulating..." : "Run Simulation"),
+            simComplete && selectedScenario && React.createElement("button", { onClick:analyzeLocally, disabled:isAnalyzing, style: {
+              padding:isMobile?"10px 18px":"12px 28px", borderRadius:100, border:`1px solid ${level.color}40`,
+              background:"transparent", color:level.color, fontSize:isMobile?11:12, fontFamily:mono, fontWeight:700,
+              cursor:"pointer", textTransform:"uppercase", letterSpacing:"0.1em", transition:"all 0.3s",
+            } }, isAnalyzing ? "Analyzing..." : "🤖 Analyze"),
+          ),
+          simComplete && React.createElement("div", { style: { marginTop:14, padding:isMobile?"12px 14px":"16px 20px", background:level.color+"08", border:`1px solid ${level.color}15`, borderRadius:12 } },
+            React.createElement("div", { style: { fontSize:11, color:level.color, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:6 } }, "Simulation Result"),
+            React.createElement("p", { style: { fontSize:isMobile?14:15, lineHeight:1.7, color:t.textMid, margin:0, transition:"color 0.5s" } },
+              "At ", React.createElement("strong", { style: { color:level.color } }, `Friction Level ${level.id} (${level.name})`), ", the student experienced ",
+              level.friction>=75?"significant productive struggle, engaging deeply through sustained effort and iterative problem-solving.":
+              level.friction>=50?"moderate productive struggle. Some cognitive work was scaffolded by AI, while core thinking remained with the student.":
+              level.friction>=25?"limited productive struggle. AI handled much of the structural and editorial work.":
+              "minimal productive struggle. The learning process was largely automated.",
+              " Estimated retention: ", React.createElement("strong", { style: { color:level.color } }, level.retention + "%"), "."
+            ),
+          ),
+        ),
+
+        showAnalysis && React.createElement("div", { style: { background:t.cardBg, border:t.cardBorder, borderRadius:16, padding:pad, position:"relative", overflow:"hidden", boxShadow:t.cardShadow, transition:"all 0.5s" } },
+          React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg, ${level.color}, transparent)` } }),
+          React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:level.color, fontFamily:mono, margin:"0 0 16px 0" } }, "🤖 Friction Analysis"),
+          isAnalyzing ?
+            React.createElement("div", { style: { textAlign:"center", padding:28 } },
+              React.createElement("div", { style: { fontSize:28, marginBottom:12, animation:"spin 2s linear infinite" } }, "⚙️"),
+              React.createElement("div", { style: { fontSize:12, color:t.textLow, fontFamily:mono, transition:"color 0.5s" } }, "Analyzing..."),
+            )
+          : aiAnalysis ?
+            React.createElement("div", { style: { display:"grid", gap:14 } },
+              React.createElement("div", { style: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" } },
+                React.createElement("div", { style: {
+                  padding:"6px 14px", borderRadius:100, fontSize:11, fontFamily:mono, fontWeight:700, letterSpacing:"0.1em",
+                  background:aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal+"15":aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution+"15":t.badgeColors.reconsider+"15",
+                  color:aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal:aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution:t.badgeColors.reconsider,
+                  border:`1px solid ${aiAnalysis.recommendation==="OPTIMAL"?t.badgeColors.optimal+"30":aiAnalysis.recommendation==="CAUTION"?t.badgeColors.caution+"30":t.badgeColors.reconsider+"30"}`,
+                } }, (aiAnalysis.recommendation==="OPTIMAL"?"✓ ":aiAnalysis.recommendation==="CAUTION"?"⚠ ":"✗ ")+aiAnalysis.recommendation),
+                React.createElement("span", { style: { fontSize:11, color:t.textLow, fontFamily:mono, transition:"color 0.5s" } }, "Optimal level: " + aiAnalysis.optimalLevel),
+              ),
+              React.createElement("p", { style: { fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, aiAnalysis.reasoning),
+              React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:12 } },
+                [{label:"Teacher Tip",content:aiAnalysis.teacherTip,icon:"👩‍🏫"},{label:"Student Reflection",content:aiAnalysis.studentPrompt,icon:"🤔"}].map(item =>
+                  React.createElement("div", { key:item.label, style: { padding:"14px 14px", background:t.analysisBg, borderRadius:10, border:t.analysisBorder, transition:"all 0.5s" } },
+                    React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:level.color, fontFamily:mono, marginBottom:8 } }, item.icon + " " + item.label),
+                    React.createElement("p", { style: { fontSize:14, lineHeight:1.6, color:t.textMid, margin:0, transition:"color 0.5s" } }, item.content),
+                  )
+                ),
+              ),
+              React.createElement("div", { style: { padding:"14px 16px", background:level.color+"06", borderLeft:`3px solid ${level.color}`, borderRadius:"0 8px 8px 0" } },
+                React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:level.color, fontFamily:mono, marginBottom:4 } }, "💡 Friction Insight"),
+                React.createElement("p", { style: { fontSize:15, lineHeight:1.6, color:t.textMid, margin:0, fontStyle:"italic", transition:"color 0.5s" } }, aiAnalysis.frictionInsight),
+              ),
+            )
+          : null,
+        ),
+      ),
+
+      // ═══ COMPARE TAB ═══
+      activeTab === "compare" && React.createElement("div", null,
+        React.createElement("div", { style: { textAlign:"center", marginBottom:isMobile?16:24 } },
+          React.createElement("p", { style: { fontSize:isMobile?14:16, color:t.textLow, maxWidth:550, margin:"0 auto", lineHeight:1.7, transition:"color 0.5s" } },
+            compareSelection.length < 2
+              ? "Select two friction levels to compare side by side."
+              : "Click a selected card to deselect it, then choose another."
+          ),
+        ),
+
+        // Level selector cards
+        React.createElement("div", { style: { display:"flex", justifyContent:"center", gap:isMobile?8:12, marginBottom:isMobile?20:32, flexWrap:"wrap" } },
+          LEVELS.map((l, i) => {
+            const isSelected = compareSelection.includes(i);
+            const isFaded = compareSelection.length >= 2 && !isSelected;
+            return React.createElement("button", { key:l.id, onClick:() => toggleCompare(i), style: {
+              background: isSelected ? l.color+"18" : t.cardBg,
+              border: isSelected ? `2px solid ${l.color}` : `2px solid ${l.color}20`,
+              borderRadius: 14, padding: isMobile ? "12px 14px" : "16px 20px", textAlign:"center",
+              position:"relative", overflow:"hidden", cursor:"pointer", transition:"all 0.4s",
+              opacity: isFaded ? 0.35 : 1, transform: isSelected ? "scale(1.05)" : "scale(1)",
+              minWidth: isMobile ? 80 : 120, boxShadow: isSelected ? `0 4px 20px ${l.color}30` : t.cardShadow,
+            } },
+              isSelected && React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:3, background:l.color } }),
+              React.createElement("div", { style: { fontSize:isMobile?22:28, marginBottom:4 } }, l.icon),
+              React.createElement("div", { style: { fontSize:isMobile?11:13, fontWeight:700, color:isSelected?l.color:t.btnTextInactive, fontFamily:mono, letterSpacing:"0.05em", whiteSpace:"nowrap", transition:"color 0.3s" } }, l.name),
+              React.createElement("div", { style: { fontSize:isMobile?9:11, color:t.textFaint, marginTop:2, fontFamily:mono, whiteSpace:"nowrap", transition:"color 0.3s" } }, l.subtitle),
+              isSelected && React.createElement("div", { style: { marginTop:8, fontSize:10, color:l.color, fontFamily:mono, textTransform:"uppercase", letterSpacing:"0.1em" } }, "✓ Selected"),
+            );
+          })
+        ),
+
+        // Side-by-side comparison
+        compareSelection.length === 2 && React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?16:24, animation:"fadeIn 0.4s ease" } },
+          compareSelection.map(idx => {
+            const cl = LEVELS[idx];
+            return React.createElement("div", { key:cl.id, style: {
+              background:t.cardBg, border:`1px solid ${cl.color}30`, borderRadius:16,
+              padding:pad, position:"relative", overflow:"hidden",
+              boxShadow:`0 4px 24px ${cl.color}15`, transition:"all 0.5s",
+            } },
+              React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:4, background:cl.color } }),
+
+              // Header
+              React.createElement("div", { style: { textAlign:"center", marginBottom:16, marginTop:8 } },
+                React.createElement("div", { style: { fontSize:isMobile?28:36, marginBottom:4 } }, cl.icon),
+                React.createElement("div", { style: { fontSize:isMobile?16:20, fontWeight:700, color:cl.color, fontFamily:mono, letterSpacing:"0.05em" } }, cl.name),
+                React.createElement("div", { style: { fontSize:isMobile?11:13, color:t.textFaint, fontFamily:mono, marginTop:2 } }, cl.subtitle),
+              ),
+
+              // Gauge
+              React.createElement("div", { style: { textAlign:"center", marginBottom:16 } },
+                React.createElement(FrictionGauge, { value:cl.friction, color:cl.color, size:isMobile?140:180, t }),
+                React.createElement("div", { style: { fontSize:isMobile?24:30, fontWeight:700, color:cl.color, fontFamily:mono, marginTop:-6 } }, cl.friction + "%"),
+                React.createElement("div", { style: { fontSize:10, color:t.textLow, textTransform:"uppercase", letterSpacing:"0.15em", fontFamily:mono } }, "Productive Friction"),
+              ),
+
+              // Metrics
+              React.createElement("div", { style: { marginBottom:16 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 12px 0" } }, "Learning Metrics"),
+                React.createElement(AnimatedBar, { value:cl.cognitiveDemand, color:cl.color, delay:0, label:"Cognitive Demand", t }),
+                React.createElement(AnimatedBar, { value:cl.retention, color:cl.color, delay:100, label:"Knowledge Retention", t }),
+                React.createElement(AnimatedBar, { value:cl.authenticity, color:cl.color, delay:200, label:"Work Authenticity", t }),
+                React.createElement(AnimatedBar, { value:cl.efficiency, color:"#6c757d", delay:300, label:"Task Efficiency", t }),
+              ),
+
+              // Description
+              React.createElement("div", { style: { marginBottom:14 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:cl.color, fontFamily:mono, margin:"0 0 8px 0" } }, "Description"),
+                React.createElement("p", { style: { fontSize:isMobile?16:18, lineHeight:1.7, color:t.textHigh, margin:0 } }, cl.description),
+              ),
+
+              // Student Behavior
+              React.createElement("div", { style: { marginBottom:14 } },
+                React.createElement("h3", { style: { fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, fontFamily:mono, margin:"0 0 8px 0" } }, "Student Behavior"),
+                React.createElement("p", { style: { fontSize:isMobile?16:18, lineHeight:1.7, color:t.textMid, margin:0 } }, cl.studentBehavior),
+              ),
+
+              // Learning Outcome
+              React.createElement("div", { style: { padding:"12px 14px", background:cl.color+"08", border:`1px solid ${cl.color}18`, borderRadius:8, borderLeft:`3px solid ${cl.color}` } },
+                React.createElement("div", { style: { fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:cl.color, fontFamily:mono, marginBottom:4 } }, "Learning Outcome"),
+                React.createElement("p", { style: { fontSize:isMobile?15:16, lineHeight:1.6, color:t.textMid, margin:0 } }, cl.learningOutcome),
+              ),
+            );
+          })
+        ),
+
+        // Prompt when less than 2 selected
+        compareSelection.length < 2 && React.createElement("div", { style: { textAlign:"center", padding:isMobile?"40px 20px":"60px 20px" } },
+          React.createElement("p", { style: { fontSize:isMobile?14:16, color:t.textFaint, fontFamily:mono, transition:"color 0.5s" } },
+            compareSelection.length === 0 ? "Select two levels above to compare" : "Select one more level to compare"
+          ),
+        ),
+      ),
+
+      React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
+
+      // Footer
+      React.createElement("footer", { style: { textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
+        React.createElement("div", { style: { fontSize:9, color:t.textGhost, fontFamily:mono, letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8, transition:"color 0.5s" } },
+          "Based on Jane Beckwith's AI Friction Scale (2025)", React.createElement("br"), "Building on the AI Assessment Scale by Perkins, Furze, Roe & MacVaugh", React.createElement("br"), "Interactive simulation by ", React.createElement("a", { href: "mailto:kevinfarrant@gmail.com", style: { color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" } }, "Kevin Farrant")
+        ),
+      ),
+    ),
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
+
+<!-- redeploy -->
