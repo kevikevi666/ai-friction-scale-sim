@@ -195,18 +195,10 @@ function ToolCard({ tool, dark, t, isMobile }) {
     React.createElement("div", {
       style: {
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         alignItems: "center",
       }
     },
-      React.createElement("span", {
-        style: {
-          fontFamily: mono,
-          fontSize: 10,
-          color: t.textLow,
-          letterSpacing: "0.02em",
-        }
-      }, tool.author),
       React.createElement("span", {
         style: {
           fontFamily: mono,
@@ -223,7 +215,7 @@ function ToolCard({ tool, dark, t, isMobile }) {
 
 function App() {
   const [dark, setDark] = useState(() => {
-    try { return localStorage.getItem("theme") === "light" ? false : true; } catch { return true; }
+    try { return localStorage.getItem("theme") === "dark" ? true : false; } catch { return false; }
   });
   const isMobile = useIsMobile();
   const t = useTheme(dark);
@@ -278,18 +270,6 @@ function App() {
         gap: 0,
       },
     },
-      // Eyebrow
-      React.createElement("div", {
-        style: {
-          fontFamily: mono,
-          fontSize: 11,
-          color: t.textLow,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          marginBottom: 16,
-        }
-      }, "Kevin Farrant"),
-
       // Headline
       React.createElement("h1", {
         style: {
@@ -303,7 +283,7 @@ function App() {
           marginBottom: 16,
           letterSpacing: "-0.01em",
         }
-      }, "Tools for thinking about AI and agency in learning."),
+      }, "Tools for thinking about AI and student agency in learning."),
 
       // Subline
       React.createElement("p", {
