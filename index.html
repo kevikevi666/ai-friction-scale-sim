@@ -214,16 +214,13 @@ function ToolCard({ tool, dark, t, isMobile }) {
 }
 
 function App() {
-  const [dark, setDark] = useState(() => {
-    try { return localStorage.getItem("theme") === "dark" ? true : false; } catch { return false; }
-  });
+  const [dark, setDark] = useState(false);
   const isMobile = useIsMobile();
   const t = useTheme(dark);
 
   useEffect(() => {
     document.body.style.background = t.bg;
     document.body.style.color = t.text;
-    try { localStorage.setItem("theme", dark ? "dark" : "light"); } catch {}
   }, [dark, t.bg, t.text]);
 
   return React.createElement("div", {
