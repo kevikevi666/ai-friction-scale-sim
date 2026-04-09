@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Assessment Check — AI Friction Scale Toolkit</title>
+<meta name="description" content="A student self-check tool for the AI era. Can you stand behind what you submitted?" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.5s, color 0.5s; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const mono  = "'JetBrains Mono', monospace";
+const spc   = "'Space Mono', monospace";
+const ACCENT = "#6366f1";
+
+/* ─────────── data ─────────── */
+
+const QUESTIONS = [
+  {
+    num: "01",
+    question: "Can you explain what you made and the choices behind it, without looking at your work?",
+    options: [
+      { text: "Yes. I can walk through it in my own words.", score: 4 },
+      { text: "Mostly. There are a few parts I'm fuzzy on.", score: 3 },
+      { text: "I can explain parts of it.", score: 2 },
+      { text: "Not really. I'd need to look back at it.", score: 1 },
+    ],
+  },
+  {
+    num: "02",
+    question: "If someone asked you to change or extend one part of this right now, could you do it?",
+    options: [
+      { text: "Yes. I could revise or expand it independently.", score: 4 },
+      { text: "I could handle most of it.", score: 3 },
+      { text: "I could change small things, but not the core.", score: 2 },
+      { text: "I don't think I could without significant help.", score: 1 },
+    ],
+  },
+  {
+    num: "03",
+    question: "At some point you probably got confused or stuck. What did you do?",
+    options: [
+      { text: "I worked through it myself, or talked it out with a person.", score: 4 },
+      { text: "I looked it up and figured it out from there.", score: 3 },
+      { text: "I had AI solve the stuck part for me.", score: 2 },
+      { text: "I don't remember getting stuck.", score: 1 },
+    ],
+  },
+  {
+    num: "04",
+    question: "How much of the thinking and decision-making in this work is genuinely yours?",
+    options: [
+      { text: "Most of it. The core reasoning is mine.", score: 4 },
+      { text: "A solid share. The key decisions were mine.", score: 3 },
+      { text: "Some parts. AI did most of the heavy lifting.", score: 2 },
+      { text: "It's hard to separate what's mine from what isn't.", score: 1 },
+    ],
+  },
+  {
+    num: "05",
+    question: "If you had to do a version of this again tomorrow, how would you do?",
+    options: [
+      { text: "I'd do well. I actually understand this now.", score: 4 },
+      { text: "I'd manage, though it would take real effort.", score: 3 },
+      { text: "I'd need a lot of help to get through it.", score: 2 },
+      { text: "I'd have to start over with AI doing the work.", score: 1 },
+    ],
+  },
+];
+
+const TIERS = [
+  {
+    min: 17, max: 20,
+    label: "Strong Stance",
+    lightColor: "#00796B",
+    darkColor:  "#2A9D8F",
+    summary: "The evidence of learning is yours. You can explain this work, defend it, and apply what you learned. Whatever tools you used, you own the understanding behind it.",
+    callout: "This is what it means to be the author of your own learning.",
+    actions: [
+      "Share one thing you genuinely learned with a classmate or your teacher.",
+      "Identify the hardest part and explain what made it click for you.",
+      "Ask your teacher what a more advanced version of this challenge would look like.",
+    ],
+  },
+  {
+    min: 12, max: 16,
+    label: "Partial Stance",
+    lightColor: "#E65100",
+    darkColor:  "#F4A261",
+    summary: "You engaged with this work, but there are parts you can't fully account for yet. That is not a failure. It is information. The question is whether you can fill those gaps.",
+    callout: "Partial ownership is still ownership. Start by identifying exactly where the gaps are.",
+    actions: [
+      "Go back to the parts you can't explain and try to work through them now.",
+      "Ask your teacher one specific question about something you're unclear on.",
+      "Write two sentences in your own words summarizing the main point of your work.",
+    ],
+  },
+  {
+    min: 7, max: 11,
+    label: "Thin Stance",
+    lightColor: "#D84315",
+    darkColor:  "#E76F51",
+    summary: "You produced something, but the learning evidence is thin. There is work here you can't explain or defend yet. The submission isn't finished, even if the file is submitted.",
+    callout: "This is not about getting caught. It is about whether you actually learned anything.",
+    actions: [
+      "Talk to your teacher about redoing or extending part of this on your own.",
+      "Try to restate the main point of your work without looking at it.",
+      "Identify one specific thing you could do differently to own more of this next time.",
+    ],
+  },
+  {
+    min: 5, max: 6,
+    label: "No Stance",
+    lightColor: "#C62828",
+    darkColor:  "#E63946",
+    summary: "Right now, you cannot stand behind this submission. The gap between the product and your understanding is too wide to call this your learning claim.",
+    callout: "This is not a grade problem. It is a learning problem, and it is fixable.",
+    actions: [
+      "Talk to your teacher before this becomes a bigger issue.",
+      "Ask what a do-over would look like, even partial credit on a reattempted version.",
+      "Be honest with yourself: what would it take to actually understand this material?",
+    ],
+  },
+];
+
+function getTier(score, dark) {
+  const tier = TIERS.find(t => score >= t.min && score <= t.max) || TIERS[3];
+  return { ...tier, color: dark ? tier.darkColor : tier.lightColor };
+}
+
+/* ─────────── hooks ─────────── */
+
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(() => window.innerWidth < bp);
+  useEffect(() => {
+    const h = () => setM(window.innerWidth < bp);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, [bp]);
+  return m;
+}
+
+function useTheme(dark) {
+  return {
+    bg:                  dark ? "#0a0a0f"                         : "#f5f5f0",
+    text:                dark ? "#fff"                            : "#1a1a2e",
+    textHigh:            dark ? "rgba(255,255,255,0.65)"          : "rgba(0,0,0,0.6)",
+    textMid:             dark ? "rgba(255,255,255,0.55)"          : "rgba(0,0,0,0.55)",
+    textLow:             dark ? "rgba(255,255,255,0.4)"           : "rgba(0,0,0,0.4)",
+    textFaint:           dark ? "rgba(255,255,255,0.3)"           : "rgba(0,0,0,0.35)",
+    cardBg:              dark ? "rgba(255,255,255,0.02)"          : "rgba(255,255,255,0.7)",
+    cardBorder:          dark ? "1px solid rgba(255,255,255,0.06)": "1px solid rgba(0,0,0,0.08)",
+    cardShadow:          dark ? "none"                            : "0 1px 3px rgba(0,0,0,0.04)",
+    optionBg:            dark ? "rgba(255,255,255,0.03)"          : "rgba(255,255,255,0.65)",
+    optionBgHover:       dark ? "rgba(255,255,255,0.06)"          : "rgba(255,255,255,0.92)",
+    optionBorder:        dark ? "1px solid rgba(255,255,255,0.07)": "1px solid rgba(0,0,0,0.09)",
+    optionBorderActive:  dark ? `1px solid ${ACCENT}55`           : `1px solid ${ACCENT}45`,
+    optionBgActive:      dark ? `${ACCENT}14`                     : `${ACCENT}08`,
+    trackBg:             dark ? "rgba(255,255,255,0.08)"          : "rgba(0,0,0,0.08)",
+    noiseOpacity:        dark ? 0.03                              : 0.015,
+  };
+}
+
+/* ─────────── components ─────────── */
+
+function ThemeToggle({ dark, onToggle }) {
+  return (
+    <button onClick={onToggle} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      style={{ position:"relative", width:56, height:28, borderRadius:14, border:"none", cursor:"pointer",
+        background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
+        transition:"background 0.3s", padding:0, display:"flex", alignItems:"center", flexShrink:0 }}>
+      <div style={{ position:"absolute", left: dark ? 30 : 4, width:20, height:20, borderRadius:"50%",
+        background: dark ? "#1a1a2e" : "#f5f5f0",
+        transition:"left 0.3s, background 0.3s",
+        display:"flex", alignItems:"center", justifyContent:"center", fontSize:12,
+        boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}>
+        {dark ? "🌙" : "☀️"}
+      </div>
+    </button>
+  );
+}
+
+function HamburgerMenu({ open, onToggle, dark, t }) {
+  const barColor  = dark ? "rgba(253,255,243,0.9)" : "rgba(26,26,46,0.75)";
+  const drawerBg  = dark ? "rgba(10,10,15,0.98)"   : "rgba(245,245,240,0.98)";
+  return (
+    <>
+      <button onClick={onToggle} aria-label={open ? "Close menu" : "Open menu"}
+        style={{ position:"fixed", top:20, left:20, zIndex:600,
+          width:30, height:30, background:"none", border:"none", cursor:"pointer",
+          display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+          gap:7, padding:0, transition:"transform 0.3s",
+          transform: open ? "rotate(-90deg)" : "rotate(0deg)" }}>
+        <span style={{ display:"block", width:"100%", height:3, background:barColor, borderRadius:5,
+          transform: open ? "translateY(10px) rotate(-45deg)" : "none", transition:"transform 0.3s" }} />
+        <span style={{ display:"block", width:"100%", height:3, background:barColor, borderRadius:5,
+          opacity: open ? 0 : 1, transition:"opacity 0.3s" }} />
+        <span style={{ display:"block", width:"100%", height:3, background:barColor, borderRadius:5,
+          transform: open ? "translateY(-10px) rotate(45deg)" : "none", transition:"transform 0.3s" }} />
+      </button>
+
+      {open && (
+        <div onClick={onToggle}
+          style={{ position:"fixed", inset:0, zIndex:400, background:"rgba(0,0,0,0.35)", backdropFilter:"blur(2px)" }} />
+      )}
+
+      <div style={{ position:"fixed", top:0, left:0, bottom:0, zIndex:500, width:272,
+        background:drawerBg, backdropFilter:"blur(20px)",
+        borderRight: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+        transform: open ? "translateX(0)" : "translateX(-100%)",
+        transition:"transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+        display:"flex", flexDirection:"column",
+        boxShadow: open ? "4px 0 40px rgba(0,0,0,0.2)" : "none" }}>
+
+        <div style={{ padding:"72px 24px 20px" }}>
+          <div style={{ fontSize:20, fontWeight:300, color:t.text }}>
+            Teacher{" "}
+            <span style={{ fontWeight:700, fontStyle:"italic", color:ACCENT }}>Toolkit</span>
+          </div>
+        </div>
+
+        <div style={{ flex:1, padding:"0 12px", overflowY:"auto" }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em",
+            color:t.textFaint, fontFamily:mono, padding:"0 12px 10px" }}>Tools</div>
+
+          <a href="../index.html"
+            style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10,
+              borderLeft:"3px solid transparent", textDecoration:"none", marginBottom:4, transition:"background 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <span style={{ fontSize:20 }}>⚖️</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:t.textMid, fontFamily:spc }}>AI Friction Scale</div>
+              <div style={{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}>Interactive simulation</div>
+            </div>
+          </a>
+
+          <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, marginBottom:4,
+            background: dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+            borderLeft:`3px solid ${ACCENT}` }}>
+            <span style={{ fontSize:20 }}>✅</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, color:t.text, fontFamily:spc }}>Assessment Check</div>
+              <div style={{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}>Current page</div>
+            </div>
+          </div>
+
+          <div style={{ padding:"16px 14px 8px", fontSize:10, textTransform:"uppercase",
+            letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono }}>Coming Soon</div>
+          {[["📖","High School English"],["📐","Mathematics"],["🔬","Science"],["📜","History"]].map(([icon, label]) => (
+            <div key={label} style={{ display:"flex", alignItems:"center", gap:12,
+              padding:"10px 14px", borderRadius:10, opacity:0.35 }}>
+              <span style={{ fontSize:18 }}>{icon}</span>
+              <div style={{ fontSize:13, color:t.textMid, fontFamily:spc }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ padding:"16px 24px",
+          borderTop: dark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono, lineHeight:1.7 }}>
+            AI Friction Scale Toolkit<br />
+            Based on Jane Beckwith's AI Friction Scale (2025)
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ProgressDots({ step, total, t }) {
+  // step is 1-based (1 = on first question, 5 = on last question)
+  return (
+    <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+      {Array.from({ length: total }, (_, i) => {
+        const done   = i < step - 1;
+        const active = i === step - 1;
+        return (
+          <div key={i} style={{
+            width: active ? 28 : 8, height: 8, borderRadius: 4,
+            background: (done || active) ? ACCENT : t.trackBg,
+            opacity: done ? 0.45 : 1,
+            transition: "all 0.4s cubic-bezier(0.4,0,0.2,1)",
+          }} />
+        );
+      })}
+    </div>
+  );
+}
+
+function OptionCard({ text, score, selected, onSelect, dark, t }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button onClick={() => onSelect(score)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ width:"100%", textAlign:"left", padding:"16px 20px", borderRadius:12,
+        border: selected ? t.optionBorderActive : t.optionBorder,
+        background: selected ? t.optionBgActive : (hovered ? t.optionBgHover : t.optionBg),
+        cursor:"pointer", transition:"all 0.2s",
+        display:"flex", alignItems:"center", gap:14,
+        boxShadow: selected ? `0 0 0 1px ${ACCENT}25` : "none" }}>
+      <div style={{ width:22, height:22, borderRadius:"50%", flexShrink:0,
+        border: selected ? `2px solid ${ACCENT}` : `2px solid ${dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)"}`,
+        background: selected ? ACCENT : "transparent",
+        transition:"all 0.2s",
+        display:"flex", alignItems:"center", justifyContent:"center" }}>
+        {selected && <div style={{ width:8, height:8, borderRadius:"50%", background:"#fff" }} />}
+      </div>
+      <p style={{ margin:0, fontSize:17, lineHeight:1.6,
+        color: selected ? t.text : t.textHigh,
+        fontWeight: selected ? 600 : 400, transition:"all 0.2s" }}>
+        {text}
+      </p>
+    </button>
+  );
+}
+
+function IntroScreen({ onStart, t, dark, isMobile }) {
+  return (
+    <div style={{ maxWidth:560, margin:"0 auto", textAlign:"center" }}>
+      <div style={{ fontSize:60, marginBottom:20, lineHeight:1 }}>🎯</div>
+      <h1 style={{ fontSize: isMobile ? 30 : 50, fontWeight:300, letterSpacing:"-0.02em",
+        lineHeight:1.15, margin:"0 0 12px" }}>
+        Can You Stand{" "}
+        <span style={{ fontWeight:700, fontStyle:"italic", color:ACCENT }}>Behind It?</span>
+      </h1>
+      <p style={{ fontSize: isMobile ? 11 : 12, color:t.textLow, fontFamily:mono,
+        textTransform:"uppercase", letterSpacing:"0.15em", marginBottom:24 }}>
+        A Self-Check for Students
+      </p>
+      <div style={{ background:t.cardBg, border:t.cardBorder, borderRadius:16,
+        padding: isMobile ? "20px 18px" : "28px 32px", marginBottom:28, textAlign:"left",
+        boxShadow:t.cardShadow }}>
+        <p style={{ fontSize: isMobile ? 16 : 18, lineHeight:1.8, color:t.textHigh, margin:"0 0 14px" }}>
+          This tool helps you figure out whether you can actually stand behind the work you submitted.
+        </p>
+        <p style={{ fontSize: isMobile ? 15 : 17, lineHeight:1.75, color:t.textHigh, margin:"0 0 16px" }}>
+          It is not about whether you used AI. It is about whether the evidence of learning is genuinely yours.
+        </p>
+        <div style={{ paddingTop:16,
+          borderTop: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}>
+          <p style={{ fontSize: isMobile ? 13 : 14, lineHeight:1.7, color:t.textLow, margin:0, fontFamily:mono }}>
+            Five questions. About two minutes. Answer honestly.
+          </p>
+        </div>
+      </div>
+      <button onClick={onStart}
+        style={{ padding: isMobile ? "14px 40px" : "16px 52px",
+          background:ACCENT, color:"#fff", border:"none", borderRadius:100,
+          fontSize: isMobile ? 15 : 17, fontWeight:600, cursor:"pointer",
+          letterSpacing:"0.02em", transition:"opacity 0.2s",
+          boxShadow:`0 4px 24px ${ACCENT}40` }}
+        onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+        onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+        Start the Check
+      </button>
+    </div>
+  );
+}
+
+function QuestionScreen({ q, step, total, answer, onAnswer, onNext, onBack, t, dark, isMobile }) {
+  const canNext = answer !== null;
+  const isLast  = step === total;
+  return (
+    <div style={{ maxWidth:600, margin:"0 auto" }}>
+      <div style={{ marginBottom:28 }}>
+        <ProgressDots step={step} total={total} t={t} />
+        <p style={{ textAlign:"center", fontSize:11, color:t.textLow, fontFamily:mono,
+          marginTop:10, textTransform:"uppercase", letterSpacing:"0.12em" }}>
+          Question {step} of {total}
+        </p>
+      </div>
+
+      <div style={{ marginBottom:22 }}>
+        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.22em",
+          color:ACCENT, fontFamily:mono, marginBottom:8, opacity:0.75 }}>
+          Be honest with yourself
+        </div>
+        <h2 style={{ fontSize: isMobile ? 20 : 27, fontWeight:600, lineHeight:1.45,
+          margin:0, letterSpacing:"-0.01em" }}>
+          {q.question}
+        </h2>
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:28 }}>
+        {q.options.map((opt, i) => (
+          <OptionCard key={i} text={opt.text} score={opt.score}
+            selected={answer === opt.score}
+            onSelect={onAnswer} dark={dark} t={t} />
+        ))}
+      </div>
+
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <button onClick={onBack}
+          style={{ padding:"10px 24px", background:"transparent",
+            border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+            borderRadius:100, fontSize:14, color:t.textLow, cursor:"pointer",
+            fontFamily:mono, transition:"all 0.2s" }}
+          onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.borderColor = dark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.22)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = t.textLow; e.currentTarget.style.borderColor = dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"; }}>
+          Back
+        </button>
+        <button onClick={onNext} disabled={!canNext}
+          style={{ padding:"12px 36px",
+            background: canNext ? ACCENT : (dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"),
+            color: canNext ? "#fff" : t.textLow,
+            border:"none", borderRadius:100,
+            fontSize:15, fontWeight:600, cursor: canNext ? "pointer" : "not-allowed",
+            transition:"all 0.3s",
+            boxShadow: canNext ? `0 4px 18px ${ACCENT}35` : "none" }}>
+          {isLast ? "See Results" : "Next"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ResultScreen({ answers, onRestart, t, dark, isMobile }) {
+  const [showBar, setShowBar] = useState(false);
+  const score = answers.reduce((a, b) => a + b, 0);
+  const tier  = getTier(score, dark);
+
+  useEffect(() => {
+    const id = setTimeout(() => setShowBar(true), 120);
+    return () => clearTimeout(id);
+  }, []);
+
+  return (
+    <div style={{ maxWidth:580, margin:"0 auto" }}>
+      <div style={{ textAlign:"center", marginBottom:28 }}>
+        <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.2em",
+          color:t.textLow, fontFamily:mono, marginBottom:10 }}>
+          Your result
+        </div>
+        <div style={{ position:"relative", height:8, background:t.trackBg,
+          borderRadius:4, overflow:"hidden", maxWidth:280, margin:"0 auto 10px" }}>
+          <div style={{ position:"absolute", left:0, top:0, bottom:0,
+            width: showBar ? `${(score / 20) * 100}%` : "0%",
+            background:tier.color, borderRadius:4,
+            transition:"width 0.9s cubic-bezier(0.4,0,0.2,1)" }} />
+        </div>
+        <div style={{ fontSize:13, color:t.textLow, fontFamily:mono }}>
+          {score} / 20
+        </div>
+      </div>
+
+      <div style={{ textAlign:"center", marginBottom:24 }}>
+        <h2 style={{ fontSize: isMobile ? 34 : 52, fontWeight:700, fontStyle:"italic",
+          color:tier.color, letterSpacing:"-0.02em", margin:0 }}>
+          {tier.label}
+        </h2>
+      </div>
+
+      <div style={{ background:t.cardBg, border:t.cardBorder, borderRadius:16,
+        padding: isMobile ? "20px 18px" : "24px 28px", marginBottom:14,
+        boxShadow:t.cardShadow }}>
+        <p style={{ fontSize: isMobile ? 16 : 18, lineHeight:1.8, color:t.textHigh, margin:"0 0 16px" }}>
+          {tier.summary}
+        </p>
+        <p style={{ fontSize: isMobile ? 14 : 16, lineHeight:1.7,
+          color:tier.color, fontStyle:"italic", margin:0,
+          paddingTop:14,
+          borderTop: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)" }}>
+          {tier.callout}
+        </p>
+      </div>
+
+      <div style={{ background: dark ? `${tier.color}10` : `${tier.color}07`,
+        border:`1px solid ${tier.color}22`, borderRadius:16,
+        padding: isMobile ? "20px 18px" : "24px 28px", marginBottom:32 }}>
+        <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.2em",
+          color:tier.color, fontFamily:mono, marginBottom:16, opacity:0.85 }}>
+          What to do now
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+          {tier.actions.map((action, i) => (
+            <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12 }}>
+              <div style={{ minWidth:24, height:24, borderRadius:"50%", flexShrink:0,
+                background:tier.color, color:"#fff",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:11, fontWeight:700, fontFamily:mono, marginTop:2 }}>
+                {i + 1}
+              </div>
+              <p style={{ margin:0, fontSize: isMobile ? 15 : 16, lineHeight:1.75, color:t.textHigh }}>
+                {action}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ textAlign:"center" }}>
+        <button onClick={onRestart}
+          style={{ padding:"12px 36px", background:"transparent",
+            border: dark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.12)",
+            borderRadius:100, fontSize:14, color:t.textMid, cursor:"pointer",
+            fontFamily:mono, transition:"all 0.2s" }}
+          onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.borderColor = dark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.22)"; }}
+          onMouseLeave={e => { e.currentTarget.style.color = t.textMid; e.currentTarget.style.borderColor = dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"; }}>
+          Start Over
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────── App ─────────── */
+
+function App() {
+  const isMobile = useIsMobile();
+  const [dark, setDark]       = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [step, setStep]       = useState(0); // 0=intro, 1-5=questions, 6=result
+  const [answers, setAnswers] = useState([null, null, null, null, null]);
+  const t = useTheme(dark);
+
+  useEffect(() => {
+    document.body.style.background = t.bg;
+    document.body.style.color      = t.text;
+  }, [dark]);
+
+  function handleAnswer(score) {
+    const qi   = step - 1;
+    const next = [...answers];
+    next[qi]   = score;
+    setAnswers(next);
+  }
+
+  function handleNext() {
+    setStep(s => Math.min(s + 1, 6));
+  }
+
+  function handleBack() {
+    setStep(s => Math.max(s - 1, 0));
+  }
+
+  function handleRestart() {
+    setStep(0);
+    setAnswers([null, null, null, null, null]);
+  }
+
+  const currentQ      = step >= 1 && step <= 5 ? QUESTIONS[step - 1] : null;
+  const currentAnswer = step >= 1 && step <= 5 ? answers[step - 1]   : null;
+
+  const topLabel =
+    step === 0 ? "AI Friction Scale Toolkit" :
+    step === 6 ? "Results" :
+    `Question ${step} of 5`;
+
+  return (
+    <div style={{ minHeight:"100vh", background:t.bg, color:t.text,
+      fontFamily:"'Crimson Pro', Georgia, serif",
+      position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" }}>
+
+      <div style={{ position:"fixed", inset:0,
+        backgroundImage:`radial-gradient(circle at 30% 40%, ${ACCENT}05 0%, transparent 50%), radial-gradient(circle at 75% 70%, ${ACCENT}03 0%, transparent 40%)`,
+        pointerEvents:"none" }} />
+
+      <div style={{ position:"fixed", inset:0, opacity:t.noiseOpacity,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        pointerEvents:"none" }} />
+
+      <HamburgerMenu open={menuOpen} onToggle={() => setMenuOpen(!menuOpen)} dark={dark} t={t} />
+
+      <div style={{ position:"relative", zIndex:1, maxWidth:740, margin:"0 auto",
+        padding: isMobile ? "20px 14px 48px" : "30px 28px 64px" }}>
+
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+          marginBottom: isMobile ? 32 : 52 }}>
+          <div style={{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.2em",
+            color: step >= 1 && step <= 5 ? ACCENT : t.textFaint,
+            fontFamily:mono, paddingLeft:44, transition:"color 0.3s" }}>
+            {topLabel}
+          </div>
+          <ThemeToggle dark={dark} onToggle={() => setDark(!dark)} />
+        </div>
+
+        {step === 0 && (
+          <IntroScreen onStart={() => setStep(1)} t={t} dark={dark} isMobile={isMobile} />
+        )}
+
+        {currentQ && (
+          <QuestionScreen
+            q={currentQ}
+            step={step}
+            total={5}
+            answer={currentAnswer}
+            onAnswer={handleAnswer}
+            onNext={handleNext}
+            onBack={handleBack}
+            t={t} dark={dark} isMobile={isMobile}
+          />
+        )}
+
+        {step === 6 && (
+          <ResultScreen
+            answers={answers}
+            onRestart={handleRestart}
+            t={t} dark={dark} isMobile={isMobile}
+          />
+        )}
+
+        {(step === 0 || step === 6) && (
+          <footer style={{ textAlign:"center", marginTop: isMobile ? 48 : 72 }}>
+            <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono,
+              letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8 }}>
+              AI Friction Scale Toolkit — Assessment Check<br />
+              Kevin Farrant — Based on Jane Beckwith's AI Friction Scale (2025)
+            </div>
+          </footer>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
