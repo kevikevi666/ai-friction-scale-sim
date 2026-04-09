@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Assessment Check — AI Friction Scale Toolkit</title>
+<title>Assessment Check — Kevin Farrant</title>
 <meta name="description" content="A student self-check tool for the AI era. Can you stand behind what you submitted?" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -289,8 +289,8 @@ function HamburgerMenu({ open, onToggle, dark, t }) {
         <div style={{ padding:"16px 24px",
           borderTop: dark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.06)" }}>
           <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono, lineHeight:1.7 }}>
-            AI Friction Scale Toolkit<br />
-            Based on Jane Beckwith's AI Friction Scale (2025)
+            Kevin Farrant<br />
+            Assessment Check
           </div>
         </div>
       </div>
@@ -574,7 +574,7 @@ function App() {
   const currentAnswer = step >= 1 && step <= 5 ? answers[step - 1]   : null;
 
   const topLabel =
-    step === 0 ? "AI Friction Scale Toolkit" :
+    step === 0 ? "Kevin Farrant" :
     step === 6 ? "Results" :
     `Question ${step} of 5`;
 
@@ -635,8 +635,7 @@ function App() {
           <footer style={{ textAlign:"center", marginTop: isMobile ? 48 : 72 }}>
             <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono,
               letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8 }}>
-              AI Friction Scale Toolkit — Assessment Check<br />
-              Kevin Farrant — Based on Jane Beckwith's AI Friction Scale (2025)
+              Kevin Farrant — Assessment Check
             </div>
           </footer>
         )}
