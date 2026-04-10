@@ -725,6 +725,34 @@ function AgencyWhatChanged({ t, isMobile }) {
   );
 }
 
+const AGENCY_CONSTANTS = [
+  {
+    verb: "Direct",
+    color: { dark: "#2A9D8F", light: "#00796B" },
+    description: "You decide whether AI belongs in this work, and where on the spectrum you stand. You don't default to the most convenient mode. That decision is always yours.",
+  },
+  {
+    verb: "Question",
+    color: { dark: "#818CF8", light: "#4338CA" },
+    description: "You treat every output as a draft, not a verdict. Confidence isn't accuracy. Fluency isn't correctness. These tools are designed to agree with you. Your skepticism is the counterweight.",
+  },
+  {
+    verb: "Own",
+    color: { dark: "#F4A261", light: "#C2560C" },
+    description: "You know which parts of the work are genuinely yours. You can say so clearly. You don't obscure the line between what you built and what AI produced.",
+  },
+  {
+    verb: "Consider",
+    color: { dark: "#A78BFA", light: "#6D28D9" },
+    description: "You think past the artifact. What are you not learning by not doing this yourself? Who is affected when this work enters the world? What assumptions came embedded in the model?",
+  },
+  {
+    verb: "Grow",
+    color: { dark: "#34D399", light: "#047857" },
+    description: "You are not finding your role and staying there. Your fluency across all three modes develops over time. Moving between Author, Designer, and Conductor with judgment is the actual goal.",
+  },
+];
+
 /* ───────── Agency: Spectrum Interactive ───────── */
 function AgencySpectrumView({ t, isMobile }) {
   const [activeRole, setActiveRole] = useState("author");
@@ -811,6 +839,61 @@ function AgencySpectrumView({ t, isMobile }) {
         React.createElement("div", { style: { fontSize: 10, fontFamily: mono, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textFaint, marginBottom: 3 }}, "Relation to the Friction Scale"),
         React.createElement("p", { style: { fontSize: isMobile ? 12 : 13, lineHeight: 1.6, color: t.textMid, margin: 0, fontStyle: "italic" }}, role.frictionScaleRelation)),
     ),
+  );
+}
+
+/* ───────── Agency: Constants ───────── */
+function AgencyConstants({ t, isMobile }) {
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What You Never Outsource"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 4, maxWidth: 680 }},
+      "Whatever role you're in, five things stay with you."),
+    React.createElement("p", { style: { fontSize: isMobile ? 14 : 16, color: t.textMid, lineHeight: 1.7, marginBottom: 28, maxWidth: 680 }},
+      "The roles describe where you sit on the spectrum. These describe how to hold that position responsibly."),
+    React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
+        gap: isMobile ? 12 : 16,
+      }
+    },
+      AGENCY_CONSTANTS.map((c, i) => {
+        const isDark = t.bg === "#0a0a0f";
+        const clr = isDark ? c.color.dark : c.color.light;
+        return React.createElement("div", {
+          key: c.verb,
+          style: {
+            background: t.cardBg,
+            border: t.cardBorder,
+            borderRadius: 12,
+            padding: isMobile ? "16px 14px" : "20px 18px",
+            boxShadow: t.cardShadow,
+            borderTop: `3px solid ${clr}`,
+            gridColumn: isMobile && i === 4 ? "1 / -1" : "auto",
+          }
+        },
+          React.createElement("div", {
+            style: {
+              fontFamily: mono,
+              fontSize: isMobile ? 18 : 22,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              color: clr,
+              marginBottom: 10,
+              textTransform: "uppercase",
+            }
+          }, c.verb),
+          React.createElement("p", {
+            style: {
+              fontSize: isMobile ? 13 : 14,
+              lineHeight: 1.7,
+              color: t.textHigh,
+              margin: 0,
+            }
+          }, c.description)
+        );
+      })
+    )
   );
 }
 
@@ -1061,6 +1144,7 @@ function AgencyTab({ t, isMobile }) {
         "When AI can do the work, what should students learn? A framework for teaching in the agentic era.")),
     React.createElement(AgencyWhatChanged, { t, isMobile }),
     React.createElement(AgencySpectrumView, { t, isMobile }),
+    React.createElement(AgencyConstants, { t, isMobile }),
     React.createElement(AgencyWalkThrough, { t, isMobile }),
     React.createElement(AgencyTerminalSim, { t, isMobile }),
     React.createElement(AgencyAttribution, { t, isMobile }),
