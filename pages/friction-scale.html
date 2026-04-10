@@ -512,132 +512,25 @@ function useScrollHide(threshold = 10) {
 }
 
 /* ───────── Hamburger Menu ───────── */
-function HamburgerMenu({ open, onToggle, darkMode, levelColor, t, onNavigate, activeTab, visible }) {
-  const barColor = darkMode ? "rgba(253,255,243,0.9)" : "rgba(26,26,46,0.75)";
-  const drawerBg = darkMode ? "rgba(10,10,15,0.98)" : "rgba(245,245,240,0.98)";
-
-  return React.createElement(React.Fragment, null,
-
-    // Floating toggle button
-    React.createElement("button", {
-      onClick: onToggle,
-      "aria-label": open ? "Close menu" : "Open menu",
-      style: {
-        position:"fixed", top:20, left:20, zIndex:600,
-        width:30, height:30, background:"none", border:"none", cursor:"pointer",
-        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-        gap:7, padding:0,
-        transform: open ? "rotate(-90deg)" : (visible ? "rotate(0deg)" : "translateX(-60px)"),
-        opacity: open ? 1 : (visible ? 1 : 0),
-        pointerEvents: open || visible ? "auto" : "none",
-        transition:"transform 0.3s, opacity 0.3s",
-      }
-    },
-      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5, position:"relative", zIndex:1,
-        transform: open ? "translateY(21px) rotate(-60deg)" : "none",
-        transformOrigin: open ? "left center" : "center",
-        transition:"transform 0.3s",
-      }}),
-      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5, position:"relative", zIndex:2,
-        transform: open ? "translateY(10px) rotate(60deg)" : "none",
-        transformOrigin: open ? "right center" : "center",
-        transition:"transform 0.3s",
-      }}),
-      React.createElement("span", { style: { display:"block", width:"100%", height:3, background:barColor, borderRadius:5,
-        transition:"opacity 0.3s",
-      }}),
-    ),
-
-    // Backdrop
-    open && React.createElement("div", {
-      onClick: onToggle,
-      style: { position:"fixed", inset:0, zIndex:400, background:"rgba(0,0,0,0.35)", backdropFilter:"blur(2px)" }
-    }),
-
-    // Slide-out drawer
-    React.createElement("div", { style: {
-      position:"fixed", top:0, left:0, bottom:0, zIndex:500,
-      width:272, background:drawerBg, backdropFilter:"blur(20px)",
-      borderRight: darkMode ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
-      transform: open ? "translateX(0)" : "translateX(-100%)",
-      transition:"transform 0.3s cubic-bezier(0.4,0,0.2,1)",
-      display:"flex", flexDirection:"column",
-      boxShadow: open ? "4px 0 40px rgba(0,0,0,0.2)" : "none",
-    }},
-
-      // Drawer header
-      React.createElement("div", { style:{ padding:"72px 24px 20px" }},
-        React.createElement("div", { style:{ fontSize:20, fontWeight:300, color:t.text }},
-          "Teacher ", React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:levelColor }}, "Toolkit")
-        ),
-      ),
-
-      // Nav items
-      React.createElement("div", { style:{ flex:1, padding:"0 12px", overflowY:"auto" }},
-        React.createElement("div", { style:{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono, padding:"0 12px 10px" }}, "Tools"),
-
-        // Friction Scale
-        React.createElement("button", { onClick: () => { onNavigate("scale"); onToggle(); }, style:{
-          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
-          background: activeTab !== "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
-          borderLeft: activeTab !== "agency" ? `3px solid ${levelColor}` : "3px solid transparent",
-          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
-        }},
-          React.createElement("span", { style:{ fontSize:20 }}, "\u2696\uFE0F"),
-          React.createElement("div", null,
-            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab !== "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "AI Friction Scale"),
-            activeTab !== "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
-          ),
-        ),
-
-        // Agency Spectrum
-        React.createElement("button", { onClick: () => { onNavigate("agency"); onToggle(); }, style:{
-          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
-          background: activeTab === "agency" ? (darkMode ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)") : "transparent",
-          borderLeft: activeTab === "agency" ? `3px solid ${t.accent}` : "3px solid transparent",
-          border: "none", cursor: "pointer", textAlign: "left", marginBottom:4,
-        }},
-          React.createElement("span", { style:{ fontSize:20 }}, "\uD83E\uDD16"),
-          React.createElement("div", null,
-            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color: activeTab === "agency" ? t.text : t.textMid, fontFamily:"'Space Mono', monospace" }}, "The Agency Spectrum"),
-            activeTab === "agency" && React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Current page"),
-          ),
-        ),
-
-        // Assessment Check
-        React.createElement("button", { onClick: () => { window.location.href = "/pages/assessment.html"; }, style:{
-          display:"flex", alignItems:"center", gap:12, padding:"12px 14px", borderRadius:10, width:"100%",
-          background:"transparent", borderLeft:"3px solid transparent",
-          border:"none", cursor:"pointer", textAlign:"left", marginBottom:4,
-        },
-          onMouseEnter: e => e.currentTarget.style.background = darkMode ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
-          onMouseLeave: e => e.currentTarget.style.background = "transparent",
-        },
-          React.createElement("span", { style:{ fontSize:20 }}, "\u2705"),
-          React.createElement("div", null,
-            React.createElement("div", { style:{ fontSize:13, fontWeight:600, color:t.textMid, fontFamily:"'Space Mono', monospace" }}, "Assessment Check"),
-            React.createElement("div", { style:{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}, "Student self-check tool"),
-          ),
-        ),
-
-        // Coming soon
-        React.createElement("div", { style:{ padding:"16px 14px 8px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono }}, "Coming Soon"),
-        ...[["\uD83D\uDCD6","English"],["\uD83D\uDCD0","Mathematics"],["\uD83D\uDD2C","Science"],["\uD83D\uDCDC","History"]].map(([icon, label]) =>
-          React.createElement("div", { key:label, style:{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:10, opacity:0.35 }},
-            React.createElement("span", { style:{ fontSize:18 }}, icon),
-            React.createElement("div", { style:{ fontSize:13, color:t.textMid, fontFamily:"'Space Mono', monospace" }}, label),
-          )
-        ),
-      ),
-
-      // Drawer footer
-      React.createElement("div", { style:{ padding:"16px 24px", borderTop: darkMode ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.06)" }},
-        React.createElement("div", { style:{ fontSize:10, color:t.textFaint, fontFamily:mono, lineHeight:1.7 }},
-          "AI Agency Toolkit", React.createElement("br"), "Kevin Farrant"
-        ),
-      ),
-    ),
-  );
+function HomeButton({ dark, t }) {
+  const [hovered, setHovered] = React.useState(false);
+  return React.createElement("a", {
+    href: "/",
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false),
+    style: {
+      position: "fixed", top: 20, left: 20, zIndex: 600,
+      display: "flex", alignItems: "center", gap: 7,
+      textDecoration: "none",
+      fontFamily: "'Space Mono', monospace",
+      fontSize: 11, fontWeight: 700, letterSpacing: "0.05em",
+      color: hovered ? t.text : t.textMid,
+      padding: "6px 10px", borderRadius: 8,
+      border: `1px solid ${hovered ? (dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)") : "transparent"}`,
+      background: hovered ? (dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)") : "transparent",
+      transition: "color 0.15s, border-color 0.15s, background 0.15s",
+    }
+  }, "\u2190 AI Agency Toolkit");
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1178,7 +1071,6 @@ function AgencyTab({ t, isMobile }) {
 function App() {
   const isMobile = useIsMobile();
   const [darkMode, setDarkMode] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(0);
   const [frictionValue, setFrictionValue] = useState(100);
   const [selectedScenario, setSelectedScenario] = useState(null);
@@ -1237,7 +1129,6 @@ function App() {
   const level = LEVELS[selectedLevel];
   const displayLevel = hoveredLevel !== null ? LEVELS[hoveredLevel] : level;
   const pad = isMobile ? 16 : 28;
-  const menuVisible = useScrollHide();
 
   // Update body bg
   useEffect(() => { document.body.style.background = t.bg; document.body.style.color = t.text; }, [darkMode]);
@@ -1268,7 +1159,7 @@ function App() {
     React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
 
     // Hamburger menu (always visible)
-    React.createElement(HamburgerMenu, { open:menuOpen, onToggle:()=>setMenuOpen(!menuOpen), darkMode, levelColor:level.color, t, onNavigate: (tab) => setActiveTab(tab), activeTab, visible: menuVisible }),
+    React.createElement(HomeButton, { dark: darkMode, t }),
 
     // ═══ AGENCY STANDALONE PAGE ═══
     activeTab === "agency" && React.createElement("div", {
