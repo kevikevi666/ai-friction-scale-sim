@@ -45,6 +45,8 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { border-radius: 4px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideInLeft  { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: translateX(0); } }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
@@ -843,56 +845,219 @@ function AgencySpectrumView({ t, isMobile }) {
 
 /* ───────── Agency: Constants ───────── */
 function AgencyConstants({ t, isMobile }) {
-  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 }},
-    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 }}, "What You Never Outsource"),
-    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 4, maxWidth: 680 }},
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState("next");
+  const [showAll, setShowAll] = useState(false);
+  const touchStartRef = useRef(null);
+  const activeIndexRef = useRef(0);
+  const showAllRef = useRef(false);
+  const total = AGENCY_CONSTANTS.length;
+  const isDark = t.bg === "#0a0a0f";
+
+  useEffect(() => { activeIndexRef.current = activeIndex; }, [activeIndex]);
+  useEffect(() => { showAllRef.current = showAll; }, [showAll]);
+
+  const goNext = () => {
+    if (activeIndexRef.current < total - 1) {
+      setDirection("next");
+      setActiveIndex(i => i + 1);
+    }
+  };
+  const goPrev = () => {
+    if (activeIndexRef.current > 0) {
+      setDirection("prev");
+      setActiveIndex(i => i - 1);
+    }
+  };
+  const goTo = (i) => {
+    setDirection(i > activeIndexRef.current ? "next" : "prev");
+    setActiveIndex(i);
+    setShowAll(false);
+  };
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (showAllRef.current) return;
+      if (e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowLeft") goPrev();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const handleTouchStart = (e) => { touchStartRef.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 40) return;
+    if (dx < 0) goNext(); else goPrev();
+  };
+
+  const c = AGENCY_CONSTANTS[activeIndex];
+  const clr = isDark ? c.color.dark : c.color.light;
+  const prevC = activeIndex > 0 ? AGENCY_CONSTANTS[activeIndex - 1] : null;
+  const nextC = activeIndex < total - 1 ? AGENCY_CONSTANTS[activeIndex + 1] : null;
+
+  return React.createElement("div", { style: { marginBottom: isMobile ? 40 : 56 } },
+    // Header
+    React.createElement("h3", { style: { fontSize: isMobile ? 26 : 36, fontWeight: 300, color: t.text, marginBottom: 10, lineHeight: 1.2 } }, "What You Never Outsource"),
+    React.createElement("p", { style: { fontSize: isMobile ? 16 : 19, color: t.textHigh, lineHeight: 1.7, marginBottom: 4, maxWidth: 680 } },
       "Whatever role you're in, five things stay with you."),
-    React.createElement("p", { style: { fontSize: isMobile ? 14 : 16, color: t.textMid, lineHeight: 1.7, marginBottom: 28, maxWidth: 680 }},
+    React.createElement("p", { style: { fontSize: isMobile ? 14 : 16, color: t.textMid, lineHeight: 1.7, marginBottom: 28, maxWidth: 680 } },
       "The roles describe where you sit on the spectrum. These describe how to hold that position responsibly."),
-    React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
-        gap: isMobile ? 12 : 16,
-      }
-    },
-      AGENCY_CONSTANTS.map((c, i) => {
-        const isDark = t.bg === "#0a0a0f";
-        const clr = isDark ? c.color.dark : c.color.light;
-        return React.createElement("div", {
-          key: c.verb,
+
+    // ── DECK VIEW ──
+    !showAll && React.createElement("div", null,
+      React.createElement("div", {
+        onTouchStart: handleTouchStart,
+        onTouchEnd: handleTouchEnd,
+        style: {
+          position: "relative", overflow: "hidden",
+          background: t.cardBg, border: t.cardBorder, borderRadius: 16,
+          borderTop: `3px solid ${clr}`,
+          padding: isMobile ? "24px 20px 20px" : "36px 40px 28px",
+          boxShadow: t.cardShadow,
+          minHeight: isMobile ? 260 : 300,
+          transition: "border-top-color 0.4s ease",
+        }
+      },
+        // Color tint background
+        React.createElement("div", { style: {
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: `radial-gradient(ellipse at 20% 50%, ${clr}0c 0%, transparent 65%)`,
+          transition: "background 0.5s ease",
+        }}),
+
+        // Progress dots
+        React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: isMobile ? 20 : 28, position: "relative", zIndex: 1 } },
+          AGENCY_CONSTANTS.map((_, i) => React.createElement("div", {
+            key: i,
+            onClick: () => goTo(i),
+            style: {
+              width: i === activeIndex ? 22 : 8, height: 8, borderRadius: 4,
+              background: i === activeIndex ? clr : t.textGhost,
+              transition: "all 0.35s ease", cursor: "pointer",
+            }
+          }))
+        ),
+
+        // Verb + description — keyed so React remounts on change, triggering animation
+        React.createElement("div", {
+          key: activeIndex,
           style: {
-            background: t.cardBg,
-            border: t.cardBorder,
-            borderRadius: 12,
-            padding: isMobile ? "16px 14px" : "20px 18px",
-            boxShadow: t.cardShadow,
-            borderTop: `3px solid ${clr}`,
-            gridColumn: isMobile && i === 4 ? "1 / -1" : "auto",
+            position: "relative", zIndex: 1,
+            animation: `${direction === "next" ? "slideInRight" : "slideInLeft"} 0.35s ease both`,
           }
         },
-          React.createElement("div", {
+          React.createElement("div", { style: {
+            fontFamily: mono, fontWeight: 700, textTransform: "uppercase",
+            fontSize: isMobile ? 54 : 84, letterSpacing: "0.01em",
+            color: clr, lineHeight: 1, marginBottom: isMobile ? 18 : 24,
+          }}, c.verb),
+          React.createElement("p", { style: {
+            fontSize: isMobile ? 15 : 18, lineHeight: 1.75,
+            color: t.textHigh, margin: 0, maxWidth: 580,
+          }}, c.description),
+        ),
+
+        // Nav row
+        React.createElement("div", {
+          style: {
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            marginTop: isMobile ? 28 : 36, position: "relative", zIndex: 1,
+          }
+        },
+          // Prev
+          React.createElement("button", {
+            onClick: goPrev,
             style: {
-              fontFamily: mono,
-              fontSize: isMobile ? 18 : 22,
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              color: clr,
-              marginBottom: 10,
-              textTransform: "uppercase",
+              display: "flex", alignItems: "center", gap: 8,
+              background: "transparent", border: "none",
+              cursor: activeIndex === 0 ? "default" : "pointer",
+              opacity: activeIndex === 0 ? 0.2 : 1,
+              transition: "opacity 0.2s", padding: "4px 0",
             }
-          }, c.verb),
-          React.createElement("p", {
+          },
+            React.createElement("span", { style: { fontSize: 20, color: prevC ? (isDark ? prevC.color.dark : prevC.color.light) : t.textFaint } }, "←"),
+            prevC && React.createElement("span", { style: { fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textMid } }, prevC.verb)
+          ),
+
+          // Counter
+          React.createElement("span", { style: { fontFamily: mono, fontSize: 11, color: t.textFaint, letterSpacing: "0.1em" } },
+            `${activeIndex + 1} / ${total}`),
+
+          // Next
+          React.createElement("button", {
+            onClick: goNext,
             style: {
-              fontSize: isMobile ? 13 : 14,
-              lineHeight: 1.7,
-              color: t.textHigh,
-              margin: 0,
+              display: "flex", alignItems: "center", gap: 8,
+              background: "transparent", border: "none",
+              cursor: activeIndex === total - 1 ? "default" : "pointer",
+              opacity: activeIndex === total - 1 ? 0.2 : 1,
+              transition: "opacity 0.2s", padding: "4px 0",
             }
-          }, c.description)
-        );
-      })
-    )
+          },
+            nextC && React.createElement("span", { style: { fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: t.textMid } }, nextC.verb),
+            React.createElement("span", { style: { fontSize: 20, color: nextC ? (isDark ? nextC.color.dark : nextC.color.light) : t.textFaint } }, "→")
+          ),
+        ),
+      ),
+
+      // See all toggle
+      React.createElement("button", {
+        onClick: () => setShowAll(true),
+        style: {
+          marginTop: 14, background: "transparent", border: "none", cursor: "pointer",
+          fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em",
+          color: t.textFaint, padding: "6px 0",
+          textDecoration: "underline", textUnderlineOffset: "4px",
+        }
+      }, "See all five →"),
+    ),
+
+    // ── GRID VIEW (show all) ──
+    showAll && React.createElement("div", { style: { animation: "fadeIn 0.3s ease" } },
+      React.createElement("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)",
+          gap: isMobile ? 12 : 16, marginBottom: 14,
+        }
+      },
+        AGENCY_CONSTANTS.map((card, i) => {
+          const cardClr = isDark ? card.color.dark : card.color.light;
+          return React.createElement("div", {
+            key: card.verb,
+            onClick: () => goTo(i),
+            style: {
+              background: t.cardBg, border: t.cardBorder, borderRadius: 12,
+              padding: isMobile ? "16px 14px" : "20px 18px",
+              boxShadow: t.cardShadow, borderTop: `3px solid ${cardClr}`,
+              cursor: "pointer", transition: "transform 0.2s",
+              gridColumn: isMobile && i === 4 ? "1 / -1" : "auto",
+            }
+          },
+            React.createElement("div", { style: {
+              fontFamily: mono, fontSize: isMobile ? 14 : 16, fontWeight: 700,
+              letterSpacing: "0.06em", color: cardClr, marginBottom: 8, textTransform: "uppercase",
+            }}, card.verb),
+            React.createElement("p", { style: {
+              fontSize: isMobile ? 12 : 13, lineHeight: 1.65, color: t.textHigh, margin: 0,
+            }}, card.description)
+          );
+        })
+      ),
+      React.createElement("button", {
+        onClick: () => setShowAll(false),
+        style: {
+          background: "transparent", border: "none", cursor: "pointer",
+          fontFamily: mono, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em",
+          color: t.textFaint, padding: "6px 0",
+          textDecoration: "underline", textUnderlineOffset: "4px",
+        }
+      }, "← Back to deck"),
+    ),
   );
 }
 
