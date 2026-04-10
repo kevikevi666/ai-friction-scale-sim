@@ -280,7 +280,7 @@ function App() {
           marginBottom: 16,
           letterSpacing: "-0.01em",
         }
-      }, "Tools for thinking about AI and student agency in learning."),
+      }, "Tools for thinking about AI and student agency in learning"),
 
       // Subline
       React.createElement("p", {
@@ -289,12 +289,13 @@ function App() {
           fontSize: isMobile ? 12 : 13,
           color: t.textLow,
           textAlign: "center",
-          maxWidth: 400,
+          maxWidth: 480,
           lineHeight: 1.6,
           marginBottom: isMobile ? 40 : 56,
           letterSpacing: "0.02em",
+          whiteSpace: isMobile ? "normal" : "nowrap",
         }
-      }, "Three interactive tools for teachers and students."),
+      }, "Three interactive tools for teachers and students"),
 
       // Cards
       React.createElement("div", {
