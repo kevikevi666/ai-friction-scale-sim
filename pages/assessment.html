@@ -461,12 +461,19 @@ function App() {
   const [dark, setDark]       = useState(false);
   const [step, setStep]       = useState(0); // 0=intro, 1-5=questions, 6=result
   const [answers, setAnswers] = useState([null, null, null, null, null]);
+  const [atTop, setAtTop]     = useState(true);
   const t = useTheme(dark);
 
   useEffect(() => {
     document.body.style.background = t.bg;
     document.body.style.color      = t.text;
   }, [dark]);
+
+  useEffect(() => {
+    const h = () => setAtTop(window.scrollY < 10);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
+  }, []);
 
   function handleAnswer(score) {
     const qi   = step - 1;
@@ -509,11 +516,13 @@ function App() {
         backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         pointerEvents:"none" }} />
 
-      {!isMobile && (
-        <div style={{ position:"relative", zIndex:1 }}>
-          <HomeButton dark={dark} t={t} />
-        </div>
-      )}
+      <div style={{ position:"relative", zIndex:1,
+        opacity: isMobile ? (atTop ? 1 : 0) : 1,
+        pointerEvents: isMobile && !atTop ? "none" : "auto",
+        transition: "opacity 0.25s",
+      }}>
+        <HomeButton dark={dark} t={t} />
+      </div>
 
       <div style={{ position:"relative", zIndex:1, maxWidth:740, margin:"0 auto",
         padding: isMobile ? "20px 14px 48px" : "30px 28px 64px" }}>
