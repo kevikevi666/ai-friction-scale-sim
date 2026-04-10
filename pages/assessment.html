@@ -470,7 +470,7 @@ function App() {
   }, [dark]);
 
   useEffect(() => {
-    const h = () => setAtTop(window.scrollY < 10);
+    const h = () => setAtTop(window.scrollY < 60);
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
