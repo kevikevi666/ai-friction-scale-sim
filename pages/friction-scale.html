@@ -1411,13 +1411,15 @@ function App() {
     React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
     React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
 
-    // Home button — fades out on scroll, reappears at top
-    React.createElement("div", { style: { position: "relative", zIndex: 1, padding: "16px 20px",
-      opacity: isMobile ? (atTop ? 1 : 0) : 1,
-      pointerEvents: isMobile && !atTop ? "none" : "auto",
-      transition: "opacity 0.25s",
-    } },
-      React.createElement(HomeButton, { dark: darkMode, t })
+    // Site nav
+    React.createElement("header", { style: { position:"relative", zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` } },
+      React.createElement("a", { href:"/", style:{ fontFamily:"'Space Mono', monospace", fontSize:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" } }, "AITT"),
+      !isMobile && React.createElement("nav", { style:{ display:"flex", gap:28, alignItems:"center" } },
+        React.createElement("a", { href:"/agency", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" } }, "THE AGENCY SPECTRUM"),
+        React.createElement("a", { href:"/pages/friction-scale.html", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" } }, "AI FRICTION SCALE"),
+        React.createElement("a", { href:"/pages/assessment.html", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" } }, "ASSESSMENT CHECK"),
+      ),
+      React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
     ),
 
     // ═══ AGENCY STANDALONE PAGE ═══
@@ -1440,11 +1442,6 @@ function App() {
 
     // ═══ FRICTION SCALE PAGES ═══
     activeTab !== "agency" && React.createElement("div", { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onWheel: handleWheel, style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
-
-      // Theme toggle row
-      React.createElement("div", { style: { display:"flex", justifyContent:"flex-end", marginBottom: 8 } },
-        React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
-      ),
 
       // Header
       React.createElement("header", { style: { textAlign:"center", marginBottom:isMobile?20:40 } },
