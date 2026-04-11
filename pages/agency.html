@@ -26,11 +26,11 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
-  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.4s, color 0.4s; }
-  button { font-family: inherit; cursor: pointer; }
-  ::-webkit-scrollbar { width: 4px; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.5s, color 0.5s; }
+  button { font-family: inherit; }
+  ::-webkit-scrollbar { height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { border-radius: 4px; background: rgba(128,128,128,0.2); }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; }
   @keyframes termCursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
   .term-cursor { display: inline-block; width: 7px; height: 14px; background: #1d1d1d; vertical-align: text-bottom; margin-left: 1px; animation: termCursor 1.1s step-start infinite; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
@@ -61,17 +61,19 @@ function useIsMobile(bp = 768) {
 function useTheme(dark) {
   return {
     bg:           dark ? "#0a0a0f"                    : "#f5f5f0",
-    text:         dark ? "#ffffff"                    : "#1a1a2e",
+    text:         dark ? "#fff"                       : "#1a1a2e",
     textHigh:     dark ? "rgba(255,255,255,0.65)"     : "rgba(0,0,0,0.6)",
     textMid:      dark ? "rgba(255,255,255,0.55)"     : "rgba(0,0,0,0.55)",
     textLow:      dark ? "rgba(255,255,255,0.4)"      : "rgba(0,0,0,0.4)",
-    textFaint:    dark ? "rgba(255,255,255,0.2)"      : "rgba(0,0,0,0.2)",
-    cardBg:       dark ? "rgba(255,255,255,0.025)"    : "rgba(255,255,255,0.75)",
-    cardBorder:   dark ? "rgba(255,255,255,0.07)"     : "rgba(0,0,0,0.09)",
-    cardShadow:   dark ? "none"                       : "0 2px 12px rgba(0,0,0,0.06)",
+    textFaint:    dark ? "rgba(255,255,255,0.3)"      : "rgba(0,0,0,0.35)",
+    textGhost:    dark ? "rgba(255,255,255,0.2)"      : "rgba(0,0,0,0.25)",
+    cardBg:       dark ? "rgba(255,255,255,0.02)"     : "rgba(255,255,255,0.7)",
+    cardBorder:   dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+    cardShadow:   dark ? "none"                       : "0 1px 3px rgba(0,0,0,0.04)",
     divider:      dark ? "rgba(255,255,255,0.06)"     : "rgba(0,0,0,0.07)",
     subtleBg:     dark ? "rgba(255,255,255,0.02)"     : "rgba(0,0,0,0.025)",
     subtleBorder: dark ? "rgba(255,255,255,0.05)"     : "rgba(0,0,0,0.07)",
+    noiseOpacity: dark ? 0.03 : 0.015,
   };
 }
 
@@ -310,10 +312,10 @@ function RoleTab({ role, dark, t, isActive, onClick, isMobile }) {
       flex: 1,
       padding: isMobile ? "18px 16px" : "22px 24px",
       background: isActive ? accent + "10" : t.cardBg,
-      border: `2px solid ${isActive ? accent : t.cardBorder}`,
-      borderRadius: 14,
+      border: isActive ? `2px solid ${accent}` : t.cardBorder,
+      borderRadius: 16,
       textAlign: "left",
-      transition: "all 0.22s",
+      transition: "all 0.3s",
       transform: isActive ? "translateY(-2px)" : "translateY(0)",
       boxShadow: isActive ? `0 6px 28px ${accent}20` : t.cardShadow,
     },
@@ -322,7 +324,7 @@ function RoleTab({ role, dark, t, isActive, onClick, isMobile }) {
       style: { fontFamily: spc, fontSize: 11, fontWeight: 700, color: accent, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }
     }, role.label),
     React.createElement("div", {
-      style: { fontFamily: serif, fontSize: 15, lineHeight: 1.5, color: isActive ? t.textHigh : t.textMid, transition: "color 0.2s" }
+      style: { fontFamily: serif, fontSize: 15, lineHeight: 1.5, color: isActive ? t.textHigh : t.textMid, transition: "color 0.5s" }
     }, role.tagline),
   );
 }
@@ -330,66 +332,67 @@ function RoleTab({ role, dark, t, isActive, onClick, isMobile }) {
 /* ───── component: role detail ───── */
 function RoleDetail({ role, dark, t, isMobile }) {
   const accent = dark ? role.accentDark : role.accentLight;
-  const pad = isMobile ? "28px 22px" : "36px 36px";
+  const pad = isMobile ? 16 : 28;
 
   return React.createElement("div", {
     style: {
       background: t.cardBg,
-      border: `1px solid ${accent}28`,
-      borderRadius: 18,
+      border: `1px solid ${accent}30`,
+      borderRadius: 16,
       padding: pad,
       position: "relative",
       overflow: "hidden",
-      boxShadow: `0 4px 36px ${accent}10`,
-      animation: "fadeUp 0.28s ease",
+      boxShadow: `0 4px 24px ${accent}15`,
+      animation: "fadeIn 0.4s ease",
+      transition: "all 0.5s",
     }
   },
-    React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, ${accent}, ${accent}60)` } }),
+    React.createElement("div", { style: { position:"absolute", top:0, left:0, right:0, height:4, background:accent } }),
 
     React.createElement("div", {
-      style: { fontFamily:spc, fontSize:10, fontWeight:700, color:accent, letterSpacing:"0.14em", textTransform:"uppercase", marginBottom:10, marginTop:6 }
+      style: { fontFamily:mono, fontSize:11, fontWeight:700, color:accent, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:10, marginTop:8 }
     }, "The " + role.label),
 
     React.createElement("p", {
-      style: { fontFamily:serif, fontSize:isMobile?19:23, lineHeight:1.5, color:t.text, marginBottom:28, fontStyle:"italic" }
+      style: { fontFamily:serif, fontSize:isMobile?19:23, lineHeight:1.5, color:t.text, marginBottom:28, fontStyle:"italic", transition:"color 0.5s" }
     }, "\u201C" + role.tagline + "\u201D"),
 
-    React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:14, marginBottom:24 } },
-      React.createElement("div", { style: { padding:"18px 20px", background:accent+"08", border:`1px solid ${accent}18`, borderRadius:12 } },
-        React.createElement("div", { style: { fontFamily:mono, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:accent, marginBottom:12 } }, "What this builds"),
+    React.createElement("div", { style: { display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24, marginBottom:24 } },
+      React.createElement("div", { style: { padding:pad, background:accent+"08", border:`1px solid ${accent}18`, borderRadius:16 } },
+        React.createElement("div", { style: { fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:accent, marginBottom:12 } }, "What this builds"),
         role.develops.map((item, i) =>
           React.createElement("div", { key:i, style:{ display:"flex", gap:8, marginBottom:i<role.develops.length-1?8:0, alignItems:"flex-start" } },
             React.createElement("span", { style:{ color:accent, fontSize:13, lineHeight:1.6, flexShrink:0, marginTop:1 } }, "\u2713"),
-            React.createElement("span", { style:{ fontFamily:serif, fontSize:15, lineHeight:1.6, color:t.textHigh } }, item),
+            React.createElement("span", { style:{ fontFamily:serif, fontSize:15, lineHeight:1.6, color:t.textHigh, transition:"color 0.5s" } }, item),
           )
         ),
       ),
-      React.createElement("div", { style: { padding:"18px 20px", background:t.subtleBg, border:`1px solid ${t.subtleBorder}`, borderRadius:12 } },
-        React.createElement("div", { style: { fontFamily:mono, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:t.textLow, marginBottom:12 } }, "What this doesn\u2019t build"),
+      React.createElement("div", { style: { padding:pad, background:t.subtleBg, border:`1px solid ${t.subtleBorder}`, borderRadius:16 } },
+        React.createElement("div", { style: { fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:12, transition:"color 0.5s" } }, "What this doesn\u2019t build"),
         role.notDevelops.map((item, i) =>
           React.createElement("div", { key:i, style:{ display:"flex", gap:8, marginBottom:i<role.notDevelops.length-1?8:0, alignItems:"flex-start" } },
             React.createElement("span", { style:{ color:t.textFaint, fontSize:13, lineHeight:1.6, flexShrink:0, marginTop:1 } }, "\u2014"),
-            React.createElement("span", { style:{ fontFamily:serif, fontSize:15, lineHeight:1.6, color:t.textMid } }, item),
+            React.createElement("span", { style:{ fontFamily:serif, fontSize:15, lineHeight:1.6, color:t.textMid, transition:"color 0.5s" } }, item),
           )
         ),
       ),
     ),
 
-    React.createElement("div", { style:{ padding:"18px 20px", background:t.subtleBg, borderLeft:`3px solid ${accent}`, borderRadius:"0 10px 10px 0", marginBottom:14 } },
-      React.createElement("div", { style:{ fontFamily:mono, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:accent, marginBottom:8 } }, "In Practice"),
-      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, lineHeight:1.75, color:t.textHigh, margin:0 } }, role.scenario),
+    React.createElement("div", { style:{ padding:`${pad}px`, background:accent+"06", borderLeft:`3px solid ${accent}`, borderRadius:"0 8px 8px 0", marginBottom:14 } },
+      React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:accent, marginBottom:8 } }, "In Practice"),
+      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, role.scenario),
     ),
 
-    React.createElement("div", { style:{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:14, padding:"14px 16px", background:accent+"07", borderRadius:10 } },
+    React.createElement("div", { style:{ display:"flex", gap:10, alignItems:"flex-start", marginBottom:14, padding:`${pad}px`, background:accent+"06", borderRadius:16 } },
       React.createElement("span", { style:{ fontSize:15, flexShrink:0 } }, "\uD83D\uDCAD"),
-      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.6, color:t.textMid, margin:0, fontStyle:"italic" } },
+      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.6, color:t.textMid, margin:0, fontStyle:"italic", transition:"color 0.5s" } },
         "\u201C" + role.innerVoice + "\u201D"
       ),
     ),
 
-    React.createElement("div", { style:{ padding:"14px 18px", background:t.cardBg, border:`1px solid ${t.cardBorder}`, borderRadius:10 } },
-      React.createElement("div", { style:{ fontFamily:mono, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:t.textLow, marginBottom:6 } }, "Teacher\u2019s Role"),
-      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.65, color:t.textMid, margin:0 } }, role.teacherRole),
+    React.createElement("div", { style:{ padding:`${pad}px`, background:t.cardBg, border:t.cardBorder, borderRadius:16, transition:"all 0.5s" } },
+      React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:6, transition:"color 0.5s" } }, "Teacher\u2019s Role"),
+      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.65, color:t.textMid, margin:0, transition:"color 0.5s" } }, role.teacherRole),
     ),
   );
 }
@@ -497,12 +500,12 @@ function SimulationSection({ dark, t, isMobile }) {
 
     // Section header
     React.createElement("div", { style:{ marginBottom:isMobile?20:28 } },
-      React.createElement("h2", {
-        style:{ fontFamily:serif, fontSize:isMobile?22:28, fontWeight:300, color:t.text, marginBottom:8 }
+      React.createElement("h3", {
+        style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" }
       }, "The same task, four ways"),
       React.createElement("p", {
-        style:{ fontFamily:mono, fontSize:isMobile?11:12, color:t.textLow, lineHeight:1.75, letterSpacing:"0.01em" }
-      }, "A student is writing a history essay on WWI. Switch the mode to see what changes when AI enters the room"),
+        style:{ fontFamily:serif, fontSize:isMobile?15:16, color:t.textHigh, lineHeight:1.7, transition:"color 0.5s" }
+      }, "A student is writing a history essay on WWI. Switch the mode to see what changes when AI enters the room."),
     ),
 
     // Mode buttons
@@ -515,20 +518,20 @@ function SimulationSection({ dark, t, isMobile }) {
           key,
           onClick: () => setSimMode(key),
           style: {
-            padding: "10px 16px",
-            background: isActive ? a + "14" : t.cardBg,
-            border: `2px solid ${isActive ? a : t.cardBorder}`,
-            borderRadius: 10,
-            fontFamily: mono, fontSize: 11, fontWeight: 700,
-            color: isActive ? a : t.textMid,
-            transition: "all 0.2s",
-            letterSpacing: "0.05em",
-            lineHeight: 1,
+            padding: isMobile ? "8px 14px" : "10px 24px",
+            border: "none",
+            borderRadius: 100,
+            background: isActive ? a + "15" : "transparent",
+            color: isActive ? a : t.textLow,
+            fontSize: isMobile ? 11 : 12,
+            fontFamily: mono,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            cursor: "pointer",
+            transition: "all 0.3s",
+            fontWeight: isActive ? 700 : 400,
           }
-        },
-          React.createElement("span", { style:{ display:"block" } }, m.label),
-          React.createElement("span", { style:{ display:"block", fontSize:9, fontWeight:400, opacity:0.65, marginTop:3, letterSpacing:"0.02em" } }, m.sub),
-        );
+        }, m.label);
       }),
     ),
 
@@ -538,26 +541,27 @@ function SimulationSection({ dark, t, isMobile }) {
         React.createElement("button", {
           onClick: handlePlay,
           style:{
-            padding:"9px 22px", background:accent, border:"none", borderRadius:8,
-            fontFamily:mono, fontSize:11, fontWeight:700, color:"#fff",
-            letterSpacing:"0.06em", transition:"opacity 0.2s",
+            padding:isMobile?"10px 18px":"12px 28px", background:accent, border:"none", borderRadius:100,
+            fontFamily:mono, fontSize:isMobile?11:12, fontWeight:700, color:"#fff",
+            textTransform:"uppercase", letterSpacing:"0.1em", transition:"all 0.3s",
           }
         }, "\u25B6  Play"),
       playing &&
         React.createElement("div", {
-          style:{ fontFamily:mono, fontSize:11, color:accent, letterSpacing:"0.05em", padding:"9px 4px" }
+          style:{ fontFamily:mono, fontSize:11, color:accent, letterSpacing:"0.05em", padding:"9px 4px", transition:"color 0.5s" }
         }, "Running..."),
       done &&
         React.createElement("div", {
-          style:{ fontFamily:mono, fontSize:11, color:accent, letterSpacing:"0.05em", padding:"9px 4px" }
+          style:{ fontFamily:mono, fontSize:11, color:accent, letterSpacing:"0.05em", padding:"9px 4px", transition:"color 0.5s" }
         }, "Done."),
       (shown.length > 0) &&
         React.createElement("button", {
           onClick: handleReset,
           style:{
-            padding:"9px 18px", background:"transparent",
-            border:`1px solid ${t.cardBorder}`, borderRadius:8,
-            fontFamily:mono, fontSize:11, color:t.textLow, letterSpacing:"0.05em", transition:"all 0.2s",
+            padding:isMobile?"10px 18px":"12px 28px", background:"transparent",
+            border:`1px solid ${accent}40`, borderRadius:100,
+            fontFamily:mono, fontSize:isMobile?11:12, color:accent, letterSpacing:"0.1em", fontWeight:700,
+            textTransform:"uppercase", transition:"all 0.3s",
           }
         }, "Reset"),
     ),
@@ -629,7 +633,7 @@ function SimulationSection({ dark, t, isMobile }) {
     React.createElement("div", {
       style:{
         display:"flex", flexWrap:"wrap", gap:isMobile?10:16, marginTop:14,
-        padding:"12px 16px", background:t.subtleBg, border:`1px solid ${t.subtleBorder}`, borderRadius:10,
+        padding:"12px 16px", background:t.subtleBg, border:`1px solid ${t.subtleBorder}`, borderRadius:16, transition:"all 0.5s",
       }
     },
       [
@@ -685,60 +689,61 @@ function ConstantsDeck({ dark, t, isMobile }) {
       onTouchEnd,
       style:{
         background: t.cardBg,
-        border: `1px solid ${accent}28`,
-        borderRadius: 20,
+        border: `1px solid ${accent}30`,
+        borderRadius: 16,
         padding: isMobile ? "44px 28px" : "64px 72px",
         textAlign: "center",
         position: "relative",
         overflow: "hidden",
-        animation: "fadeUp 0.26s ease",
-        boxShadow: `0 4px 48px ${accent}12`,
+        animation: "fadeIn 0.4s ease",
+        boxShadow: `0 4px 24px ${accent}15`,
         minHeight: 280,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         gap: 24,
         userSelect: "none",
+        transition: "all 0.5s",
       }
     },
       React.createElement("div", { style:{ position:"absolute", inset:0, background:`radial-gradient(ellipse at 50% -10%, ${accent}10 0%, transparent 65%)`, pointerEvents:"none" } }),
-      React.createElement("div", { style:{ fontFamily:spc, fontSize:isMobile?52:82, fontWeight:700, color:accent, lineHeight:1, letterSpacing:"-0.02em", position:"relative" } }, c.verb),
-      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?17:20, lineHeight:1.7, color:t.textHigh, maxWidth:520, margin:"0 auto", position:"relative" } }, c.body),
+      React.createElement("div", { style:{ fontFamily:spc, fontSize:isMobile?52:82, fontWeight:700, color:accent, lineHeight:1, letterSpacing:"-0.02em", position:"relative", transition:"color 0.5s" } }, c.verb),
+      React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?17:20, lineHeight:1.7, color:t.textHigh, maxWidth:520, margin:"0 auto", position:"relative", transition:"color 0.5s" } }, c.body),
     ),
 
     React.createElement("div", { style:{ display:"flex", alignItems:"center", justifyContent:"center", gap:20, marginTop:20 } },
       React.createElement("button", {
         onClick: prev, disabled: active===0,
-        style:{ background:"transparent", border:`1px solid ${t.cardBorder}`, borderRadius:8, padding:"8px 14px", fontFamily:mono, fontSize:11, color:active===0?t.textFaint:t.textLow, opacity:active===0?0.4:1, transition:"all 0.2s" }
+        style:{ background:"transparent", border:"none", borderRadius:8, padding:"8px 14px", fontFamily:mono, fontSize:11, color:active===0?t.textFaint:t.textLow, opacity:active===0?0.4:1, cursor:"pointer", transition:"all 0.3s" }
       }, "\u2190 " + (active > 0 ? CONSTANTS[active-1].verb : "")),
 
       React.createElement("div", { style:{ display:"flex", gap:8, alignItems:"center" } },
         CONSTANTS.map((con, i) => {
           const da = dark ? con.accentDark : con.accentLight;
-          return React.createElement("div", { key:con.id, onClick:()=>goTo(i), style:{ width:i===active?22:7, height:7, borderRadius:4, background:i===active?da:t.cardBorder, cursor:"pointer", transition:"all 0.28s" } });
+          return React.createElement("div", { key:con.id, onClick:()=>goTo(i), style:{ width:i===active?22:7, height:7, borderRadius:4, background:i===active?da:t.textGhost, cursor:"pointer", transition:"all 0.3s" } });
         })
       ),
 
       React.createElement("button", {
         onClick: next, disabled: active===total-1,
-        style:{ background:"transparent", border:`1px solid ${t.cardBorder}`, borderRadius:8, padding:"8px 14px", fontFamily:mono, fontSize:11, color:active===total-1?t.textFaint:t.textLow, opacity:active===total-1?0.4:1, transition:"all 0.2s" }
+        style:{ background:"transparent", border:"none", borderRadius:8, padding:"8px 14px", fontFamily:mono, fontSize:11, color:active===total-1?t.textFaint:t.textLow, opacity:active===total-1?0.4:1, cursor:"pointer", transition:"all 0.3s" }
       }, (active < total-1 ? CONSTANTS[active+1].verb : "") + " \u2192"),
     ),
 
     React.createElement("div", { style:{ textAlign:"center", marginTop:14 } },
       React.createElement("button", {
         onClick: () => setShowAll(v => !v),
-        style:{ background:"transparent", border:"none", fontFamily:mono, fontSize:11, color:t.textLow, textDecoration:"underline", textUnderlineOffset:3, transition:"color 0.2s" }
+        style:{ background:"transparent", border:"none", fontFamily:mono, fontSize:11, color:t.textLow, textDecoration:"underline", textUnderlineOffset:3, cursor:"pointer", transition:"color 0.3s" }
       }, showAll ? "Close" : "See all five"),
     ),
 
     showAll && React.createElement("div", {
-      style:{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(5, 1fr)", gap:10, marginTop:16, animation:"fadeUp 0.22s ease" }
+      style:{ display:"grid", gridTemplateColumns:isMobile?"1fr 1fr":"repeat(5, 1fr)", gap:10, marginTop:16, animation:"fadeIn 0.4s ease" }
     },
       CONSTANTS.map((con, i) => {
         const a = dark ? con.accentDark : con.accentLight;
         return React.createElement("button", {
           key: con.id,
           onClick: () => { goTo(i); setShowAll(false); },
-          style:{ padding:"14px 10px", background:i===active?a+"10":t.cardBg, border:`1px solid ${i===active?a:t.cardBorder}`, borderRadius:10, textAlign:"center", transition:"all 0.18s" }
+          style:{ padding:"14px 10px", background:i===active?a+"10":t.cardBg, border:i===active?`1px solid ${a}`:t.cardBorder, borderRadius:16, textAlign:"center", cursor:"pointer", transition:"all 0.3s" }
         },
           React.createElement("div", { style:{ fontFamily:spc, fontSize:12, fontWeight:700, color:a, letterSpacing:"0.05em" } }, con.verb),
         );
@@ -747,24 +752,418 @@ function ConstantsDeck({ dark, t, isMobile }) {
   );
 }
 
+/* ───── data: assess questions ───── */
+const ASSESS_QUESTIONS = [
+  {
+    id: "execution",
+    question: "Who does most of the substantive work on this task?",
+    options: [
+      { label: "The student writes, builds, or researches from scratch", role: "author", weight: 3 },
+      { label: "The student defines what to do, AI executes, student revises", role: "designer", weight: 3 },
+      { label: "AI handles the full pipeline, student reviews the output", role: "conductor", weight: 3 },
+    ],
+  },
+  {
+    id: "struggle",
+    question: "Where does the productive struggle happen?",
+    options: [
+      { label: "In the doing: drafting, reasoning, building", role: "author", weight: 2 },
+      { label: "In the framing: defining constraints, giving precise direction", role: "designer", weight: 2 },
+      { label: "In the oversight: catching errors, verifying quality, judging tone", role: "conductor", weight: 2 },
+    ],
+  },
+  {
+    id: "revision",
+    question: "What does revision look like?",
+    options: [
+      { label: "The student reworks their own draft or prototype", role: "author", weight: 2 },
+      { label: "The student sends AI back with specific feedback to try again", role: "designer", weight: 2 },
+      { label: "The student flags problems and AI regenerates", role: "conductor", weight: 2 },
+    ],
+  },
+  {
+    id: "knowledge",
+    question: "How much domain knowledge does the student need to start?",
+    options: [
+      { label: "They need to know the material well enough to produce the work", role: "author", weight: 1 },
+      { label: "They need to know enough to set good constraints and spot weak output", role: "designer", weight: 1 },
+      { label: "They need to know enough to recognize when something is wrong", role: "conductor", weight: 1 },
+    ],
+  },
+  {
+    id: "time",
+    question: "Where does the student spend most of their time?",
+    options: [
+      { label: "Creating: writing, coding, designing, researching", role: "author", weight: 2 },
+      { label: "Directing: prompting, constraining, iterating on instructions", role: "designer", weight: 2 },
+      { label: "Evaluating: reviewing, verifying, accepting or rejecting", role: "conductor", weight: 2 },
+    ],
+  },
+];
+
+const ASSESS_RESULTS = {
+  author: {
+    label: "Author",
+    accentDark: "#2A9D8F",
+    accentLight: "#00796B",
+    summary: "This task puts students in the Author role. The student does the substantive work, with AI assisting at moments. The productive struggle is in the execution itself.",
+    builds: "Writing fluency, research process, argumentation, persistence, close reading, sustained reasoning.",
+    misses: "Delegation skills, AI evaluation, problem framing for complex AI tasks.",
+    teacherNote: "This is the right mode when the goal is building foundational skills through practice. Assess both the product and the process. The difficulty is the learning.",
+    constantFocus: "own",
+  },
+  designer: {
+    label: "Designer",
+    accentDark: "#F4A261",
+    accentLight: "#E65100",
+    summary: "This task puts students in the Designer role. The student defines the problem and delegates execution to AI. Their contribution is in the framing, constraints, and critical evaluation of what AI produces.",
+    builds: "Problem definition, constraint-setting, critical evaluation, editorial judgment, communication clarity.",
+    misses: "Writing fluency, independent research process, sustained drafting and argumentation.",
+    teacherNote: "This is the right mode when the goal is developing the ability to define problems precisely and evaluate outputs critically. Assess the quality of the student's direction, not just the final artifact.",
+    constantFocus: "question",
+  },
+  conductor: {
+    label: "Conductor",
+    accentDark: "#818cf8",
+    accentLight: "#6366f1",
+    summary: "This task puts students in the Conductor role. AI executes the full pipeline. The student's contribution is oversight: monitoring, catching errors, verifying quality, and deciding what to accept or reject.",
+    builds: "Pattern recognition, quality monitoring, bias detection, source verification, oversight of complex processes.",
+    misses: "Writing, research, argumentation, deep content engagement, foundational domain knowledge-building.",
+    teacherNote: "This is the right mode when students have genuine domain expertise and the goal is developing sophisticated judgment about AI outputs. Design checkpoints and accountability structures. Teach students to verify and question work they did not execute.",
+    constantFocus: "consider",
+  },
+};
+
+/* ───── component: assess section ───── */
+function AssessSection({ dark, t, isMobile }) {
+  const [answers, setAnswers]     = useState({});
+  const [showResult, setShowResult] = useState(false);
+  const [assessMode, setAssessMode] = useState("educator"); // educator or student
+
+  const questionCount = ASSESS_QUESTIONS.length;
+  const answeredCount = Object.keys(answers).length;
+  const allAnswered   = answeredCount === questionCount;
+
+  const handleAnswer = (questionId, option) => {
+    setAnswers(prev => ({ ...prev, [questionId]: option }));
+    setShowResult(false);
+  };
+
+  const getResult = () => {
+    const scores = { author: 0, designer: 0, conductor: 0 };
+    Object.values(answers).forEach(opt => {
+      scores[opt.role] += opt.weight;
+    });
+    const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    return {
+      primary: sorted[0][0],
+      primaryScore: sorted[0][1],
+      secondary: sorted[1][0],
+      secondaryScore: sorted[1][1],
+      total: sorted[0][1] + sorted[1][1] + sorted[2][1],
+    };
+  };
+
+  const handleSubmit = () => {
+    if (allAnswered) setShowResult(true);
+  };
+
+  const handleReset = () => {
+    setAnswers({});
+    setShowResult(false);
+  };
+
+  const result = showResult ? getResult() : null;
+  const resultData = result ? ASSESS_RESULTS[result.primary] : null;
+  const resultAccent = resultData ? (dark ? resultData.accentDark : resultData.accentLight) : null;
+
+  const educatorIntro = "Describe a task you are designing or have assigned. Answer each question based on how the task is structured, not how you hope students will approach it.";
+  const studentIntro = "Think about a task you recently completed or are working on right now. Answer each question based on what you actually did, not what the assignment sheet said.";
+
+  return React.createElement("div", null,
+
+    // Mode toggle
+    React.createElement("div", { style:{ display:"flex", gap:isMobile?8:10, marginBottom:isMobile?24:32 } },
+      ["educator", "student"].map(mode => {
+        const isActive = assessMode === mode;
+        return React.createElement("button", {
+          key: mode,
+          onClick: () => { setAssessMode(mode); handleReset(); },
+          style:{
+            flex:1, padding:isMobile?"12px 14px":"14px 16px",
+            background: isActive ? "#52B788" + "18" : t.cardBg,
+            border: isActive ? `2px solid #52B788` : t.cardBorder,
+            borderRadius: 16,
+            fontFamily: mono, fontSize: isMobile?11:12, fontWeight: 700,
+            color: isActive ? "#52B788" : t.textLow,
+            letterSpacing: "0.08em", textTransform: "uppercase",
+            cursor: "pointer", transition: "all 0.3s",
+          }
+        },
+          React.createElement("div", null, mode === "educator" ? "I'm designing a task" : "I'm reflecting on my work"),
+          React.createElement("div", { style:{ fontSize:9, fontWeight:400, opacity:0.7, marginTop:4, textTransform:"none", letterSpacing:"0.02em" } },
+            mode === "educator" ? "For educators" : "For students"),
+        );
+      }),
+    ),
+
+    // Intro text
+    React.createElement("p", {
+      style:{ fontFamily:serif, fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, marginBottom:isMobile?28:36, maxWidth:640, transition:"color 0.5s" }
+    }, assessMode === "educator" ? educatorIntro : studentIntro),
+
+    // Questions
+    !showResult && ASSESS_QUESTIONS.map((q, qi) =>
+      React.createElement("div", {
+        key: q.id,
+        style:{
+          marginBottom: isMobile?14:24,
+          padding: isMobile ? 16 : 28,
+          background: t.cardBg,
+          border: answers[q.id] ? `1px solid ${(dark ? ASSESS_RESULTS[answers[q.id].role].accentDark : ASSESS_RESULTS[answers[q.id].role].accentLight)}30` : t.cardBorder,
+          borderRadius: 16,
+          boxShadow: t.cardShadow,
+          transition: "all 0.5s",
+        }
+      },
+        React.createElement("div", { style:{ display:"flex", gap:10, alignItems:"baseline", marginBottom:14 } },
+          React.createElement("span", { style:{ fontFamily:mono, fontSize:10, color:t.textFaint, letterSpacing:"0.06em" } }, String(qi + 1).padStart(2, "0")),
+          React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?16:18, fontWeight:600, color:t.text, lineHeight:1.5, margin:0, transition:"color 0.5s" } }, q.question),
+        ),
+        React.createElement("div", { style:{ display:"flex", flexDirection:"column", gap:8 } },
+          q.options.map((opt, oi) => {
+            const isSelected = answers[q.id] === opt;
+            const optAccent = dark ? ASSESS_RESULTS[opt.role].accentDark : ASSESS_RESULTS[opt.role].accentLight;
+            return React.createElement("button", {
+              key: oi,
+              onClick: () => handleAnswer(q.id, opt),
+              style:{
+                padding: "12px 16px",
+                background: isSelected ? optAccent + "12" : "transparent",
+                border: `1.5px solid ${isSelected ? optAccent : t.subtleBorder}`,
+                borderRadius: 12,
+                textAlign: "left",
+                fontFamily: serif, fontSize: isMobile?14:15, lineHeight:1.6,
+                color: isSelected ? (dark ? "#fff" : t.text) : t.textHigh,
+                cursor: "pointer", transition: "all 0.3s",
+              }
+            }, opt.label);
+          }),
+        ),
+      ),
+    ),
+
+    // Submit button
+    !showResult && React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:14, marginTop:8 } },
+      React.createElement("button", {
+        onClick: handleSubmit,
+        disabled: !allAnswered,
+        style:{
+          padding: isMobile?"10px 18px":"12px 28px",
+          background: allAnswered ? "#52B788" : t.subtleBg,
+          border: allAnswered ? "none" : `1px solid ${t.subtleBorder}`,
+          borderRadius: 100,
+          fontFamily: mono, fontSize: isMobile?11:12, fontWeight: 700, letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: allAnswered ? "#fff" : t.textFaint,
+          cursor: allAnswered ? "pointer" : "not-allowed",
+          transition: "all 0.3s",
+          opacity: allAnswered ? 1 : 0.5,
+        }
+      }, "See Result"),
+      React.createElement("span", { style:{ fontFamily:mono, fontSize:11, color:t.textFaint, transition:"color 0.5s" } },
+        answeredCount + " / " + questionCount),
+    ),
+
+    // Result
+    showResult && result && React.createElement("div", { style:{ animation:"fadeIn 0.4s ease" } },
+
+      // Primary result card
+      React.createElement("div", {
+        style:{
+          padding: isMobile ? 16 : 28,
+          background: t.cardBg,
+          border: `1px solid ${resultAccent}30`,
+          borderRadius: 16,
+          position: "relative",
+          overflow: "hidden",
+          boxShadow: `0 4px 24px ${resultAccent}15`,
+          marginBottom: isMobile?14:24,
+          transition: "all 0.5s",
+        }
+      },
+        React.createElement("div", { style:{ position:"absolute", top:0, left:0, right:0, height:4, background:resultAccent } }),
+
+        React.createElement("div", { style:{ fontFamily:mono, fontSize:11, fontWeight:700, color:resultAccent, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:6, marginTop:8 } },
+          assessMode === "educator" ? "This task is in" : "You were in"),
+        React.createElement("div", { style:{ fontFamily:serif, fontSize:isMobile?32:44, fontWeight:700, color:resultAccent, marginBottom:16, lineHeight:1.1, transition:"color 0.5s" } },
+          resultData.label + " Mode"),
+        React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, marginBottom:24, maxWidth:580, transition:"color 0.5s" } }, resultData.summary),
+
+        // Builds / Misses grid
+        React.createElement("div", { style:{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:isMobile?14:24, marginBottom:24 } },
+          React.createElement("div", { style:{ padding:isMobile?16:28, background:resultAccent+"08", border:`1px solid ${resultAccent}18`, borderRadius:16 } },
+            React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:resultAccent, marginBottom:10 } },
+              "What this develops"),
+            React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, resultData.builds),
+          ),
+          React.createElement("div", { style:{ padding:isMobile?16:28, background:t.subtleBg, border:`1px solid ${t.subtleBorder}`, borderRadius:16 } },
+            React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" } },
+              "What this doesn't develop"),
+            React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.7, color:t.textMid, margin:0, transition:"color 0.5s" } }, resultData.misses),
+          ),
+        ),
+
+        // Teacher note
+        React.createElement("div", { style:{ padding:isMobile?16:28, background:resultAccent+"06", borderLeft:`3px solid ${resultAccent}`, borderRadius:"0 8px 8px 0" } },
+          React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:resultAccent, marginBottom:6 } },
+            assessMode === "educator" ? "Design Note" : "Something to Consider"),
+          React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?14:15, lineHeight:1.7, color:t.textHigh, margin:0, transition:"color 0.5s" } }, resultData.teacherNote),
+        ),
+      ),
+
+      // Spectrum bar showing where the result lands
+      React.createElement("div", {
+        style:{
+          padding: isMobile ? 16 : 28,
+          background: t.cardBg,
+          border: t.cardBorder,
+          borderRadius: 16,
+          marginBottom: isMobile?14:24,
+          boxShadow: t.cardShadow,
+          transition: "all 0.5s",
+        }
+      },
+        React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:14, transition:"color 0.5s" } }, "Where this lands"),
+        React.createElement("div", { style:{ display:"flex", gap:4, marginBottom:10 } },
+          ["author", "designer", "conductor"].map(role => {
+            const rd = ASSESS_RESULTS[role];
+            const a = dark ? rd.accentDark : rd.accentLight;
+            const pct = result.total > 0 ? Math.round((Object.values(answers).filter(o => o.role === role).reduce((s, o) => s + o.weight, 0) / result.total) * 100) : 0;
+            const isPrimary = role === result.primary;
+            return React.createElement("div", {
+              key: role,
+              style:{ flex: Math.max(pct, 8), height: 8, background: a, borderRadius: 4, opacity: isPrimary ? 1 : 0.35, transition: "all 0.4s" }
+            });
+          }),
+        ),
+        React.createElement("div", { style:{ display:"flex", justifyContent:"space-between" } },
+          ["author", "designer", "conductor"].map(role => {
+            const rd = ASSESS_RESULTS[role];
+            const a = dark ? rd.accentDark : rd.accentLight;
+            const isPrimary = role === result.primary;
+            return React.createElement("span", {
+              key: role,
+              style:{ fontFamily:mono, fontSize:10, color: isPrimary ? a : t.textFaint, fontWeight: isPrimary ? 700 : 400, letterSpacing:"0.04em" }
+            }, rd.label);
+          }),
+        ),
+      ),
+
+      // Relevant constant
+      (() => {
+        const con = CONSTANTS.find(c => c.id === resultData.constantFocus);
+        const conAccent = dark ? con.accentDark : con.accentLight;
+        return React.createElement("div", {
+          style:{
+            padding: isMobile ? 16 : 28,
+            background: t.cardBg,
+            border: `1px solid ${conAccent}30`,
+            borderRadius: 16,
+            textAlign: "center",
+            marginBottom: isMobile?14:24,
+            boxShadow: `0 4px 24px ${conAccent}15`,
+            transition: "all 0.5s",
+          }
+        },
+          React.createElement("div", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" } }, "The constant to hold closest"),
+          React.createElement("div", { style:{ fontFamily:spc, fontSize:isMobile?36:52, fontWeight:700, color:conAccent, lineHeight:1, marginBottom:14, transition:"color 0.5s" } }, con.verb),
+          React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, lineHeight:1.7, color:t.textHigh, maxWidth:480, margin:"0 auto", transition:"color 0.5s" } }, con.body),
+        );
+      })(),
+
+      // Reset
+      React.createElement("div", { style:{ textAlign:"center" } },
+        React.createElement("button", {
+          onClick: handleReset,
+          style:{
+            padding: isMobile?"10px 18px":"12px 28px",
+            background: "transparent",
+            border: `1px solid ${resultAccent}40`,
+            borderRadius: 100,
+            fontFamily: mono, fontSize: isMobile?11:12, fontWeight: 700, letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: resultAccent,
+            cursor: "pointer", transition: "all 0.3s",
+          }
+        }, "Start Over"),
+      ),
+    ),
+  );
+}
+
+/* ───── tab config ───── */
+const TABS = [
+  { id: "spectrum",  label: "Spectrum",  sub: "The three roles",          accentDark: "#52B788", accentLight: "#2D6A4F" },
+  { id: "simulate",  label: "Simulate",  sub: "See it in action",        accentDark: "#F4A261", accentLight: "#E65100" },
+  { id: "assess",    label: "Assess",    sub: "Check your task design",  accentDark: "#818cf8", accentLight: "#6366f1" },
+];
+
+const SWIPE_TABS = TABS.map(t => t.id);
+
 /* ───── App ───── */
 function App() {
-  const [dark, setDark]           = useState(false);
+  const [dark, setDark]             = useState(false);
   const [activeRole, setActiveRole] = useState("author");
+  const [activeTab, setActiveTab]   = useState("spectrum");
   const isMobile = useIsMobile();
   const t = useTheme(dark);
   const role = ROLES.find(r => r.id === activeRole);
+
+  // Swipe / wheel nav for tabs
+  const touchStartRef = useRef(null);
+  const lastWheelRef = useRef(0);
+  const handleTouchStart = (e) => { touchStartRef.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartRef.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 50) return;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (dx < 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (dx > 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
+  const handleWheel = (e) => {
+    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 30) return;
+    const now = Date.now();
+    if (now - lastWheelRef.current < 600) return;
+    lastWheelRef.current = now;
+    const idx = SWIPE_TABS.indexOf(activeTab);
+    if (idx === -1) return;
+    if (e.deltaX > 0 && idx < SWIPE_TABS.length - 1) setActiveTab(SWIPE_TABS[idx + 1]);
+    if (e.deltaX < 0 && idx > 0) setActiveTab(SWIPE_TABS[idx - 1]);
+  };
 
   useEffect(() => {
     document.body.style.background = t.bg;
     document.body.style.color = t.text;
   }, [dark, t.bg, t.text]);
 
-  return React.createElement("div", { style:{ minHeight:"100vh", display:"flex", flexDirection:"column", background:t.bg, color:t.text } },
+  const tabAccent = (() => {
+    const tab = TABS.find(tb => tb.id === activeTab);
+    return dark ? tab.accentDark : tab.accentLight;
+  })();
+
+  return React.createElement("div", { style:{ minHeight:"100vh", background:t.bg, color:t.text, fontFamily:serif, position:"relative", overflowX:"hidden", transition:"background 0.5s, color 0.5s" } },
+
+    // BG effects
+    React.createElement("div", { style:{ position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${tabAccent}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${tabAccent}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
+    React.createElement("div", { style:{ position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
 
     // Header
     React.createElement("header", {
-      style:{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` }
+      style:{ position:"relative", zIndex:1, display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", padding:isMobile?"16px 20px":"18px 40px" }
     },
       React.createElement("a", {
         href:"/",
@@ -781,81 +1180,162 @@ function App() {
         React.createElement("button", {
           onClick: () => setDark(d => !d),
           title: dark ? "Switch to light mode" : "Switch to dark mode",
-          style:{ background:"transparent", border:`1px solid ${t.cardBorder}`, borderRadius:8, padding:"6px 10px", fontSize:15, color:t.textMid, cursor:"pointer" }
+          style:{ width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", background:"transparent", border:t.cardBorder, borderRadius:8, fontSize:15, color:t.textMid, cursor:"pointer", transition:"all 0.3s" }
         }, dark ? "\u2600\uFE0F" : "\uD83C\uDF19"),
       ),
     ),
 
     // Main
-    React.createElement("main", { style:{ flex:1, padding:isMobile?"48px 0 64px":"72px 0 96px" } },
-      React.createElement("div", { style:{ maxWidth:880, margin:"0 auto", padding:isMobile?"0 20px":"0 40px" } },
+    React.createElement("div", {
+      onTouchStart: handleTouchStart,
+      onTouchEnd: handleTouchEnd,
+      onWheel: handleWheel,
+      style:{ position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" }
+    },
 
-        // Hero
-        React.createElement("div", { style:{ textAlign:"center", marginBottom:isMobile?44:72 } },
-          React.createElement("h1", { style:{ fontFamily:serif, fontSize:isMobile?37:55, fontWeight:300, lineHeight:1.15, color:t.text, marginBottom:18, letterSpacing:"-0.01em" } },
-            "The ",
-            React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:"#52B788" } }, "Agency"),
-            " Spectrum"),
-          React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?12:13, color:t.textLow, lineHeight:1.75, maxWidth:540, margin:"0 auto", letterSpacing:"0.01em" } },
-            "Three roles in AI work: Author, Designer, Conductor"),
-          React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?12:13, color:t.textLow, lineHeight:1.75, margin:"4px auto 0", letterSpacing:"0.01em", maxWidth:540 } },
-            "The central question is not how much AI a student uses, but who is steering"),
+      // Hero
+      React.createElement("header", { style:{ textAlign:"center", marginBottom:isMobile?20:40 } },
+        React.createElement("div", { style:{ fontSize:10, textTransform:"uppercase", letterSpacing:"0.3em", color:tabAccent, fontFamily:mono, marginBottom:10, transition:"color 0.5s" } }, "Interactive Framework"),
+        React.createElement("h1", { style:{ fontSize:isMobile?26:48, fontWeight:300, letterSpacing:"-0.02em", lineHeight:1.1, margin:"0 0 8px 0" } },
+          "The ",
+          React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:tabAccent, transition:"color 0.5s" } }, "Agency"),
+          " Spectrum"),
+      ),
+
+      // Tab bar
+      React.createElement("div", {
+        style:{
+          display:"flex", justifyContent:"center", gap:4, marginBottom:isMobile?18:32,
+        }
+      },
+          TABS.map(tab => {
+            const isActive = activeTab === tab.id;
+            const a = dark ? tab.accentDark : tab.accentLight;
+            return React.createElement("button", {
+              key: tab.id,
+              onClick: () => setActiveTab(tab.id),
+              style:{
+                padding: isMobile ? "8px 14px" : "10px 24px",
+                border: "none",
+                borderRadius: 100,
+                background: isActive ? a + "15" : "transparent",
+                color: isActive ? a : t.textLow,
+                fontSize: isMobile ? 11 : 12,
+                fontFamily: mono,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                cursor: "pointer",
+                transition: "all 0.3s",
+                fontWeight: isActive ? 700 : 400,
+              }
+            }, tab.label);
+          }),
         ),
 
-        // Section: The Three Roles
-        React.createElement("div", { style:{ marginBottom:isMobile?56:80 } },
-          React.createElement("div", { style:{ marginBottom:isMobile?20:28 } },
-            React.createElement("h2", { style:{ fontFamily:serif, fontSize:isMobile?22:28, fontWeight:300, color:t.text, marginBottom:8 } }, "The Three Roles"),
-            React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?11:12, color:t.textLow, lineHeight:1.7, letterSpacing:"0.01em" } },
-              "None is inherently better or worse. The critical skill is knowing which role is appropriate for a given task and why"),
-          ),
-          React.createElement("div", { style:{ display:"flex", flexDirection:isMobile?"column":"row", gap:12, marginBottom:20 } },
-            ROLES.map(r =>
-              React.createElement(RoleTab, { key:r.id, role:r, dark, t, isMobile, isActive:activeRole===r.id, onClick:()=>setActiveRole(r.id) })
+        // ── TAB: Spectrum ──
+        activeTab === "spectrum" && React.createElement("div", { key:"spectrum", style:{ animation:"fadeIn 0.4s ease" } },
+
+          // The Three Roles
+          React.createElement("div", { style:{ marginBottom:isMobile?40:56 } },
+            React.createElement("div", { style:{ marginBottom:isMobile?20:28 } },
+              React.createElement("h3", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" } }, "The Three Roles"),
+              React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, color:t.textHigh, lineHeight:1.7, transition:"color 0.5s" } },
+                "None is inherently better or worse. The critical skill is knowing which role is appropriate for a given task and why."),
             ),
+
+            // Visual continuum
+            React.createElement("div", {
+              style:{
+                padding: isMobile ? 16 : 28,
+                background: t.cardBg,
+                border: t.cardBorder,
+                borderRadius: 16,
+                marginBottom: isMobile?14:24,
+                boxShadow: t.cardShadow,
+                transition: "all 0.5s",
+              }
+            },
+              React.createElement("div", { style:{ display:"flex", justifyContent:"space-between", marginBottom:10 } },
+                React.createElement("span", { style:{ fontFamily:mono, fontSize:9, color:t.textFaint, letterSpacing:"0.08em", textTransform:"uppercase" } }, "Student executes"),
+                React.createElement("span", { style:{ fontFamily:mono, fontSize:9, color:t.textFaint, letterSpacing:"0.08em", textTransform:"uppercase" } }, "Student oversees"),
+              ),
+              React.createElement("div", { style:{ display:"flex", gap:3, marginBottom:10 } },
+                ROLES.map(r => {
+                  const a = dark ? r.accentDark : r.accentLight;
+                  const isActive = activeRole === r.id;
+                  return React.createElement("div", {
+                    key: r.id,
+                    onClick: () => setActiveRole(r.id),
+                    style:{
+                      flex:1, height: isActive ? 12 : 8, background:a,
+                      borderRadius:4, cursor:"pointer",
+                      opacity: isActive ? 1 : 0.4,
+                      transition:"all 0.3s",
+                    }
+                  });
+                }),
+              ),
+              React.createElement("div", { style:{ display:"flex", justifyContent:"space-between" } },
+                ROLES.map(r => {
+                  const a = dark ? r.accentDark : r.accentLight;
+                  const isActive = activeRole === r.id;
+                  return React.createElement("span", {
+                    key: r.id,
+                    onClick: () => setActiveRole(r.id),
+                    style:{ fontFamily:mono, fontSize:10, color: isActive ? a : t.textFaint, fontWeight: isActive ? 700 : 400, letterSpacing:"0.04em", cursor:"pointer", transition:"color 0.3s", flex:1, textAlign: r.id === "author" ? "left" : r.id === "conductor" ? "right" : "center" }
+                  }, r.label);
+                }),
+              ),
+            ),
+
+            // Role tabs
+            React.createElement("div", { style:{ display:"flex", flexDirection:isMobile?"column":"row", gap:isMobile?8:10, marginBottom:20 } },
+              ROLES.map(r =>
+                React.createElement(RoleTab, { key:r.id, role:r, dark, t, isMobile, isActive:activeRole===r.id, onClick:()=>setActiveRole(r.id) })
+              ),
+            ),
+            React.createElement(RoleDetail, { key:activeRole, role, dark, t, isMobile }),
           ),
-          React.createElement(RoleDetail, { key:activeRole, role, dark, t, isMobile }),
+
+          // Divider
+          React.createElement("div", { style:{ height:1, background:t.divider, marginBottom:isMobile?40:56 } }),
+
+          // What You Never Outsource
+          React.createElement("div", null,
+            React.createElement("div", { style:{ textAlign:"center", marginBottom:isMobile?20:32 } },
+              React.createElement("h3", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" } }, "What You Never Outsource"),
+              React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, color:t.textHigh, lineHeight:1.7, maxWidth:550, margin:"0 auto", transition:"color 0.5s" } },
+                "Five constants that apply across all three roles. These are not a checklist. They are dispositions that remain with the learner regardless of which mode they are in."),
+            ),
+            React.createElement(ConstantsDeck, { dark, t, isMobile }),
+          ),
         ),
 
-        // Divider
-        React.createElement("div", { style:{ height:1, background:t.divider, marginBottom:isMobile?56:80 } }),
-
-        // Section: Simulation
-        React.createElement(SimulationSection, { dark, t, isMobile }),
-
-        // Divider
-        React.createElement("div", { style:{ height:1, background:t.divider, marginBottom:isMobile?56:80 } }),
-
-        // Section: What You Never Outsource
-        React.createElement("div", null,
-          React.createElement("div", { style:{ textAlign:"center", marginBottom:isMobile?28:44 } },
-            React.createElement("h2", { style:{ fontFamily:serif, fontSize:isMobile?22:32, fontWeight:300, color:t.text, marginBottom:12 } }, "What You Never Outsource"),
-            React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?11:12, color:t.textLow, lineHeight:1.75, maxWidth:500, margin:"0 auto", letterSpacing:"0.01em" } },
-              "Five constants that apply across all three roles. These are not a checklist. They are dispositions that remain with the learner regardless of which mode they are in"),
-          ),
-          React.createElement(ConstantsDeck, { dark, t, isMobile }),
+        // ── TAB: Simulate ──
+        activeTab === "simulate" && React.createElement("div", { key:"simulate", style:{ animation:"fadeIn 0.4s ease" } },
+          React.createElement(SimulationSection, { dark, t, isMobile }),
         ),
+
+        // ── TAB: Assess ──
+        activeTab === "assess" && React.createElement("div", { key:"assess", style:{ animation:"fadeIn 0.4s ease" } },
+          React.createElement("div", { style:{ marginBottom:isMobile?20:28 } },
+            React.createElement("h3", { style:{ fontFamily:mono, fontSize:11, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textLow, marginBottom:10, transition:"color 0.5s" } }, "Assess Your Task"),
+            React.createElement("p", { style:{ fontFamily:serif, fontSize:isMobile?15:16, color:t.textHigh, lineHeight:1.7, transition:"color 0.5s" } },
+              "Answer five questions. Find out which role your task puts students in, what that builds, and what it misses."),
+          ),
+          React.createElement(AssessSection, { dark, t, isMobile }),
+        ),
+
+      React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
+
+      // Footer
+      React.createElement("footer", { style:{ textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
+        React.createElement("div", { style:{ fontSize:9, color:t.textGhost, fontFamily:mono, letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8, transition:"color 0.5s" } },
+          "The Agency Spectrum (2026)", React.createElement("br"),
+          "A companion to Jane Beckwith's AI Friction Scale", React.createElement("br"),
+          "By ", React.createElement("a", { href:"mailto:kevinfarrant@gmail.com", style:{ color:"inherit", textDecoration:"underline", textUnderlineOffset:"3px" } }, "Kevin Farrant")),
       ),
     ),
-
-    // Footer
-    React.createElement("footer", {
-      style:{ borderTop:`1px solid ${t.divider}`, padding:isMobile?"20px":"24px 40px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }
-    },
-      React.createElement("span", { style:{ fontFamily:mono, fontSize:9, color:t.textFaint, letterSpacing:"0.06em", textTransform:"uppercase" } },
-        "The Agency Spectrum, Kevin Farrant (2026)"),
-      React.createElement("a", {
-        href:"mailto:kevinfarrant@gmail.com",
-        style:{ fontFamily:mono, fontSize:9, color:t.textFaint, letterSpacing:"0.04em", textDecoration:"none" }
-      }, "Contact"),
-    ),
-
-    React.createElement("style", null, `
-      @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-    `),
   );
 }
 
