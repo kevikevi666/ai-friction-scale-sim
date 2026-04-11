@@ -134,8 +134,8 @@ function ToolCard({ tool, dark, t, isMobile }) {
         : t.cardShadow,
       textDecoration: "none",
       cursor: "pointer",
-      transition: "border-color 0.2s, box-shadow 0.2s, transform 0.18s",
-      transform: hovered ? "translateY(-3px)" : "translateY(0)",
+      transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
+      transform: hovered ? "scale(1.03)" : "scale(1)",
       flex: 1,
       minWidth: isMobile ? "100%" : 260,
       maxWidth: isMobile ? "100%" : 340,
@@ -246,7 +246,7 @@ function App() {
       React.createElement("a", {
         href: "/",
         style: { fontFamily: spc, fontSize: 13, fontWeight: 700, color: t.text, textDecoration: "none", letterSpacing: "0.04em" }
-      }, "AITT"),
+      }, "AI AGENCY TOOLKIT"),
       // Nav links (desktop only)
       !isMobile && React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center" } },
         React.createElement("a", { href: "/agency", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#2A9D8F" : "#00796B", textDecoration: "none", letterSpacing: "0.06em" } }, "THE AGENCY SPECTRUM"),
@@ -273,18 +273,6 @@ function App() {
         gap: 0,
       },
     },
-      // Eyebrow
-      React.createElement("div", {
-        style: {
-          fontFamily: mono,
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-          color: t.textLow,
-          marginBottom: 16,
-          textAlign: "center",
-        }
-      }, "AI Teacher Toolkit"),
       // Headline
       React.createElement("h1", {
         style: {
@@ -295,25 +283,10 @@ function App() {
           color: t.text,
           textAlign: "center",
           maxWidth: 560,
-          marginBottom: 16,
+          marginBottom: isMobile ? 40 : 56,
           letterSpacing: "-0.01em",
         }
       }, "Interactive tools for thinking about AI and student agency in learning"),
-
-      // Subline
-      React.createElement("p", {
-        style: {
-          fontFamily: mono,
-          fontSize: isMobile ? 12 : 13,
-          color: t.textLow,
-          textAlign: "center",
-          maxWidth: 480,
-          lineHeight: 1.6,
-          marginBottom: isMobile ? 40 : 56,
-          letterSpacing: "0.02em",
-          whiteSpace: isMobile ? "normal" : "nowrap",
-        }
-      }, "Three tools for teachers and students"),
 
       // Cards
       React.createElement("div", {
@@ -323,7 +296,7 @@ function App() {
           gap: 16,
           width: "100%",
           maxWidth: 1040,
-          alignItems: isMobile ? "stretch" : "flex-start",
+          alignItems: "stretch",
           justifyContent: "center",
         }
       },
