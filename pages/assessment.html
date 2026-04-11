@@ -502,7 +502,7 @@ function App() {
   const currentAnswer = step >= 1 && step <= 5 ? answers[step - 1]   : null;
 
   const topLabel =
-    step === 0 ? "Kevin Farrant" :
+    step === 0 ? "" :
     step === 6 ? "Results" :
     `Question ${step} of 5`;
 
@@ -519,16 +519,18 @@ function App() {
         backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         pointerEvents:"none" }} />
 
-      <header style={{ position:"relative", zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` }}>
-        <a href="/" style={{ fontFamily:"'Space Mono', monospace", fontSize:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" }}>AI AGENCY TOOLKIT</a>
-        {!isMobile && (
-          <nav style={{ display:"flex", gap:28, alignItems:"center" }}>
+      <header style={{ position:"relative", zIndex:1, display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` }}>
+        <a href="/" style={{ fontFamily:"'Space Mono', monospace", fontSize:isMobile?10:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" }}>AI AGENCY TOOLKIT</a>
+        {!isMobile ? (
+          <nav style={{ display:"flex", gap:28, alignItems:"center", justifyContent:"center" }}>
             <a href="/agency" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" }}>THE AGENCY SPECTRUM</a>
             <a href="/pages/friction-scale.html" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" }}>AI FRICTION SCALE</a>
             <a href="/pages/assessment.html" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" }}>ASSESSMENT CHECK</a>
           </nav>
-        )}
-        <ThemeToggle dark={dark} onToggle={() => setDark(!dark)} />
+        ) : <div />}
+        <div style={{ display:"flex", justifyContent:"flex-end" }}>
+          <ThemeToggle dark={dark} onToggle={() => setDark(!dark)} />
+        </div>
       </header>
 
       <div style={{ position:"relative", zIndex:1, maxWidth:740, margin:"0 auto",

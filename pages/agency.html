@@ -761,22 +761,26 @@ function App() {
 
     // Header
     React.createElement("header", {
-      style:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` }
+      style:{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", padding:isMobile?"16px 20px":"18px 40px", borderBottom:`1px solid ${t.divider}` }
     },
       React.createElement("a", {
         href:"/",
-        style:{ fontFamily:spc, fontSize:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" }
+        style:{ fontFamily:spc, fontSize:isMobile?10:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" }
       }, "AI AGENCY TOOLKIT"),
-      !isMobile && React.createElement("nav", { style:{ display:"flex", gap:28, alignItems:"center" } },
-        React.createElement("a", { href:"/agency", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" } }, "THE AGENCY SPECTRUM"),
-        React.createElement("a", { href:"/pages/friction-scale.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" } }, "AI FRICTION SCALE"),
-        React.createElement("a", { href:"/pages/assessment.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" } }, "ASSESSMENT CHECK"),
+      !isMobile
+        ? React.createElement("nav", { style:{ display:"flex", gap:28, alignItems:"center", justifyContent:"center" } },
+            React.createElement("a", { href:"/agency", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" } }, "THE AGENCY SPECTRUM"),
+            React.createElement("a", { href:"/pages/friction-scale.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" } }, "AI FRICTION SCALE"),
+            React.createElement("a", { href:"/pages/assessment.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" } }, "ASSESSMENT CHECK"),
+          )
+        : React.createElement("div"),
+      React.createElement("div", { style:{ display:"flex", justifyContent:"flex-end" } },
+        React.createElement("button", {
+          onClick: () => setDark(d => !d),
+          title: dark ? "Switch to light mode" : "Switch to dark mode",
+          style:{ background:"transparent", border:`1px solid ${t.cardBorder}`, borderRadius:8, padding:"6px 10px", fontSize:15, color:t.textMid, cursor:"pointer" }
+        }, dark ? "\u2600\uFE0F" : "\uD83C\uDF19"),
       ),
-      React.createElement("button", {
-        onClick: () => setDark(d => !d),
-        title: dark ? "Switch to light mode" : "Switch to dark mode",
-        style:{ background:"transparent", border:`1px solid ${t.cardBorder}`, borderRadius:8, padding:"6px 10px", fontSize:15, color:t.textMid, cursor:"pointer" }
-      }, dark ? "\u2600\uFE0F" : "\uD83C\uDF19"),
     ),
 
     // Main
