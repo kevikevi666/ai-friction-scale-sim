@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AI Agency Toolkit</title>
 <meta name="description" content="Author, Designer, Conductor. A framework for understanding where you sit when AI is in the room." />
-<meta property="og:title" content="The Agency Spectrum" />
+<meta property="og:title" content="The Agency Spectrum — AI Agency Toolkit" />
 <meta property="og:description" content="Three roles in AI work. A framework for educators and students navigating the agentic era." />
 <meta property="og:url" content="https://aiagencytoolkit.com/agency" />
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content="AI Agency Toolkit" />
+<meta property="og:image" content="https://aiagencytoolkit.com/og-image.png" />
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://aiagencytoolkit.com/og-image.png" />
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -789,11 +792,13 @@ function App() {
 
         // Hero
         React.createElement("div", { style:{ textAlign:"center", marginBottom:isMobile?44:72 } },
-          React.createElement("h1", { style:{ fontFamily:serif, fontSize:isMobile?32:48, fontWeight:300, lineHeight:1.15, color:t.text, marginBottom:18, letterSpacing:"-0.01em" } },
-            "The Agency Spectrum"),
+          React.createElement("h1", { style:{ fontFamily:serif, fontSize:isMobile?37:55, fontWeight:300, lineHeight:1.15, color:t.text, marginBottom:18, letterSpacing:"-0.01em" } },
+            "The ",
+            React.createElement("span", { style:{ fontWeight:700, fontStyle:"italic", color:"#52B788" } }, "Agency"),
+            " Spectrum"),
           React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?12:13, color:t.textLow, lineHeight:1.75, maxWidth:540, margin:"0 auto", letterSpacing:"0.01em" } },
             "Three roles in AI work: Author, Designer, Conductor"),
-          React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?12:13, color:t.textLow, lineHeight:1.75, margin:"4px auto 0", letterSpacing:"0.01em", whiteSpace:"nowrap" } },
+          React.createElement("p", { style:{ fontFamily:mono, fontSize:isMobile?12:13, color:t.textLow, lineHeight:1.75, margin:"4px auto 0", letterSpacing:"0.01em", maxWidth:540 } },
             "The central question is not how much AI a student uses, but who is steering"),
         ),
 
