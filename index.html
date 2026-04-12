@@ -24,6 +24,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="/icons.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
@@ -36,6 +37,18 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect } = React;
+
+/* ── Custom SVG icon component ── */
+const SiteIcon = ({ name, size = 24, color = "currentColor" }) =>
+  React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: size, height: size, viewBox: "0 0 24 24",
+    fill: "none", stroke: color,
+    strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round",
+    "aria-hidden": "true",
+    style: { display: "inline-block", flexShrink: 0, verticalAlign: "middle" },
+    dangerouslySetInnerHTML: { __html: (window.SITE_ICONS || {})[name] || "" },
+  });
 
 const mono = "'JetBrains Mono', monospace";
 const spc  = "'Space Mono', monospace";
@@ -70,7 +83,7 @@ function useTheme(dark) {
 const TOOLS = [
   {
     id: "agency",
-    emoji: "🤖",
+    icon: "spectrum",
     title: "The Agency Spectrum",
     subtitle: "Three roles in AI work",
     description: "Author, Designer, Conductor. A framework for understanding where you sit when AI is in the room.",
@@ -80,7 +93,7 @@ const TOOLS = [
   },
   {
     id: "friction",
-    emoji: "🧠",
+    icon: "gauge",
     title: "AI Friction Scale",
     subtitle: "Interactive simulation",
     description: "Explore how different levels of AI involvement affect learning, retention, and cognitive demand.",
@@ -90,7 +103,7 @@ const TOOLS = [
   },
   {
     id: "assessment",
-    emoji: "🎯",
+    icon: "check",
     title: "Assessment Check",
     subtitle: "Student self-check tool",
     description: "Can you stand behind your work? A five-question reflection on understanding and ownership.",
@@ -114,7 +127,7 @@ function ThemeToggle({ dark, onToggle, t }) {
       color: t.textMid,
       transition: "border-color 0.2s",
     },
-  }, dark ? "☀️" : "🌙");
+  }, React.createElement(SiteIcon, { name: dark ? "sun" : "moon", size: 16, color: t.textMid }));
 }
 
 function ToolCard({ tool, dark, t, isMobile }) {
@@ -145,10 +158,10 @@ function ToolCard({ tool, dark, t, isMobile }) {
       maxWidth: isMobile ? "100%" : 340,
     },
   },
-    // Emoji
+    // Icon
     React.createElement("div", {
-      style: { fontSize: 36, marginBottom: 16, lineHeight: 1 }
-    }, tool.emoji),
+      style: { marginBottom: 16, lineHeight: 1 }
+    }, React.createElement(SiteIcon, { name: tool.icon, size: 36, color: accent })),
 
     // Title
     React.createElement("div", {
@@ -265,7 +278,7 @@ function App() {
           onClick: () => setDark(d => !d),
           title: dark ? "Switch to light mode" : "Switch to dark mode",
           style: { background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "6px 10px", fontSize: 15, color: t.textMid, cursor: "pointer" }
-        }, dark ? "☀️" : "🌙"),
+        }, React.createElement(SiteIcon, { name: dark ? "sun" : "moon", size: 16, color: t.textMid })),
       ),
     ),
 

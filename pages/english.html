@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="/icons.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -22,6 +23,18 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect } = React;
+
+/* ── Custom SVG icon component ── */
+const SiteIcon = ({ name, size = 24, color = "currentColor" }) =>
+  React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: size, height: size, viewBox: "0 0 24 24",
+    fill: "none", stroke: color,
+    strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round",
+    "aria-hidden": "true",
+    style: { display: "inline-block", flexShrink: 0, verticalAlign: "middle" },
+    dangerouslySetInnerHTML: { __html: (window.SITE_ICONS || {})[name] || "" },
+  });
 
 const mono = "'JetBrains Mono', monospace";
 const ACCENT = "#4f46e5";
@@ -72,7 +85,7 @@ function ThemeToggle({ dark, onToggle }) {
         transition:"left 0.3s, background 0.3s",
         display:"flex", alignItems:"center", justifyContent:"center", fontSize:12,
         boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}>
-        {dark ? "🌙" : "☀️"}
+        <SiteIcon name={dark ? "moon" : "sun"} size={12} color={dark ? "#94a3b8" : "#f59e0b"} />
       </div>
     </button>
   );
@@ -83,7 +96,7 @@ const scenarios = [
   {
     id: "literary-analysis",
     name: "Literary Analysis",
-    icon: "📖",
+    icon: "book",
     subject: "Close Reading / Essay",
     subtitle: "From five paragraphs to thinking portfolios",
     traditional: {
@@ -109,7 +122,7 @@ const scenarios = [
   {
     id: "creative-writing",
     name: "Creative Writing",
-    icon: "✍️",
+    icon: "pen",
     subject: "Voice / Craft",
     subtitle: "From submission to performance",
     traditional: {
@@ -135,7 +148,7 @@ const scenarios = [
   {
     id: "research-paper",
     name: "Research Paper",
-    icon: "📚",
+    icon: "layers",
     subject: "Argument / Sources",
     subtitle: "From citations to synthesis storytelling",
     traditional: {
@@ -161,9 +174,9 @@ const scenarios = [
 ];
 
 const phases = [
-  { id: "traditional", label: "Traditional",     icon: "📋" },
-  { id: "friction",    label: "Friction Points",  icon: "⚡" },
-  { id: "alternative", label: "Alternative",      icon: "🚀" },
+  { id: "traditional", label: "Traditional",     icon: "doc" },
+  { id: "friction",    label: "Friction Points",  icon: "bolt" },
+  { id: "alternative", label: "Alternative",      icon: "launch" },
 ];
 
 /* ───────── components ───────── */
@@ -199,7 +212,7 @@ function Card({ label, icon, accent, t, children }) {
         <div style={{ padding:"12px 20px", borderBottom:t.cardBorder,
           display:"flex", alignItems:"center", gap:10,
           background: accent ? `${accent}08` : "transparent" }}>
-          {icon && <span style={{ fontSize:18 }}>{icon}</span>}
+          {icon && <SiteIcon name={icon} size={18} color={accent || t.textLow} />}
           <span style={{ fontSize:10, fontFamily:mono, textTransform:"uppercase",
             letterSpacing:"0.15em", color: accent || t.textLow, fontWeight:600 }}>
             {label}
@@ -214,7 +227,7 @@ function Card({ label, icon, accent, t, children }) {
 function PhaseContent({ phase, scenario, t, isMobile }) {
   if (phase === "traditional") {
     return (
-      <Card label={scenario.traditional.label} icon="📋" t={t}>
+      <Card label={scenario.traditional.label} icon="doc" t={t}>
         <p style={{ margin:"0 0 20px", fontSize:17, lineHeight:1.75, color:t.textHigh }}>
           {scenario.traditional.description}
         </p>
@@ -249,7 +262,7 @@ function PhaseContent({ phase, scenario, t, isMobile }) {
   if (phase === "alternative") {
     return (
       <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
-        <Card label={scenario.alternative.label} icon="🚀" accent={ACCENT} t={t}>
+        <Card label={scenario.alternative.label} icon="launch" accent={ACCENT} t={t}>
           <p style={{ margin:"0 0 4px", fontSize:14, fontStyle:"italic",
             color:ACCENT, fontFamily:mono }}>{scenario.alternative.tagline}</p>
           <p style={{ margin:"0 0 20px", fontSize:17, lineHeight:1.75, color:t.textHigh }}>
@@ -259,7 +272,7 @@ function PhaseContent({ phase, scenario, t, isMobile }) {
           <StepList steps={scenario.alternative.steps} t={t} />
         </Card>
 
-        <Card label="Why This Works" icon="✅" accent="#00796B" t={t}>
+        <Card label="Why This Works" icon="checkmark" accent="#00796B" t={t}>
           <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
             {scenario.alternative.benefits.map((b, i) => (
               <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
@@ -270,7 +283,7 @@ function PhaseContent({ phase, scenario, t, isMobile }) {
           </div>
         </Card>
 
-        <Card label="AI's New Role" icon="🤖" accent="#7c3aed" t={t}>
+        <Card label="AI's New Role" icon="chip" accent="#7c3aed" t={t}>
           <p style={{ margin:0, fontSize:16, lineHeight:1.75, color:t.textHigh }}>
             {scenario.alternative.aiRole}
           </p>
@@ -340,7 +353,7 @@ function HamburgerMenu({ open, onToggle, dark, t }) {
               borderLeft:"3px solid transparent", textDecoration:"none", marginBottom:4, transition:"background 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"}
             onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <span style={{ fontSize:20 }}>⚖️</span>
+            <SiteIcon name="scale" size={20} color={t.textMid} />
             <div>
               <div style={{ fontSize:13, fontWeight:600, color:t.text, fontFamily:"'Space Mono', monospace" }}>AI Friction Scale</div>
               <div style={{ fontSize:10, color:t.textLow, fontFamily:mono, marginTop:2 }}>Interactive simulation</div>
@@ -349,9 +362,9 @@ function HamburgerMenu({ open, onToggle, dark, t }) {
 
           {/* Coming soon */}
           <div style={{ padding:"16px 14px 8px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:t.textFaint, fontFamily:mono }}>Coming Soon</div>
-          {[["📖","High School English"],["📐","Mathematics"],["🔬","Science"],["📜","History"]].map(([icon, label]) => (
+          {[["book","High School English"],["math","Mathematics"],["atom","Science"],["history","History"]].map(([icon, label]) => (
             <div key={label} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:10, opacity:0.35 }}>
-              <span style={{ fontSize:18 }}>{icon}</span>
+              <SiteIcon name={icon} size={18} color={t.textMid} />
               <div style={{ fontSize:13, color:t.textMid, fontFamily:"'Space Mono', monospace" }}>{label}</div>
             </div>
           ))}
@@ -445,7 +458,7 @@ function App() {
                 {activeScenario === i && (
                   <div style={{ position:"absolute", top:0, left:0, right:0, height:3, background:ACCENT }} />
                 )}
-                <div style={{ fontSize: isMobile ? 20 : 24, marginBottom:6 }}>{s.icon}</div>
+                <div style={{ marginBottom:6 }}><SiteIcon name={s.icon} size={isMobile ? 20 : 24} color={activeScenario === i ? ACCENT : t.textMid} /></div>
                 <div style={{ fontSize: isMobile ? 13 : 14, fontWeight:600, color:t.text,
                   fontFamily:"'Space Mono', monospace", marginBottom:3, transition:"color 0.3s" }}>
                   {s.name}
@@ -478,7 +491,7 @@ function App() {
                 textTransform:"uppercase", letterSpacing:"0.08em",
                 cursor:"pointer", transition:"all 0.3s",
                 fontWeight: activePhase === p.id ? 700 : 400 }}>
-              {p.icon} {p.label}
+              <SiteIcon name={p.icon} size={14} color={activePhase === p.id ? ACCENT : t.textLow} /> {p.label}
             </button>
           ))}
         </div>

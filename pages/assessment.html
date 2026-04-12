@@ -14,6 +14,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous"></script>
+<script src="/icons.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -29,6 +30,18 @@
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect } = React;
+
+/* ── Custom SVG icon component ── */
+const SiteIcon = ({ name, size = 24, color = "currentColor" }) =>
+  React.createElement("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    width: size, height: size, viewBox: "0 0 24 24",
+    fill: "none", stroke: color,
+    strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round",
+    "aria-hidden": "true",
+    style: { display: "inline-block", flexShrink: 0, verticalAlign: "middle" },
+    dangerouslySetInnerHTML: { __html: (window.SITE_ICONS || {})[name] || "" },
+  });
 
 const mono  = "'JetBrains Mono', monospace";
 const spc   = "'Space Mono', monospace";
@@ -195,7 +208,7 @@ function ThemeToggle({ dark, onToggle }) {
         transition:"left 0.3s, background 0.3s",
         display:"flex", alignItems:"center", justifyContent:"center", fontSize:12,
         boxShadow:"0 1px 3px rgba(0,0,0,0.2)" }}>
-        {dark ? "🌙" : "☀️"}
+        <SiteIcon name={dark ? "moon" : "sun"} size={12} color={dark ? "#94a3b8" : "#f59e0b"} />
       </div>
     </button>
   );
@@ -271,7 +284,7 @@ function OptionCard({ text, score, selected, onSelect, dark, t }) {
 function IntroScreen({ onStart, t, dark, isMobile }) {
   return (
     <div style={{ maxWidth:560, margin:"0 auto", textAlign:"center" }}>
-      <div style={{ fontSize:60, marginBottom:20, lineHeight:1 }}>🎯</div>
+      <div style={{ marginBottom:20 }}><SiteIcon name="check" size={60} color={ACCENT} /></div>
       <h1 style={{ fontSize: isMobile ? 30 : 50, fontWeight:300, letterSpacing:"-0.02em",
         lineHeight:1.15, margin:"0 0 12px" }}>
         Can You Stand{" "}
