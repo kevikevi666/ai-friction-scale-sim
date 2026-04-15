@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Agency Toolkit — Redesign Studio</title>
+<meta name="description" content="Paste an assignment. Get a diagnosis against the Agency Spectrum and a role-aware redesign with a transfer checkpoint." />
+<meta property="og:title" content="Redesign Studio — AI Agency Toolkit" />
+<meta property="og:description" content="Diagnose and redesign assignments for the agentic AI era." />
+<meta property="og:image" content="https://aiagencytoolkit.com/og-image.png" />
+<meta property="og:url" content="https://aiagencytoolkit.com/pages/redesign-studio.html" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Redesign Studio — AI Agency Toolkit" />
+<meta name="twitter:image" content="https://aiagencytoolkit.com/og-image.png" />
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/favicon.png" type="image/png" sizes="48x48" />
+<link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: 'Crimson Pro', Georgia, serif; overflow-x: hidden; transition: background 0.4s, color 0.4s; }
+  button, textarea, input { font-family: inherit; }
+  textarea { resize: vertical; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const mono = "'JetBrains Mono', monospace";
+const spc  = "'Space Mono', monospace";
+const serif = "'Crimson Pro', Georgia, serif";
+
+const ACCENT = { dark: "#F472B6", light: "#BE185D" };
+
+const ROLE_COLORS = {
+  Author:    { dark: "#34D399", light: "#059669" },
+  Designer:  { dark: "#60A5FA", light: "#2563EB" },
+  Conductor: { dark: "#A78BFA", light: "#7C3AED" },
+};
+
+const ROLES = [
+  {
+    name: "Author",
+    tagline: "The student does the work. AI assists at moments.",
+    develops: "Writing fluency, research process, argumentation, sustained reasoning.",
+    doesNotDevelop: "Delegation, AI evaluation, problem definition for external execution.",
+  },
+  {
+    name: "Designer",
+    tagline: "The student defines the problem and delegates execution.",
+    develops: "Problem definition, critical evaluation, editorial judgment, communication clarity.",
+    doesNotDevelop: "Writing fluency, research process, sustained drafting.",
+  },
+  {
+    name: "Conductor",
+    tagline: "The student conducts an orchestra of AI agents toward a goal.",
+    develops: "Pattern recognition, quality monitoring, bias detection, verification.",
+    doesNotDevelop: "Writing, research, argumentation, deep content engagement.",
+  },
+];
+
+const FRICTION_LEVELS = [
+  { id: 1, label: "No AI", subtitle: "Maximum Friction" },
+  { id: 2, label: "AI for Ideation", subtitle: "High Friction" },
+  { id: 3, label: "AI for Structure", subtitle: "Moderate Friction" },
+  { id: 4, label: "AI for Feedback", subtitle: "Low Friction" },
+  { id: 5, label: "Full AI", subtitle: "Minimum Friction" },
+];
+
+/* ─────────── hooks ─────────── */
+
+function useIsMobile(bp = 768) {
+  const [m, setM] = useState(() => window.matchMedia(`(max-width: ${bp - 1}px)`).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${bp - 1}px)`);
+    const h = e => setM(e.matches);
+    mql.addEventListener("change", h);
+    return () => mql.removeEventListener("change", h);
+  }, []);
+  return m;
+}
+
+function useTheme(dark) {
+  return {
+    bg:          dark ? "#0a0a0f"                    : "#f5f5f0",
+    text:        dark ? "#ffffff"                    : "#1a1a2e",
+    textHigh:    dark ? "rgba(255,255,255,0.65)"     : "rgba(0,0,0,0.6)",
+    textMid:     dark ? "rgba(255,255,255,0.55)"     : "rgba(0,0,0,0.55)",
+    textLow:     dark ? "rgba(255,255,255,0.4)"      : "rgba(0,0,0,0.4)",
+    textFaint:   dark ? "rgba(255,255,255,0.3)"      : "rgba(0,0,0,0.35)",
+    cardBg:      dark ? "rgba(255,255,255,0.025)"    : "rgba(255,255,255,0.75)",
+    cardBorder:  dark ? "rgba(255,255,255,0.07)"     : "rgba(0,0,0,0.09)",
+    cardShadow:  dark ? "none"                       : "0 2px 12px rgba(0,0,0,0.06)",
+    divider:     dark ? "rgba(255,255,255,0.06)"     : "rgba(0,0,0,0.07)",
+    btnHover:    dark ? "rgba(255,255,255,0.04)"     : "rgba(0,0,0,0.04)",
+  };
+}
+
+/* ─────────── Claude API layer ─────────── */
+
+async function callClaude(system, user, maxTokens = 4096) {
+  // Try Netlify function first
+  try {
+    const res = await fetch("/.netlify/functions/claude", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ system, user, max_tokens: maxTokens }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data.content && data.content[0] && data.content[0].text;
+      if (!text) throw new Error("Empty response from API.");
+      return JSON.parse(text);
+    }
+    if (res.status !== 404) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || "Server error: " + res.status);
+    }
+    // 404 means no Netlify function, fall through to BYOK
+  } catch (err) {
+    if (err.message && !err.message.includes("Failed to fetch") && !err.message.includes("NetworkError") && !err.message.includes("404")) {
+      throw err;
+    }
+  }
+
+  // BYOK fallback
+  const apiKey = localStorage.getItem("ANTHROPIC_API_KEY");
+  if (!apiKey) {
+    throw new Error("NO_KEY");
+  }
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      system: system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    const msg = errData.error ? (errData.error.message || JSON.stringify(errData.error)) : "API error: " + res.status;
+    if (res.status === 401) throw new Error("BAD_KEY");
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  const text = data.content && data.content[0] && data.content[0].text;
+  if (!text) throw new Error("Empty response from API.");
+  return JSON.parse(text);
+}
+
+/* ─────────── prompt builders ─────────── */
+
+function buildDiagnosePrompts(assignment, grade, targetRole, targetFriction) {
+  const system = `You are an expert in AI-era pedagogy grounded in Kevin Farrant's Agency Spectrum framework (Author, Designer, Conductor, and the Five Constants: Direct, Question, Own, Consider, Grow) and Jane Beckwith's AI Friction Scale (1 = No AI to 5 = Full AI, where the Friction Scale describes variation within the Author role). You diagnose K-12 assignments for cognitive bypass risk when students have free access to agentic AI. Your diagnoses are honest, specific, and pedagogically sharp. You name the actual bypass vectors a student would use, not vague risks. You respond ONLY with valid JSON. No markdown fences, no preamble, no commentary.`;
+
+  const user = `Diagnose this assignment for Agency Spectrum cognitive bypass risk.
+
+Framework reference:
+- Author: student does the work, AI assists at margins. Develops writing fluency, research process, argumentation, sustained reasoning.
+- Designer: student defines the problem, sets constraints, delegates execution. Develops problem definition, critical evaluation, editorial judgment.
+- Conductor: student sets goal, AI executes full pipeline, student supervises. Develops pattern recognition, quality monitoring, bias detection, verification.
+
+Five Constants that must be preserved in any role:
+- Direct: student decides whether AI belongs and where on the spectrum
+- Question: student treats every output as a draft, not a verdict
+- Own: student knows which parts are genuinely theirs
+- Consider: student thinks past the artifact to impact and assumptions
+- Grow: student develops fluency across all three roles over time
+
+Assignment:
+"""
+${assignment}
+"""
+
+Grade/subject: ${grade || "unspecified"}
+Teacher's target role for the redesign: ${targetRole}
+${targetRole === "Author" ? `Target friction level: ${targetFriction}` : ""}
+
+Return ONLY this JSON:
+{
+  "diagnosisHeadline": "<one punchy sentence, max 20 words, capturing the core diagnosis>",
+  "currentRole": "<Author | Designer | Conductor>",
+  "currentRoleRationale": "<one sentence>",
+  "aiVulnerabilities": [
+    {"vector": "<short punchy name>", "description": "<how a student bypasses the learning>", "example": "<a specific concrete example of the bypass, quoting a plausible AI prompt>"}
+  ],
+  "constantsAtRisk": [
+    {"constant": "<Direct | Question | Own | Consider | Grow>", "risk": "<one sentence tied to the assignment's specifics>"}
+  ]
+}
+
+Requirements: exactly 3 aiVulnerabilities. Exactly 2 or 3 constantsAtRisk.`;
+
+  return { system, user };
+}
+
+function buildRedesignPrompts(assignment, grade, targetRole, targetFriction, diagnosis) {
+  const system = `You are an expert in AI-era pedagogy grounded in Kevin Farrant's Agency Spectrum framework. You redesign K-12 assignments for a specific target role (Author, Designer, or Conductor), always include a transfer verification checkpoint where AI is removed and students demonstrate learning has transferred, and honestly name what the redesigned version develops and does not develop. Your redesigns are specific, actionable, and usable by a teacher on Monday morning. No generic filler. You respond ONLY with valid JSON.`;
+
+  const user = `Redesign this assignment for the ${targetRole} role.
+
+Original assignment:
+"""
+${assignment}
+"""
+
+Diagnosis:
+${JSON.stringify(diagnosis)}
+
+Target role: ${targetRole}
+${targetRole === "Author" ? `Target friction level: ${targetFriction}` : ""}
+Grade/subject: ${grade || "unspecified"}
+
+Design requirements:
+1. Redesign the assignment so a student operating in ${targetRole} mode is the honest target. The prompt, deliverables, and sequence should reward the skills that role develops, not the ones it does not.
+2. Include a transfer verification checkpoint. A specific moment where AI access is removed and the student must demonstrate learning transferred. Concrete formats: in-class written synthesis, oral defense, novel-context application, handwritten work, live problem-solve. Not fuzzy.
+3. Generate FIVE student reflection prompts tied to this specific assignment. These prompts should echo the structure and tone of an existing "Assessment Check" tool that asks students "can you stand behind your work." One reflection per Constant (Direct, Question, Own, Consider, Grow), each contextualized to this assignment.
+4. Be honest about what this redesign develops AND what it does not develop. Use Kevin's framing from his framework paper. Example: "This redesign develops problem definition and editorial judgment. It does not develop writing fluency or sustained drafting. Both are valuable. They are not the same thing."
+5. Provide a 4-item change log: what changed and why.
+
+Return ONLY this JSON:
+{
+  "redesignedPrompt": "<full new assignment text, markdown formatted, ready to hand to students. Include sections, deliverables, and sequence>",
+  "roleRationale": "<2-3 sentences on why the ${targetRole} role is right for this assignment and these learning goals>",
+  "transferCheckpoint": {
+    "when": "<where in the sequence>",
+    "what": "<specifically what students demonstrate without AI>",
+    "how": "<format of the checkpoint>"
+  },
+  "reflectionPrompts": [
+    {"constant": "Direct", "prompt": "<contextualized reflection question>"},
+    {"constant": "Question", "prompt": "<...>"},
+    {"constant": "Own", "prompt": "<...>"},
+    {"constant": "Consider", "prompt": "<...>"},
+    {"constant": "Grow", "prompt": "<...>"}
+  ],
+  "develops": "<sentence or two on what this redesign develops>",
+  "doesNotDevelop": "<sentence or two on what it does not develop, in Kevin's honest framing>",
+  "changeLog": ["<change + rationale>", "<...>", "<...>", "<...>"]
+}`;
+
+  return { system, user };
+}
+
+/* ─────────── localStorage helpers ─────────── */
+
+const STORAGE_KEY = "redesign_studio_saves";
+
+function loadSaves() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
+}
+
+function addSave(entry) {
+  const saves = loadSaves();
+  saves.unshift({ ...entry, id: Date.now(), savedAt: new Date().toISOString() });
+  if (saves.length > 20) saves.length = 20;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+}
+
+function deleteSave(id) {
+  const saves = loadSaves().filter(s => s.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+}
+
+/* ─────────── markdown-to-elements helper ─────────── */
+
+function renderMarkdown(md, t) {
+  if (!md) return null;
+  const lines = md.split("\n");
+  const els = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith("### ")) {
+      els.push(React.createElement("h4", { key: i, style: { fontFamily: spc, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: t.text, marginTop: 20, marginBottom: 8 } }, line.slice(4)));
+    } else if (line.startsWith("## ")) {
+      els.push(React.createElement("h3", { key: i, style: { fontFamily: spc, fontSize: 14, fontWeight: 700, letterSpacing: "0.04em", color: t.text, marginTop: 24, marginBottom: 10 } }, line.slice(3)));
+    } else if (line.startsWith("# ")) {
+      els.push(React.createElement("h2", { key: i, style: { fontFamily: serif, fontSize: 22, fontWeight: 600, color: t.text, marginTop: 24, marginBottom: 10 } }, line.slice(2)));
+    } else if (line.startsWith("- ") || line.startsWith("* ")) {
+      els.push(React.createElement("div", { key: i, style: { display: "flex", gap: 10, marginBottom: 6, paddingLeft: 4 } },
+        React.createElement("span", { style: { color: t.textLow, flexShrink: 0 } }, "\u2022"),
+        React.createElement("span", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh } }, renderInline(line.slice(2)))
+      ));
+    } else if (/^\d+\.\s/.test(line)) {
+      const num = line.match(/^(\d+)\.\s/)[1];
+      els.push(React.createElement("div", { key: i, style: { display: "flex", gap: 10, marginBottom: 6, paddingLeft: 4 } },
+        React.createElement("span", { style: { color: t.textLow, flexShrink: 0, fontFamily: mono, fontSize: 13 } }, num + "."),
+        React.createElement("span", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh } }, renderInline(line.replace(/^\d+\.\s/, "")))
+      ));
+    } else if (line.trim() === "") {
+      els.push(React.createElement("div", { key: i, style: { height: 8 } }));
+    } else {
+      els.push(React.createElement("p", { key: i, style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, marginBottom: 8 } }, renderInline(line)));
+    }
+    i++;
+  }
+  return els;
+}
+
+function renderInline(text) {
+  // Bold and italic
+  const parts = [];
+  let remaining = text;
+  let key = 0;
+  const regex = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(remaining)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(remaining.slice(lastIndex, match.index));
+    }
+    if (match[2]) {
+      parts.push(React.createElement("strong", { key: key++, style: { fontStyle: "italic" } }, match[2]));
+    } else if (match[3]) {
+      parts.push(React.createElement("strong", { key: key++ }, match[3]));
+    } else if (match[4]) {
+      parts.push(React.createElement("em", { key: key++ }, match[4]));
+    } else if (match[5]) {
+      parts.push(React.createElement("code", { key: key++, style: { fontFamily: mono, fontSize: "0.9em", padding: "2px 6px", borderRadius: 4, background: "rgba(128,128,128,0.12)" } }, match[5]));
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < remaining.length) {
+    parts.push(remaining.slice(lastIndex));
+  }
+  return parts.length > 0 ? parts : text;
+}
+
+/* ─────────── components ─────────── */
+
+function Header({ dark, setDark, t, isMobile }) {
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  return React.createElement("header", {
+    style: {
+      position: "relative", zIndex: 10,
+      display: "grid", gridTemplateColumns: "1fr auto 1fr",
+      alignItems: "center",
+      padding: isMobile ? "16px 20px" : "18px 40px",
+      borderBottom: `1px solid ${t.divider}`,
+    },
+  },
+    React.createElement("a", {
+      href: "/",
+      style: { fontFamily: spc, fontSize: isMobile ? 10 : 13, fontWeight: 700, color: t.text, textDecoration: "none", letterSpacing: "0.04em" }
+    }, "AI AGENCY TOOLKIT"),
+    !isMobile
+      ? React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center", justifyContent: "center" } },
+          React.createElement("a", { href: "/agency", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#2A9D8F" : "#00796B", textDecoration: "none", letterSpacing: "0.06em" } }, "THE AGENCY SPECTRUM"),
+          React.createElement("a", { href: "/pages/friction-scale.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F4A261" : "#E65100", textDecoration: "none", letterSpacing: "0.06em" } }, "AI FRICTION SCALE"),
+          React.createElement("a", { href: "/pages/assessment.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#818cf8" : "#6366f1", textDecoration: "none", letterSpacing: "0.06em" } }, "ASSESSMENT CHECK"),
+          React.createElement("a", { href: "/pages/redesign-studio.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: accent, textDecoration: "none", letterSpacing: "0.06em", borderBottom: `2px solid ${accent}`, paddingBottom: 2 } }, "REDESIGN STUDIO"),
+        )
+      : React.createElement("div"),
+    React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } },
+      React.createElement("button", {
+        onClick: () => setDark(d => !d),
+        title: dark ? "Switch to light mode" : "Switch to dark mode",
+        style: { background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "6px 10px", fontSize: 15, color: t.textMid, cursor: "pointer" }
+      }, dark ? "☀️" : "🌙"),
+    ),
+  );
+}
+
+function ApiKeyModal({ dark, t, onClose, onSave }) {
+  const [key, setKey] = useState("");
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  return React.createElement("div", {
+    style: { position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", padding: 20 },
+    onClick: (e) => { if (e.target === e.currentTarget) onClose(); }
+  },
+    React.createElement("div", {
+      style: { background: t.bg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: 32, maxWidth: 480, width: "100%", boxShadow: "0 24px 48px rgba(0,0,0,0.3)" }
+    },
+      React.createElement("h3", { style: { fontFamily: spc, fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 16, letterSpacing: "0.04em" } }, "API KEY REQUIRED"),
+      React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, marginBottom: 8 } },
+        "The Redesign Studio uses Claude to analyze and redesign your assignments. When running locally, you need to provide your own Anthropic API key."
+      ),
+      React.createElement("p", { style: { fontSize: 14, lineHeight: 1.6, color: t.textLow, marginBottom: 20 } },
+        "Your key is stored only in this browser's localStorage. It is never sent anywhere except directly to Anthropic's API."
+      ),
+      React.createElement("input", {
+        type: "password",
+        placeholder: "sk-ant-...",
+        value: key,
+        onChange: (e) => setKey(e.target.value),
+        style: {
+          width: "100%", padding: "12px 16px", borderRadius: 10,
+          border: `1px solid ${t.cardBorder}`,
+          background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+          color: t.text, fontSize: 15, fontFamily: mono, marginBottom: 16,
+          outline: "none",
+        }
+      }),
+      React.createElement("div", { style: { display: "flex", gap: 12, justifyContent: "flex-end" } },
+        React.createElement("button", {
+          onClick: onClose,
+          style: { padding: "10px 20px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
+        }, "Cancel"),
+        React.createElement("button", {
+          onClick: () => { if (key.trim()) { localStorage.setItem("ANTHROPIC_API_KEY", key.trim()); onSave(); } },
+          disabled: !key.trim(),
+          style: { padding: "10px 24px", background: key.trim() ? accent : t.cardBorder, color: "#fff", border: "none", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: key.trim() ? "pointer" : "not-allowed", fontFamily: mono }
+        }, "Save Key"),
+      ),
+    ),
+  );
+}
+
+function RoleCard({ role, selected, onSelect, dark, t, isMobile }) {
+  const [hovered, setHovered] = useState(false);
+  const rc = dark ? ROLE_COLORS[role.name].dark : ROLE_COLORS[role.name].light;
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  const isActive = selected || hovered;
+
+  return React.createElement("button", {
+    onClick: () => onSelect(role.name),
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false),
+    style: {
+      flex: 1, minWidth: isMobile ? "100%" : 200,
+      textAlign: "left", cursor: "pointer",
+      background: selected ? (dark ? `${accent}10` : `${accent}06`) : t.cardBg,
+      border: `${selected ? 2 : 1}px solid ${selected ? accent : (hovered ? rc : t.cardBorder)}`,
+      borderRadius: 16,
+      padding: isMobile ? "20px 18px" : "24px 22px",
+      transition: "all 0.2s",
+      boxShadow: selected ? `0 0 0 1px ${accent}30` : t.cardShadow,
+    }
+  },
+    React.createElement("div", { style: { fontFamily: spc, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: rc, marginBottom: 6 } }, role.name),
+    React.createElement("div", { style: { fontFamily: serif, fontSize: 15, fontStyle: "italic", color: t.textHigh, lineHeight: 1.5, marginBottom: 14 } }, role.tagline),
+    React.createElement("div", { style: { height: 1, background: t.divider, marginBottom: 12 } }),
+    React.createElement("div", { style: { fontSize: 12, fontFamily: mono, color: t.textLow, lineHeight: 1.6, marginBottom: 4 } },
+      React.createElement("span", { style: { color: rc, fontWeight: 600 } }, "Develops: "),
+      role.develops
+    ),
+    React.createElement("div", { style: { fontSize: 12, fontFamily: mono, color: t.textLow, lineHeight: 1.6 } },
+      React.createElement("span", { style: { color: t.textFaint, fontWeight: 600 } }, "Does not develop: "),
+      role.doesNotDevelop
+    ),
+  );
+}
+
+function FrictionPicker({ value, onChange, dark, t, isMobile }) {
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  return React.createElement("div", { style: { marginTop: 20 } },
+    React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 12 } }, "Target Friction Level"),
+    React.createElement("div", { style: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: 8 } },
+      ...FRICTION_LEVELS.map(fl =>
+        React.createElement("button", {
+          key: fl.id,
+          onClick: () => onChange(fl.id),
+          style: {
+            flex: 1, padding: "10px 12px", borderRadius: 10, cursor: "pointer",
+            border: `1px solid ${value === fl.id ? accent : t.cardBorder}`,
+            background: value === fl.id ? (dark ? `${accent}15` : `${accent}08`) : "transparent",
+            textAlign: "center", transition: "all 0.2s",
+          }
+        },
+          React.createElement("div", { style: { fontFamily: mono, fontSize: 11, fontWeight: 700, color: value === fl.id ? accent : t.textMid } }, fl.id),
+          React.createElement("div", { style: { fontFamily: mono, fontSize: 9, color: t.textLow, marginTop: 2 } }, fl.label),
+        )
+      )
+    ),
+    React.createElement("div", { style: { marginTop: 10, textAlign: "right" } },
+      React.createElement("a", {
+        href: "/pages/friction-scale.html",
+        target: "_blank",
+        rel: "noopener noreferrer",
+        style: { fontFamily: mono, fontSize: 10, color: t.textFaint, textDecoration: "none", letterSpacing: "0.04em" }
+      }, "Not sure which level fits? Try the simulator →"),
+    ),
+  );
+}
+
+function LoadingScreen({ message, dark, t }) {
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  return React.createElement("div", {
+    style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 24 }
+  },
+    React.createElement("div", {
+      style: {
+        width: 40, height: 40, borderRadius: "50%",
+        border: `3px solid ${t.cardBorder}`,
+        borderTopColor: accent,
+        animation: "spin 0.8s linear infinite",
+      }
+    }),
+    React.createElement("p", { style: { fontFamily: mono, fontSize: 12, color: t.textMid, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" } }, message),
+  );
+}
+
+function ErrorMessage({ message, onRetry, dark, t }) {
+  return React.createElement("div", {
+    style: { background: dark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, padding: "16px 20px", marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }
+  },
+    React.createElement("p", { style: { fontSize: 15, color: dark ? "#FCA5A5" : "#DC2626", margin: 0 } }, message),
+    onRetry && React.createElement("button", {
+      onClick: onRetry,
+      style: { alignSelf: "flex-start", padding: "8px 20px", background: "transparent", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 100, fontSize: 12, color: dark ? "#FCA5A5" : "#DC2626", cursor: "pointer", fontFamily: mono }
+    }, "Try Again"),
+  );
+}
+
+/* ─────────── Screen 1: Input ─────────── */
+
+function InputScreen({ onDiagnose, dark, t, isMobile, savedRedesigns, onLoadSave, onDeleteSave }) {
+  const [assignment, setAssignment] = useState("");
+  const [grade, setGrade] = useState("");
+  const [targetRole, setTargetRole] = useState(null);
+  const [targetFriction, setTargetFriction] = useState(3);
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  const canSubmit = assignment.trim().length > 20 && targetRole;
+
+  return React.createElement("div", { style: { maxWidth: 760, margin: "0 auto" } },
+    // Title
+    React.createElement("div", { style: { textAlign: "center", marginBottom: isMobile ? 28 : 40 } },
+      React.createElement("div", { style: { fontSize: 40, marginBottom: 12, lineHeight: 1 } }, "✎"),
+      React.createElement("h1", {
+        style: { fontFamily: serif, fontSize: isMobile ? 28 : 42, fontWeight: 300, lineHeight: 1.2, letterSpacing: "-0.01em", marginBottom: 8 }
+      },
+        "Redesign ",
+        React.createElement("span", { style: { fontWeight: 700, fontStyle: "italic", color: accent } }, "Studio")
+      ),
+      React.createElement("p", { style: { fontFamily: mono, fontSize: 11, color: t.textLow, textTransform: "uppercase", letterSpacing: "0.15em" } }, "Diagnose and redesign for the agentic era"),
+    ),
+
+    // Assignment input
+    React.createElement("div", { style: { marginBottom: 24 } },
+      React.createElement("label", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, display: "block", marginBottom: 8 } }, "Paste your assignment"),
+      React.createElement("textarea", {
+        value: assignment,
+        onChange: (e) => setAssignment(e.target.value),
+        placeholder: "Paste the full text of the assignment you want to diagnose and redesign...",
+        rows: 8,
+        style: {
+          width: "100%", padding: "16px 18px", borderRadius: 12,
+          border: `1px solid ${t.cardBorder}`,
+          background: dark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)",
+          color: t.text, fontSize: 16, lineHeight: 1.7,
+          fontFamily: serif, outline: "none",
+          transition: "border-color 0.2s",
+        },
+        onFocus: (e) => e.target.style.borderColor = accent,
+        onBlur: (e) => e.target.style.borderColor = t.cardBorder,
+      }),
+    ),
+
+    // Grade/subject
+    React.createElement("div", { style: { marginBottom: 28 } },
+      React.createElement("label", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, display: "block", marginBottom: 8 } }, "Grade and subject (optional)"),
+      React.createElement("input", {
+        type: "text",
+        value: grade,
+        onChange: (e) => setGrade(e.target.value),
+        placeholder: "e.g. 10th Grade English, AP Biology",
+        style: {
+          width: "100%", padding: "12px 16px", borderRadius: 10,
+          border: `1px solid ${t.cardBorder}`,
+          background: dark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)",
+          color: t.text, fontSize: 15, fontFamily: serif, outline: "none",
+          transition: "border-color 0.2s",
+        },
+        onFocus: (e) => e.target.style.borderColor = accent,
+        onBlur: (e) => e.target.style.borderColor = t.cardBorder,
+      }),
+    ),
+
+    // Target role
+    React.createElement("div", { style: { marginBottom: 20 } },
+      React.createElement("label", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, display: "block", marginBottom: 12 } }, "Target role for redesign"),
+      React.createElement("div", { style: { display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12 } },
+        ...ROLES.map(r => React.createElement(RoleCard, { key: r.name, role: r, selected: targetRole === r.name, onSelect: setTargetRole, dark, t, isMobile }))
+      ),
+      React.createElement("div", { style: { marginTop: 10, textAlign: "right" } },
+        React.createElement("a", {
+          href: "/agency",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          style: { fontFamily: mono, fontSize: 10, color: t.textFaint, textDecoration: "none", letterSpacing: "0.04em" }
+        }, "Not sure which role fits? Read the framework →"),
+      ),
+    ),
+
+    // Friction picker (Author only)
+    targetRole === "Author" && React.createElement(FrictionPicker, { value: targetFriction, onChange: setTargetFriction, dark, t, isMobile }),
+
+    // CTA
+    React.createElement("div", { style: { textAlign: "center", marginTop: 36 } },
+      React.createElement("button", {
+        onClick: () => canSubmit && onDiagnose({ assignment, grade, targetRole, targetFriction }),
+        disabled: !canSubmit,
+        style: {
+          padding: isMobile ? "14px 40px" : "16px 52px",
+          background: canSubmit ? accent : (dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"),
+          color: canSubmit ? "#fff" : t.textLow,
+          border: "none", borderRadius: 100,
+          fontSize: isMobile ? 15 : 17, fontWeight: 600,
+          cursor: canSubmit ? "pointer" : "not-allowed",
+          transition: "all 0.2s",
+          boxShadow: canSubmit ? `0 4px 24px ${accent}40` : "none",
+          fontFamily: serif,
+        }
+      }, "Diagnose this assignment"),
+    ),
+
+    // Saved redesigns
+    savedRedesigns.length > 0 && React.createElement("div", { style: { marginTop: 48, borderTop: `1px solid ${t.divider}`, paddingTop: 28 } },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 16 } }, "Saved Redesigns"),
+      ...savedRedesigns.map(save =>
+        React.createElement("div", {
+          key: save.id,
+          style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 10, marginBottom: 8, gap: 12 }
+        },
+          React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+            React.createElement("div", { style: { fontFamily: mono, fontSize: 11, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+              save.targetRole + " redesign"
+            ),
+            React.createElement("div", { style: { fontFamily: mono, fontSize: 9, color: t.textFaint, marginTop: 2 } },
+              save.grade || "No grade specified",
+              " · ",
+              new Date(save.savedAt).toLocaleDateString()
+            ),
+          ),
+          React.createElement("div", { style: { display: "flex", gap: 8, flexShrink: 0 } },
+            React.createElement("button", {
+              onClick: () => onLoadSave(save),
+              style: { padding: "6px 14px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 10, color: accent, cursor: "pointer", fontFamily: mono }
+            }, "Load"),
+            React.createElement("button", {
+              onClick: () => onDeleteSave(save.id),
+              style: { padding: "6px 10px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 10, color: t.textFaint, cursor: "pointer", fontFamily: mono }
+            }, "×"),
+          ),
+        )
+      ),
+    ),
+  );
+}
+
+/* ─────────── Screen 3: Diagnosis ─────────── */
+
+function DiagnosisScreen({ diagnosis, input, onRedesign, onStartOver, dark, t, isMobile }) {
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  const currentRoleColor = ROLE_COLORS[diagnosis.currentRole]
+    ? (dark ? ROLE_COLORS[diagnosis.currentRole].dark : ROLE_COLORS[diagnosis.currentRole].light)
+    : accent;
+  const targetRoleColor = ROLE_COLORS[input.targetRole]
+    ? (dark ? ROLE_COLORS[input.targetRole].dark : ROLE_COLORS[input.targetRole].light)
+    : accent;
+
+  return React.createElement("div", { style: { maxWidth: 700, margin: "0 auto" } },
+    // Headline
+    React.createElement("h2", {
+      style: { fontFamily: serif, fontSize: isMobile ? 24 : 32, fontWeight: 600, fontStyle: "italic", lineHeight: 1.35, color: t.text, marginBottom: 24, textAlign: "center" }
+    }, diagnosis.diagnosisHeadline),
+
+    // Current role
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 10 } }, "Current student role with free AI access"),
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 8 } },
+        React.createElement("span", { style: { fontFamily: spc, fontSize: 16, fontWeight: 700, color: currentRoleColor } }, diagnosis.currentRole),
+      ),
+      React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, margin: 0 } }, diagnosis.currentRoleRationale),
+    ),
+
+    // AI bypass vectors
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 16 } }, "Cognitive bypass vectors"),
+      ...diagnosis.aiVulnerabilities.map((v, i) =>
+        React.createElement("div", { key: i, style: { marginBottom: i < diagnosis.aiVulnerabilities.length - 1 ? 20 : 0 } },
+          React.createElement("div", { style: { fontFamily: spc, fontSize: 13, fontWeight: 700, color: dark ? "#FCA5A5" : "#DC2626", marginBottom: 4 } }, v.vector),
+          React.createElement("p", { style: { fontSize: 15, lineHeight: 1.65, color: t.textHigh, margin: "0 0 6px" } }, v.description),
+          React.createElement("p", { style: { fontSize: 13, lineHeight: 1.6, color: t.textLow, fontStyle: "italic", margin: 0, paddingLeft: 12, borderLeft: `2px solid ${t.divider}` } },
+            "Example: ", v.example
+          ),
+        )
+      ),
+    ),
+
+    // Constants at risk
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 28, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 16 } }, "Constants at risk"),
+      ...diagnosis.constantsAtRisk.map((c, i) =>
+        React.createElement("div", { key: i, style: { display: "flex", gap: 12, alignItems: "flex-start", marginBottom: i < diagnosis.constantsAtRisk.length - 1 ? 14 : 0 } },
+          React.createElement("span", {
+            style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#FBBF24" : "#D97706", background: dark ? "rgba(251,191,36,0.12)" : "rgba(217,119,6,0.08)", padding: "4px 10px", borderRadius: 6, flexShrink: 0, textTransform: "uppercase", letterSpacing: "0.06em" }
+          }, c.constant),
+          React.createElement("p", { style: { fontSize: 15, lineHeight: 1.65, color: t.textHigh, margin: 0 } }, c.risk),
+        )
+      ),
+    ),
+
+    // CTA
+    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" } },
+      React.createElement("button", {
+        onClick: onStartOver,
+        style: { padding: "12px 28px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 14, color: t.textMid, cursor: "pointer", fontFamily: mono }
+      }, "Start Over"),
+      React.createElement("button", {
+        onClick: onRedesign,
+        style: {
+          padding: "14px 36px", background: accent, color: "#fff",
+          border: "none", borderRadius: 100, fontSize: 16, fontWeight: 600,
+          cursor: "pointer", fontFamily: serif,
+          boxShadow: `0 4px 24px ${accent}40`,
+        }
+      }, `Redesign toward ${input.targetRole}`),
+    ),
+  );
+}
+
+/* ─────────── Screen 5: Redesign ─────────── */
+
+function RedesignScreen({ redesign, diagnosis, input, onSave, onStartOver, dark, t, isMobile }) {
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+  const targetRoleColor = ROLE_COLORS[input.targetRole]
+    ? (dark ? ROLE_COLORS[input.targetRole].dark : ROLE_COLORS[input.targetRole].light)
+    : accent;
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  function handleExport() {
+    const md = buildExportMarkdown(redesign, diagnosis, input);
+    navigator.clipboard.writeText(md).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  function handleSave() {
+    onSave();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return React.createElement("div", { style: { maxWidth: 720, margin: "0 auto" } },
+    // Role badge
+    React.createElement("div", { style: { textAlign: "center", marginBottom: 24 } },
+      React.createElement("span", {
+        style: { display: "inline-block", fontFamily: spc, fontSize: 11, fontWeight: 700, color: targetRoleColor, background: dark ? `${targetRoleColor}15` : `${targetRoleColor}10`, border: `1px solid ${targetRoleColor}30`, borderRadius: 100, padding: "6px 18px", textTransform: "uppercase", letterSpacing: "0.08em" }
+      }, `${input.targetRole} mode redesign`),
+    ),
+
+    // Role rationale
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 10 } }, "Why this role"),
+      React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, margin: 0 } }, redesign.roleRationale),
+    ),
+
+    // Redesigned prompt
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "28px 32px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 16 } }, "Redesigned assignment"),
+      React.createElement("div", null, ...renderMarkdown(redesign.redesignedPrompt, t)),
+    ),
+
+    // Transfer checkpoint
+    React.createElement("div", {
+      style: { background: dark ? `${targetRoleColor}08` : `${targetRoleColor}05`, border: `1px solid ${targetRoleColor}20`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16 }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: targetRoleColor, marginBottom: 14 } }, "Transfer Verification Checkpoint"),
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } },
+        React.createElement("div", null,
+          React.createElement("span", { style: { fontFamily: mono, fontSize: 10, color: t.textLow, textTransform: "uppercase", letterSpacing: "0.1em" } }, "When: "),
+          React.createElement("span", { style: { fontSize: 15, color: t.textHigh } }, redesign.transferCheckpoint.when),
+        ),
+        React.createElement("div", null,
+          React.createElement("span", { style: { fontFamily: mono, fontSize: 10, color: t.textLow, textTransform: "uppercase", letterSpacing: "0.1em" } }, "What: "),
+          React.createElement("span", { style: { fontSize: 15, color: t.textHigh } }, redesign.transferCheckpoint.what),
+        ),
+        React.createElement("div", null,
+          React.createElement("span", { style: { fontFamily: mono, fontSize: 10, color: t.textLow, textTransform: "uppercase", letterSpacing: "0.1em" } }, "How: "),
+          React.createElement("span", { style: { fontSize: 15, color: t.textHigh } }, redesign.transferCheckpoint.how),
+        ),
+      ),
+    ),
+
+    // Reflection prompts
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 16 } }, "Student reflection prompts"),
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
+        ...redesign.reflectionPrompts.map((rp, i) =>
+          React.createElement("div", { key: i },
+            React.createElement("span", {
+              style: { fontFamily: mono, fontSize: 9, fontWeight: 700, color: dark ? "#FBBF24" : "#D97706", background: dark ? "rgba(251,191,36,0.12)" : "rgba(217,119,6,0.08)", padding: "3px 8px", borderRadius: 4, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, display: "inline-block" }
+            }, rp.constant),
+            React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, margin: "6px 0 0" } }, rp.prompt),
+          )
+        ),
+      ),
+    ),
+
+    // Develops / does not develop
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 16, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 12 } }, "What this redesign develops"),
+      React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, margin: "0 0 16px" } }, redesign.develops),
+      React.createElement("div", { style: { height: 1, background: t.divider, marginBottom: 16 } }),
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 12 } }, "What it does not develop"),
+      React.createElement("p", { style: { fontSize: 16, lineHeight: 1.7, color: t.textHigh, margin: 0 } }, redesign.doesNotDevelop),
+    ),
+
+    // Change log
+    React.createElement("div", {
+      style: { background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 16, padding: isMobile ? "20px 18px" : "24px 28px", marginBottom: 28, boxShadow: t.cardShadow }
+    },
+      React.createElement("div", { style: { fontFamily: mono, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", color: t.textLow, marginBottom: 14 } }, "Change log"),
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } },
+        ...redesign.changeLog.map((change, i) =>
+          React.createElement("div", { key: i, style: { display: "flex", gap: 10, alignItems: "flex-start" } },
+            React.createElement("span", { style: { fontFamily: mono, fontSize: 11, color: accent, fontWeight: 700, flexShrink: 0 } }, `${i + 1}.`),
+            React.createElement("span", { style: { fontSize: 15, lineHeight: 1.65, color: t.textHigh } }, change),
+          )
+        ),
+      ),
+    ),
+
+    // Actions
+    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 } },
+      React.createElement("button", {
+        onClick: handleExport,
+        style: { padding: "12px 24px", background: accent, color: "#fff", border: "none", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: mono, transition: "opacity 0.2s" }
+      }, copied ? "Copied!" : "Export as Markdown"),
+      React.createElement("button", {
+        onClick: handleSave,
+        style: { padding: "12px 24px", background: "transparent", border: `1px solid ${accent}`, borderRadius: 100, fontSize: 13, fontWeight: 600, color: accent, cursor: "pointer", fontFamily: mono, transition: "all 0.2s" }
+      }, saved ? "Saved!" : "Save"),
+      React.createElement("button", {
+        onClick: onStartOver,
+        style: { padding: "12px 24px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
+      }, "Redesign another"),
+    ),
+
+    // Assessment Check footer
+    React.createElement("div", { style: { textAlign: "center", marginTop: 28, paddingTop: 20, borderTop: `1px solid ${t.divider}` } },
+      React.createElement("a", {
+        href: "/pages/assessment.html",
+        target: "_blank",
+        rel: "noopener noreferrer",
+        style: { fontFamily: mono, fontSize: 11, color: t.textLow, textDecoration: "none", letterSpacing: "0.04em", transition: "color 0.15s" },
+        onMouseEnter: (e) => e.target.style.color = accent,
+        onMouseLeave: (e) => e.target.style.color = t.textLow,
+      }, "Have your students run their final submission through Assessment Check →"),
+    ),
+  );
+}
+
+/* ─────────── export helper ─────────── */
+
+function buildExportMarkdown(redesign, diagnosis, input) {
+  const lines = [];
+  lines.push(`# Assignment Redesign: ${input.targetRole} Mode`);
+  lines.push("");
+  if (input.grade) lines.push(`**Grade/Subject:** ${input.grade}`);
+  lines.push("");
+  lines.push("## Why This Role");
+  lines.push("");
+  lines.push(redesign.roleRationale);
+  lines.push("");
+  lines.push("## Redesigned Assignment");
+  lines.push("");
+  lines.push(redesign.redesignedPrompt);
+  lines.push("");
+  lines.push("## Transfer Verification Checkpoint");
+  lines.push("");
+  lines.push(`**When:** ${redesign.transferCheckpoint.when}`);
+  lines.push(`**What:** ${redesign.transferCheckpoint.what}`);
+  lines.push(`**How:** ${redesign.transferCheckpoint.how}`);
+  lines.push("");
+  lines.push("## Student Reflection Prompts");
+  lines.push("");
+  redesign.reflectionPrompts.forEach(rp => {
+    lines.push(`**${rp.constant}:** ${rp.prompt}`);
+    lines.push("");
+  });
+  lines.push("## What This Redesign Develops");
+  lines.push("");
+  lines.push(redesign.develops);
+  lines.push("");
+  lines.push("## What It Does Not Develop");
+  lines.push("");
+  lines.push(redesign.doesNotDevelop);
+  lines.push("");
+  lines.push("## Change Log");
+  lines.push("");
+  redesign.changeLog.forEach((c, i) => {
+    lines.push(`${i + 1}. ${c}`);
+  });
+  lines.push("");
+  lines.push("---");
+  lines.push("*Generated by the Redesign Studio, part of the AI Agency Toolkit (aiagencytoolkit.com)*");
+  return lines.join("\n");
+}
+
+/* ─────────── App ─────────── */
+
+function App() {
+  const [dark, setDark] = useState(false);
+  const isMobile = useIsMobile();
+  const t = useTheme(dark);
+  const accent = dark ? ACCENT.dark : ACCENT.light;
+
+  // screen: "input" | "diagnosing" | "diagnosis" | "redesigning" | "redesign" | "loaded"
+  const [screen, setScreen] = useState("input");
+  const [input, setInput] = useState(null);
+  const [diagnosis, setDiagnosis] = useState(null);
+  const [redesign, setRedesign] = useState(null);
+  const [error, setError] = useState(null);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [savedRedesigns, setSavedRedesigns] = useState(loadSaves);
+  const pendingAction = useRef(null);
+
+  useEffect(() => {
+    document.body.style.background = t.bg;
+    document.body.style.color = t.text;
+  }, [dark, t.bg, t.text]);
+
+  function refreshSaves() {
+    setSavedRedesigns(loadSaves());
+  }
+
+  async function handleDiagnose(data) {
+    setInput(data);
+    setScreen("diagnosing");
+    setError(null);
+    try {
+      const prompts = buildDiagnosePrompts(data.assignment, data.grade, data.targetRole, data.targetFriction);
+      const result = await callClaude(prompts.system, prompts.user);
+      setDiagnosis(result);
+      setScreen("diagnosis");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      if (err.message === "NO_KEY") {
+        pendingAction.current = () => handleDiagnose(data);
+        setShowKeyModal(true);
+        setScreen("input");
+        return;
+      }
+      if (err.message === "BAD_KEY") {
+        setError("Invalid API key. Please check your key and try again. You can update it below.");
+        localStorage.removeItem("ANTHROPIC_API_KEY");
+        setScreen("input");
+        return;
+      }
+      setError(err.message || "Something went wrong. Please try again.");
+      setScreen("input");
+    }
+  }
+
+  async function handleRedesign() {
+    setScreen("redesigning");
+    setError(null);
+    try {
+      const prompts = buildRedesignPrompts(input.assignment, input.grade, input.targetRole, input.targetFriction, diagnosis);
+      const result = await callClaude(prompts.system, prompts.user, 4096);
+      setRedesign(result);
+      setScreen("redesign");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      if (err.message === "NO_KEY") {
+        pendingAction.current = () => handleRedesign();
+        setShowKeyModal(true);
+        setScreen("diagnosis");
+        return;
+      }
+      if (err.message === "BAD_KEY") {
+        setError("Invalid API key. Please check your key and try again.");
+        localStorage.removeItem("ANTHROPIC_API_KEY");
+        setScreen("diagnosis");
+        return;
+      }
+      setError(err.message || "Something went wrong. Please try again.");
+      setScreen("diagnosis");
+    }
+  }
+
+  function handleSave() {
+    addSave({
+      assignment: input.assignment,
+      grade: input.grade,
+      targetRole: input.targetRole,
+      targetFriction: input.targetFriction,
+      diagnosis,
+      redesign,
+    });
+    refreshSaves();
+  }
+
+  function handleLoadSave(save) {
+    setInput({ assignment: save.assignment, grade: save.grade, targetRole: save.targetRole, targetFriction: save.targetFriction });
+    setDiagnosis(save.diagnosis);
+    setRedesign(save.redesign);
+    setScreen("redesign");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleDeleteSave(id) {
+    deleteSave(id);
+    refreshSaves();
+  }
+
+  function handleStartOver() {
+    setScreen("input");
+    setInput(null);
+    setDiagnosis(null);
+    setRedesign(null);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleKeyModalSave() {
+    setShowKeyModal(false);
+    if (pendingAction.current) {
+      const action = pendingAction.current;
+      pendingAction.current = null;
+      action();
+    }
+  }
+
+  const hasKey = !!localStorage.getItem("ANTHROPIC_API_KEY");
+
+  return React.createElement("div", {
+    style: { minHeight: "100vh", background: t.bg, color: t.text, position: "relative", overflow: "hidden" }
+  },
+    // Background overlays
+    React.createElement("div", {
+      style: { position: "fixed", inset: 0, pointerEvents: "none",
+        backgroundImage: `radial-gradient(circle at 20% 50%, ${accent}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${accent}04 0%, transparent 40%)` }
+    }),
+    React.createElement("div", {
+      style: { position: "fixed", inset: 0, pointerEvents: "none", opacity: dark ? 0.03 : 0.015,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }
+    }),
+
+    React.createElement(Header, { dark, setDark, t, isMobile }),
+
+    // API key management (BYOK)
+    screen === "input" && hasKey && React.createElement("div", {
+      style: { position: "relative", zIndex: 1, maxWidth: 760, margin: "0 auto", padding: "8px 20px 0", textAlign: "right" }
+    },
+      React.createElement("button", {
+        onClick: () => { localStorage.removeItem("ANTHROPIC_API_KEY"); refreshSaves(); handleStartOver(); },
+        style: { fontFamily: mono, fontSize: 9, color: t.textFaint, background: "transparent", border: "none", cursor: "pointer", letterSpacing: "0.04em" }
+      }, "Remove saved API key"),
+    ),
+
+    React.createElement("main", {
+      style: { position: "relative", zIndex: 1, padding: isMobile ? "28px 16px 48px" : "40px 32px 64px" }
+    },
+      error && React.createElement("div", { style: { maxWidth: 700, margin: "0 auto 20px" } },
+        React.createElement(ErrorMessage, { message: error, onRetry: () => setError(null), dark, t })
+      ),
+
+      screen === "input" && React.createElement(InputScreen, {
+        onDiagnose: handleDiagnose, dark, t, isMobile,
+        savedRedesigns, onLoadSave: handleLoadSave, onDeleteSave: handleDeleteSave,
+      }),
+
+      screen === "diagnosing" && React.createElement(LoadingScreen, { message: "Diagnosing assignment against the Agency Spectrum...", dark, t }),
+
+      screen === "diagnosis" && diagnosis && React.createElement(DiagnosisScreen, {
+        diagnosis, input, onRedesign: handleRedesign, onStartOver: handleStartOver, dark, t, isMobile,
+      }),
+
+      screen === "redesigning" && React.createElement(LoadingScreen, { message: "Redesigning assignment for " + (input ? input.targetRole : "") + " mode...", dark, t }),
+
+      (screen === "redesign" || screen === "loaded") && redesign && React.createElement(RedesignScreen, {
+        redesign, diagnosis, input, onSave: handleSave, onStartOver: handleStartOver, dark, t, isMobile,
+      }),
+    ),
+
+    // Footer
+    React.createElement("footer", {
+      style: {
+        position: "relative", zIndex: 1,
+        borderTop: `1px solid ${t.divider}`,
+        padding: isMobile ? "20px" : "24px 40px",
+        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
+      },
+    },
+      React.createElement("span", {
+        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em" }
+      }, "Kevin Farrant — Redesign Studio"),
+      React.createElement("a", {
+        href: "mailto:kevinfarrant@gmail.com",
+        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em", textDecoration: "none" }
+      }, "Contact"),
+    ),
+
+    // Key modal
+    showKeyModal && React.createElement(ApiKeyModal, {
+      dark, t,
+      onClose: () => { setShowKeyModal(false); pendingAction.current = null; },
+      onSave: handleKeyModalSave,
+    }),
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>

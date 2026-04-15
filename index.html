@@ -99,6 +99,16 @@ const TOOLS = [
     accent: { dark: "#818cf8", light: "#6366f1" },
     href: "/pages/assessment.html",
   },
+  {
+    id: "redesign",
+    emoji: "✎",
+    title: "Redesign Studio",
+    subtitle: "Bring an assignment, leave with a redesign",
+    description: "Paste an assignment you already use. Get a diagnosis against the Agency Spectrum and a role-aware redesign with a transfer checkpoint.",
+    author: "Kevin Farrant",
+    accent: { dark: "#F472B6", light: "#BE185D" },
+    href: "/pages/redesign-studio.html",
+  },
 ];
 
 function ThemeToggle({ dark, onToggle, t }) {
@@ -141,9 +151,9 @@ function ToolCard({ tool, dark, t, isMobile }) {
       cursor: "pointer",
       transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
       transform: hovered ? "scale(1.03)" : "scale(1)",
-      flex: 1,
+      flex: "1 1 calc(25% - 12px)",
       minWidth: isMobile ? "100%" : 260,
-      maxWidth: isMobile ? "100%" : 340,
+      maxWidth: isMobile ? "100%" : 380,
     },
   },
     // Emoji
@@ -258,6 +268,7 @@ function App() {
             React.createElement("a", { href: "/agency", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#2A9D8F" : "#00796B", textDecoration: "none", letterSpacing: "0.06em" } }, "THE AGENCY SPECTRUM"),
             React.createElement("a", { href: "/pages/friction-scale.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F4A261" : "#E65100", textDecoration: "none", letterSpacing: "0.06em" } }, "AI FRICTION SCALE"),
             React.createElement("a", { href: "/pages/assessment.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#818cf8" : "#6366f1", textDecoration: "none", letterSpacing: "0.06em" } }, "ASSESSMENT CHECK"),
+            React.createElement("a", { href: "/pages/redesign-studio.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F472B6" : "#BE185D", textDecoration: "none", letterSpacing: "0.06em" } }, "REDESIGN STUDIO"),
           )
         : React.createElement("div"),
       // Theme toggle (right, justified to end)
@@ -301,10 +312,11 @@ function App() {
       React.createElement("div", {
         style: {
           display: "flex",
+          flexWrap: "wrap",
           flexDirection: isMobile ? "column" : "row",
           gap: 16,
           width: "100%",
-          maxWidth: 1040,
+          maxWidth: 1200,
           alignItems: "stretch",
           justifyContent: "center",
         }

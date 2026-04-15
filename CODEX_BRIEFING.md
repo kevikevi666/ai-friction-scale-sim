@@ -1,5 +1,5 @@
-# Codex Briefing — AI Friction Scale Toolkit
-**Last updated:** March 2026 | **Author:** Kevin Farrant (with Claude)
+# Codex Briefing — AI Agency Toolkit
+**Last updated:** April 2026 | **Author:** Kevin Farrant (with Claude)
 
 ---
 
@@ -11,21 +11,25 @@ Kevin Farrant is Makerspace Director and Upper School Technology Coordinator at 
 
 ## What This Project Is
 
-The **AI Friction Scale Toolkit** is a growing suite of interactive, standalone web tools for educators. It is grounded in Jane Beckwith's AI Friction Scale, which describes five levels of AI use in student work — from No AI (maximum productive struggle) to Full AI (minimum friction).
+The **AI Agency Toolkit** (aiagencytoolkit.com) is a growing suite of interactive, standalone web tools for educators. It is grounded in Kevin Farrant's Agency Spectrum framework (Author, Designer, Conductor) and Jane Beckwith's AI Friction Scale (1-5 levels of AI involvement in student work).
 
-The toolkit currently has two tools:
+The toolkit currently has four tools:
 
-1. **AI Friction Scale Simulator** (`index.html`) — The original, polished interactive sim. Three tabs: Scale, Simulate, Compare. Dark/light mode. Fully built and stable.
-2. **High School English** (`pages/english.html`) — The first subject-specific module. Three assignment scenarios (Literary Analysis, Creative Writing, Research Paper), each with three phases (Traditional, Friction Points, Alternative). Standalone file, visually matched to the main sim.
+1. **The Agency Spectrum** (`pages/agency.html`, served at `/agency`) — An interactive presentation of Kevin's framework paper: three roles (Author, Designer, Conductor) and five constants (Direct, Question, Own, Consider, Grow).
+2. **AI Friction Scale Simulator** (`pages/friction-scale.html`) — Interactive sim of Beckwith's 1-5 scale. Three tabs: Scale, Simulate, Compare. Dark/light mode. Fully built and stable.
+3. **Assessment Check** (`pages/assessment.html`) — Student self-check tool. Five reflection questions about ownership and understanding.
+4. **Redesign Studio** (`pages/redesign-studio.html`) — Teacher-facing tool. Paste an assignment, get a diagnosis against the Agency Spectrum, then a role-aware redesign with transfer checkpoint and reflection prompts. Uses Claude API via Netlify function (or BYOK mode locally).
 
-Future tools will follow the same pattern — one standalone HTML file per subject, added to `pages/`.
+The homepage (`index.html`) is a hub showing all four tools as cards. Each tool page is a standalone HTML file in `pages/`.
+
+Legacy files: `pages/english.html` is a subject-specific module from an earlier version of the toolkit.
 
 ---
 
 ## Project Location
 
 ```
-/Users/kevinfarrant/Desktop/Claude code/AI Friction Scale Sim/
+/Users/kevinfarrant/Desktop/Claude Code/ai-agency-toolkit/
 ```
 
 GitHub: `https://github.com/kevikevi666/ai-friction-scale-sim.git` (branch: `main`)
@@ -54,17 +58,24 @@ All React code goes inside `<script type="text/babel">` tags. You can use JSX or
 ## File Structure
 
 ```
-AI Friction Scale Sim/
-  index.html                  ← Main AI Friction Scale sim (DO NOT break this)
+ai-agency-toolkit/
+  index.html                         ← Homepage hub (four tool cards)
   pages/
-    english.html              ← High School English toolkit page
-    math.html                 ← (future)
-    science.html              ← (future)
-    history.html              ← (future)
-  CODEX_BRIEFING.md           ← This file
-  ai-friction-scale-simulation.jsx   ← Legacy source reference (not used directly)
-  ai-friction-scale.html             ← Older version (ignore)
-  ai-friction-scale-light.html       ← Older version (ignore)
+    agency.html                      ← The Agency Spectrum (framework presentation)
+    friction-scale.html              ← AI Friction Scale Simulator
+    assessment.html                  ← Assessment Check (student self-check)
+    redesign-studio.html             ← Redesign Studio (assignment diagnosis + redesign)
+    english.html                     ← High School English (legacy subject module)
+  netlify/
+    functions/
+      claude.js                      ← Netlify serverless function (Claude API proxy)
+  netlify.toml                       ← Netlify build config
+  _redirects                         ← Netlify URL rewrites (/agency -> /pages/agency.html)
+  sitemap.xml                        ← Sitemap for all pages
+  agency-spectrum-framework.md       ← Kevin's Agency Spectrum paper (source of truth)
+  CODEX_BRIEFING.md                  ← This file
+  favicon.ico / favicon.png / favicon.svg
+  og-image.png
 ```
 
 **Never touch `index.html` lightly.** Build and fully test new pages in `pages/` first. Only integrate into `index.html` when a page is proven and complete.
@@ -311,8 +322,6 @@ function useIsMobile(bp = 768) {
 
 ## What's Next (planned)
 
-- Math page (`pages/math.html`)
-- Science page (`pages/science.html`)
-- History page (`pages/history.html`)
-- Possible: a "landing/hub" page that shows all toolkit modules as cards
-- Possible: back-navigation from subject pages to the main sim
+- Subject-specific modules: Math, Science, History (each in `pages/`)
+- Polish cross-tool navigation and active state indicators
+- Potential: saved/shared redesigns across sessions
