@@ -124,7 +124,7 @@ async function callClaude(system, user, maxTokens = 4096) {
       const data = await res.json();
       const text = data.content && data.content[0] && data.content[0].text;
       if (!text) throw new Error("Empty response from API.");
-      return JSON.parse(text);
+      return cleanJSON(text);
     }
     if (res.status !== 404) {
       const errData = await res.json().catch(() => ({}));
@@ -138,7 +138,8 @@ async function callClaude(system, user, maxTokens = 4096) {
   }
 
   // BYOK fallback
-  const apiKey = localStorage.getItem("ANTHROPIC_API_KEY");
+  const rawKey = localStorage.getItem("ANTHROPIC_API_KEY");
+  const apiKey = rawKey ? rawKey.replace(/[^\x20-\x7E]/g, "").trim() : null;
   if (!apiKey) {
     throw new Error("NO_KEY");
   }
@@ -152,7 +153,7 @@ async function callClaude(system, user, maxTokens = 4096) {
       "anthropic-dangerous-direct-browser-access": "true",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
       system: system,
       messages: [{ role: "user", content: user }],
@@ -170,6 +171,12 @@ async function callClaude(system, user, maxTokens = 4096) {
   const text = data.content && data.content[0] && data.content[0].text;
   if (!text) throw new Error("Empty response from API.");
   return JSON.parse(text);
+}
+
+function cleanJSON(text) {
+  let s = text.trim();
+  s = s.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+  return JSON.parse(s.trim());
 }
 
 /* ─────────── prompt builders ─────────── */
@@ -353,37 +360,194 @@ function renderInline(text) {
   return parts.length > 0 ? parts : text;
 }
 
+/* ─────────── share link helpers ─────────── */
+
+function encodeShareState(input, diagnosis, redesign) {
+  try {
+    const state = { input, diagnosis, redesign };
+    return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  } catch (e) { return null; }
+}
+
+function decodeShareState(encoded) {
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  } catch (e) { return null; }
+}
+
+/* ─────────── print helper ─────────── */
+
+function openPrintWindow(redesign, diagnosis, input) {
+  const role = input.targetRole;
+  const grade = input.grade || "";
+  const tc = redesign.transferCheckpoint;
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redesign Studio: ${role} Mode${grade ? " \u2014 " + grade : ""}</title>
+<style>
+  body { font-family: Georgia, serif; font-size: 14px; line-height: 1.65; color: #111; max-width: 680px; margin: 36px auto; padding: 0 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { font-family: monospace; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 28px; }
+  h2 { font-family: monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #444; margin: 28px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  h3, h4 { font-size: 14px; margin: 14px 0 4px; }
+  p { margin: 0 0 10px; }
+  ul, ol { padding-left: 20px; margin: 0 0 10px; }
+  li { margin-bottom: 4px; }
+  .vector { font-family: monospace; font-size: 12px; font-weight: bold; color: #b00; }
+  .example { font-style: italic; font-size: 13px; color: #555; border-left: 2px solid #ccc; padding-left: 10px; margin-top: 4px; }
+  .badge { display: inline-block; font-family: monospace; font-size: 10px; font-weight: bold; background: #fef3c7; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .checkpoint-grid { display: grid; grid-template-columns: 80px 1fr; gap: 6px 12px; background: #f8f6f0; border: 1px solid #ddd; border-radius: 6px; padding: 14px; margin-bottom: 10px; }
+  .checkpoint-label { font-family: monospace; font-size: 10px; text-transform: uppercase; color: #666; padding-top: 2px; }
+  .divider { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-family: monospace; font-size: 10px; color: #999; text-align: center; }
+  code { font-family: monospace; font-size: 0.9em; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+  strong { font-weight: 700; }
+  em { font-style: italic; }
+  @media print { body { margin: 0; } }
+</style>
+</head>
+<body>
+<h1>Assignment Redesign: ${role} Mode</h1>
+${grade ? `<div class="subtitle">${grade}</div>` : '<div class="subtitle">Assignment Redesign</div>'}
+
+<h2>Why This Role</h2>
+<p>${redesign.roleRationale}</p>
+
+<h2>Redesigned Assignment</h2>
+${redesign.redesignedPrompt.split('\n').map(line => {
+  if (line.startsWith('### ')) return `<h4>${line.slice(4)}</h4>`;
+  if (line.startsWith('## ')) return `<h3>${line.slice(3)}</h3>`;
+  if (line.startsWith('# ')) return `<h3>${line.slice(2)}</h3>`;
+  if (line.startsWith('- ') || line.startsWith('* ')) return `<li>${line.slice(2).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}</li>`;
+  if (/^\d+\.\s/.test(line)) return `<li>${line.replace(/^\d+\.\s/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</li>`;
+  if (line.trim() === '') return '<br>';
+  return `<p>${line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}</p>`;
+}).join('\n')}
+
+<h2>Transfer Verification Checkpoint</h2>
+<div class="checkpoint-grid">
+  <span class="checkpoint-label">When</span><span>${tc.when}</span>
+  <span class="checkpoint-label">What</span><span>${tc.what}</span>
+  <span class="checkpoint-label">How</span><span>${tc.how}</span>
+</div>
+
+<h2>Student Reflection Prompts</h2>
+${redesign.reflectionPrompts.map(rp => `<div><span class="badge">${rp.constant}</span><p>${rp.prompt}</p></div>`).join('\n')}
+
+<h2>What This Redesign Develops</h2>
+<p>${redesign.develops}</p>
+<hr class="divider">
+<p><strong>Does not develop:</strong> ${redesign.doesNotDevelop}</p>
+
+<h2>Change Log</h2>
+<ol>${redesign.changeLog.map(c => `<li>${c}</li>`).join('\n')}</ol>
+
+<h2>Diagnosis Summary</h2>
+<p><em>${diagnosis.diagnosisHeadline}</em></p>
+${diagnosis.aiVulnerabilities.map(v => `<div><span class="vector">${v.vector}</span><p>${v.description}</p><p class="example">Example: ${v.example}</p></div>`).join('\n')}
+
+<footer>Generated by Redesign Studio &mdash; AI Agency Toolkit (aiagencytoolkit.com)</footer>
+<script>window.onload = function() { window.print(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+}
+
 /* ─────────── components ─────────── */
 
+const NAV_LINKS = [
+  { href: "/agency",                     label: "THE AGENCY SPECTRUM", colorDark: "#2A9D8F", colorLight: "#00796B" },
+  { href: "/pages/friction-scale.html",  label: "AI FRICTION SCALE",   colorDark: "#F4A261", colorLight: "#E65100" },
+  { href: "/pages/assessment.html",      label: "ASSESSMENT CHECK",    colorDark: "#818cf8", colorLight: "#6366f1" },
+  { href: "/pages/redesign-studio.html", label: "REDESIGN STUDIO",     colorDark: null,      colorLight: null, active: true },
+];
+
 function Header({ dark, setDark, t, isMobile }) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const accent = dark ? ACCENT.dark : ACCENT.light;
-  return React.createElement("header", {
-    style: {
-      position: "relative", zIndex: 10,
-      display: "grid", gridTemplateColumns: "1fr auto 1fr",
-      alignItems: "center",
-      padding: isMobile ? "16px 20px" : "18px 40px",
-      borderBottom: `1px solid ${t.divider}`,
+
+  return React.createElement(React.Fragment, null,
+    React.createElement("header", {
+      style: {
+        position: "relative", zIndex: 10,
+        display: "grid", gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        padding: isMobile ? "16px 20px" : "18px 40px",
+        borderBottom: `1px solid ${t.divider}`,
+      },
     },
-  },
-    React.createElement("a", {
-      href: "/",
-      style: { fontFamily: spc, fontSize: isMobile ? 10 : 13, fontWeight: 700, color: t.text, textDecoration: "none", letterSpacing: "0.04em" }
-    }, "AI AGENCY TOOLKIT"),
-    !isMobile
-      ? React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center", justifyContent: "center" } },
-          React.createElement("a", { href: "/agency", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#2A9D8F" : "#00796B", textDecoration: "none", letterSpacing: "0.06em" } }, "THE AGENCY SPECTRUM"),
-          React.createElement("a", { href: "/pages/friction-scale.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F4A261" : "#E65100", textDecoration: "none", letterSpacing: "0.06em" } }, "AI FRICTION SCALE"),
-          React.createElement("a", { href: "/pages/assessment.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#818cf8" : "#6366f1", textDecoration: "none", letterSpacing: "0.06em" } }, "ASSESSMENT CHECK"),
-          React.createElement("a", { href: "/pages/redesign-studio.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: accent, textDecoration: "none", letterSpacing: "0.06em", borderBottom: `2px solid ${accent}`, paddingBottom: 2 } }, "REDESIGN STUDIO"),
-        )
-      : React.createElement("div"),
-    React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } },
-      React.createElement("button", {
-        onClick: () => setDark(d => !d),
-        title: dark ? "Switch to light mode" : "Switch to dark mode",
-        style: { background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "6px 10px", fontSize: 15, color: t.textMid, cursor: "pointer" }
-      }, dark ? "☀️" : "🌙"),
+      React.createElement("a", {
+        href: "/",
+        style: { fontFamily: spc, fontSize: isMobile ? 10 : 13, fontWeight: 700, color: t.text, textDecoration: "none", letterSpacing: "0.04em" }
+      }, "AI AGENCY TOOLKIT"),
+      !isMobile
+        ? React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center", justifyContent: "center" } },
+            ...NAV_LINKS.map(link => {
+              const color = link.active ? accent : (dark ? link.colorDark : link.colorLight);
+              return React.createElement("a", {
+                key: link.label,
+                href: link.href,
+                style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color, textDecoration: "none", letterSpacing: "0.06em",
+                  ...(link.active ? { borderBottom: `2px solid ${accent}`, paddingBottom: 2 } : {}) }
+              }, link.label);
+            })
+          )
+        : React.createElement("div"),
+      React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 } },
+        React.createElement("button", {
+          onClick: () => setDark(d => !d),
+          title: dark ? "Switch to light mode" : "Switch to dark mode",
+          style: { background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "6px 10px", fontSize: 15, color: t.textMid, cursor: "pointer" }
+        }, dark ? "☀️" : "🌙"),
+        isMobile && React.createElement("button", {
+          onClick: () => setDrawerOpen(o => !o),
+          "aria-label": "Menu",
+          style: { background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "5px 9px", fontSize: 17, color: t.textMid, cursor: "pointer", lineHeight: 1 }
+        }, drawerOpen ? "✕" : "☰"),
+      ),
+    ),
+
+    isMobile && drawerOpen && React.createElement("div", {
+      style: { position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.45)" },
+      onClick: () => setDrawerOpen(false),
+    },
+      React.createElement("div", {
+        style: {
+          position: "absolute", top: 0, right: 0, width: 260, height: "100%",
+          background: t.bg, borderLeft: `1px solid ${t.cardBorder}`,
+          display: "flex", flexDirection: "column",
+          padding: "24px 0 24px",
+        },
+        onClick: e => e.stopPropagation(),
+      },
+        React.createElement("div", {
+          style: { fontFamily: spc, fontSize: 11, fontWeight: 700, color: t.textFaint, letterSpacing: "0.06em", padding: "0 20px 16px", borderBottom: `1px solid ${t.divider}` }
+        }, "AI AGENCY TOOLKIT"),
+        React.createElement("nav", { style: { display: "flex", flexDirection: "column", marginTop: 8 } },
+          ...NAV_LINKS.map(link => {
+            const color = link.active ? accent : (dark ? link.colorDark : link.colorLight);
+            return React.createElement("a", {
+              key: link.label,
+              href: link.href,
+              style: {
+                fontFamily: mono, fontSize: 11, fontWeight: 700, color,
+                textDecoration: "none", letterSpacing: "0.06em",
+                padding: "13px 20px",
+                borderBottom: `1px solid ${t.divider}`,
+                borderLeft: link.active ? `3px solid ${accent}` : "3px solid transparent",
+                background: link.active ? (dark ? `${accent}08` : `${accent}05`) : "transparent",
+              }
+            }, link.label);
+          })
+        ),
+      )
     ),
   );
 }
@@ -424,7 +588,7 @@ function ApiKeyModal({ dark, t, onClose, onSave }) {
           style: { padding: "10px 20px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
         }, "Cancel"),
         React.createElement("button", {
-          onClick: () => { if (key.trim()) { localStorage.setItem("ANTHROPIC_API_KEY", key.trim()); onSave(); } },
+          onClick: () => { const clean = key.replace(/[^\x20-\x7E]/g, "").trim(); if (clean) { localStorage.setItem("ANTHROPIC_API_KEY", clean); onSave(); } },
           disabled: !key.trim(),
           style: { padding: "10px 24px", background: key.trim() ? accent : t.cardBorder, color: "#fff", border: "none", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: key.trim() ? "pointer" : "not-allowed", fontFamily: mono }
         }, "Save Key"),
@@ -751,6 +915,7 @@ function RedesignScreen({ redesign, diagnosis, input, onSave, onStartOver, dark,
     ? (dark ? ROLE_COLORS[input.targetRole].dark : ROLE_COLORS[input.targetRole].light)
     : accent;
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [saved, setSaved] = useState(false);
 
   function handleExport() {
@@ -759,6 +924,20 @@ function RedesignScreen({ redesign, diagnosis, input, onSave, onStartOver, dark,
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  }
+
+  function handleShare() {
+    const encoded = encodeShareState(input, diagnosis, redesign);
+    if (!encoded) return;
+    const url = window.location.origin + window.location.pathname + '#share=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      setShared(true);
+      setTimeout(() => setShared(false), 2500);
+    });
+  }
+
+  function handlePrint() {
+    openPrintWindow(redesign, diagnosis, input);
   }
 
   function handleSave() {
@@ -856,18 +1035,26 @@ function RedesignScreen({ redesign, diagnosis, input, onSave, onStartOver, dark,
     ),
 
     // Actions
-    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 } },
       React.createElement("button", {
         onClick: handleExport,
-        style: { padding: "12px 24px", background: accent, color: "#fff", border: "none", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: mono, transition: "opacity 0.2s" }
-      }, copied ? "Copied!" : "Export as Markdown"),
+        style: { padding: "12px 22px", background: accent, color: "#fff", border: "none", borderRadius: 100, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: mono, transition: "opacity 0.2s" }
+      }, copied ? "Copied!" : "Copy Markdown"),
+      React.createElement("button", {
+        onClick: handleShare,
+        style: { padding: "12px 22px", background: "transparent", border: `1px solid ${accent}`, borderRadius: 100, fontSize: 13, fontWeight: 600, color: accent, cursor: "pointer", fontFamily: mono }
+      }, shared ? "Link Copied!" : "Share Link"),
+      React.createElement("button", {
+        onClick: handlePrint,
+        style: { padding: "12px 22px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
+      }, "Print / PDF"),
       React.createElement("button", {
         onClick: handleSave,
-        style: { padding: "12px 24px", background: "transparent", border: `1px solid ${accent}`, borderRadius: 100, fontSize: 13, fontWeight: 600, color: accent, cursor: "pointer", fontFamily: mono, transition: "all 0.2s" }
+        style: { padding: "12px 22px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
       }, saved ? "Saved!" : "Save"),
       React.createElement("button", {
         onClick: onStartOver,
-        style: { padding: "12px 24px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textMid, cursor: "pointer", fontFamily: mono }
+        style: { padding: "12px 22px", background: "transparent", border: `1px solid ${t.cardBorder}`, borderRadius: 100, fontSize: 13, color: t.textFaint, cursor: "pointer", fontFamily: mono }
       }, "Redesign another"),
     ),
 
@@ -949,6 +1136,21 @@ function App() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [savedRedesigns, setSavedRedesigns] = useState(loadSaves);
   const pendingAction = useRef(null);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#share=')) {
+      const state = decodeShareState(hash.slice(7));
+      if (state && state.input && state.diagnosis && state.redesign) {
+        setInput(state.input);
+        setDiagnosis(state.diagnosis);
+        setRedesign(state.redesign);
+        setScreen("redesign");
+        window.history.replaceState(null, '', window.location.pathname);
+        window.scrollTo({ top: 0 });
+      }
+    }
+  }, []);
 
   useEffect(() => {
     document.body.style.background = t.bg;
