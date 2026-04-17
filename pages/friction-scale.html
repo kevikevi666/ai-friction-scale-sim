@@ -37,6 +37,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -102,6 +103,7 @@ function useTheme(dark) {
     textFaint: dark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.35)",
     textGhost: dark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
     textSkip: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.2)",
+    divider: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)",
     cardBg: dark ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.7)",
     cardBorder: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
     cardShadow: dark ? "none" : "0 1px 3px rgba(0,0,0,0.04)",
@@ -1407,7 +1409,7 @@ function App() {
     }, 1500);
   };
 
-  return React.createElement("div", { style: { minHeight:"100vh", background:t.bg, color:t.text, fontFamily:"'Crimson Pro', Georgia, serif", position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" } },
+  return React.createElement("div", { style: { minHeight:"100vh", display:"flex", flexDirection:"column", background:t.bg, color:t.text, fontFamily:"'Crimson Pro', Georgia, serif", position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" } },
     // BG
     React.createElement("div", { style: { position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${level.color}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${level.color}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
     React.createElement("div", { style: { position:"fixed", inset:0, opacity:t.noiseOpacity, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`, pointerEvents:"none", transition:"opacity 0.5s" } }),
@@ -1417,9 +1419,7 @@ function App() {
       React.createElement("a", { href:"/", style:{ fontFamily:"'Space Mono', monospace", fontSize:isMobile?10:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" } }, "AI AGENCY TOOLKIT"),
       !isMobile
         ? React.createElement("nav", { style:{ display:"flex", gap:28, alignItems:"center", justifyContent:"center" } },
-            React.createElement("a", { href:"/agency", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" } }, "THE AGENCY SPECTRUM"),
-            React.createElement("a", { href:"/pages/friction-scale.html", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" } }, "AI FRICTION SCALE"),
-            React.createElement("a", { href:"/pages/assessment.html", style:{ fontFamily:"'JetBrains Mono', monospace", fontSize:10, fontWeight:700, color:darkMode?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" } }, "ASSESSMENT CHECK"),
+            ...SiteNav.renderNavLinks({ dark: darkMode, currentPage: activeTab === "agency" ? "agency" : "friction-scale" })
           )
         : React.createElement("div"),
       React.createElement("div", { style:{ display:"flex", justifyContent:"flex-end" } },
@@ -1429,25 +1429,17 @@ function App() {
 
     // ═══ AGENCY STANDALONE PAGE ═══
     activeTab === "agency" && React.createElement("div", {
-      style: { position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "24px 16px" : "48px 32px" }
+      style: { flex:1, width:"100%", position: "relative", zIndex: 1, maxWidth: 1100, margin: "0 auto", padding: isMobile ? "24px 16px" : "48px 32px" }
     },
       // Theme toggle top-right
       React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 8 }},
         React.createElement(ThemeToggle, { dark: darkMode, onToggle: () => setDarkMode(!darkMode) }),
       ),
       React.createElement(AgencyTab, { t, isMobile }),
-      // Agency footer
-      React.createElement("footer", { style: { textAlign: "center", marginTop: isMobile ? 28 : 48, paddingBottom: 24 }},
-        React.createElement("div", { style: { fontSize: 9, color: t.textGhost, fontFamily: mono, letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 1.8 }},
-          "The Agency Spectrum (2026)", React.createElement("br"),
-          "A companion to Jane Beckwith's AI Friction Scale", React.createElement("br"),
-          "By ", React.createElement("a", { href: "mailto:kevinfarrant@gmail.com", style: { color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" }}, "Kevin Farrant"), React.createElement("br"),
-          "© 2026 Kevin Farrant. All rights reserved."),
-      ),
     ),
 
     // ═══ FRICTION SCALE PAGES ═══
-    activeTab !== "agency" && React.createElement("div", { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onWheel: handleWheel, style: { position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
+    activeTab !== "agency" && React.createElement("div", { onTouchStart: handleTouchStart, onTouchEnd: handleTouchEnd, onWheel: handleWheel, style: { flex:1, width:"100%", position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" } },
 
       // Header
       React.createElement("header", { style: { textAlign:"center", marginBottom:isMobile?20:40 } },
@@ -1699,14 +1691,10 @@ function App() {
       ),
 
       React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
-
-      // Footer
-      React.createElement("footer", { style: { textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
-        React.createElement("div", { style: { fontSize:9, color:t.textGhost, fontFamily:mono, letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8, transition:"color 0.5s" } },
-          "Based on Jane Beckwith's AI Friction Scale (2025)", React.createElement("br"), "Building on the AI Assessment Scale by Perkins, Furze, Roe & MacVaugh", React.createElement("br"), "Interactive simulation by ", React.createElement("a", { href: "mailto:kevinfarrant@gmail.com", style: { color: "inherit", textDecoration: "underline", textUnderlineOffset: "3px" } }, "Kevin Farrant"), React.createElement("br"), "© 2026 Kevin Farrant. All rights reserved."
-        ),
-      ),
     ),
+
+    // Footer (shared)
+    SiteNav.renderFooter({ isMobile, t, currentPage: activeTab === "agency" ? "agency" : "friction-scale" })
   );
 }
 

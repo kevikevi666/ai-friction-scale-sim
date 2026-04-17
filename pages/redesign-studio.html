@@ -24,6 +24,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -462,13 +463,6 @@ ${diagnosis.aiVulnerabilities.map(v => `<div><span class="vector">${v.vector}</s
 
 /* ─────────── components ─────────── */
 
-const NAV_LINKS = [
-  { href: "/agency",                     label: "THE AGENCY SPECTRUM", colorDark: "#2A9D8F", colorLight: "#00796B" },
-  { href: "/pages/friction-scale.html",  label: "AI FRICTION SCALE",   colorDark: "#F4A261", colorLight: "#E65100" },
-  { href: "/pages/assessment.html",      label: "ASSESSMENT CHECK",    colorDark: "#818cf8", colorLight: "#6366f1" },
-  { href: "/pages/redesign-studio.html", label: "REDESIGN STUDIO",     colorDark: null,      colorLight: null, active: true },
-];
-
 function Header({ dark, setDark, t, isMobile }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const accent = dark ? ACCENT.dark : ACCENT.light;
@@ -489,15 +483,7 @@ function Header({ dark, setDark, t, isMobile }) {
       }, "AI AGENCY TOOLKIT"),
       !isMobile
         ? React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center", justifyContent: "center" } },
-            ...NAV_LINKS.map(link => {
-              const color = link.active ? accent : (dark ? link.colorDark : link.colorLight);
-              return React.createElement("a", {
-                key: link.label,
-                href: link.href,
-                style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color, textDecoration: "none", letterSpacing: "0.06em",
-                  ...(link.active ? { borderBottom: `2px solid ${accent}`, paddingBottom: 2 } : {}) }
-              }, link.label);
-            })
+            ...SiteNav.renderNavLinks({ dark, currentPage: "redesign-studio" })
           )
         : React.createElement("div"),
       React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 } },
@@ -531,20 +517,21 @@ function Header({ dark, setDark, t, isMobile }) {
           style: { fontFamily: spc, fontSize: 11, fontWeight: 700, color: t.textFaint, letterSpacing: "0.06em", padding: "0 20px 16px", borderBottom: `1px solid ${t.divider}` }
         }, "AI AGENCY TOOLKIT"),
         React.createElement("nav", { style: { display: "flex", flexDirection: "column", marginTop: 8 } },
-          ...NAV_LINKS.map(link => {
-            const color = link.active ? accent : (dark ? link.colorDark : link.colorLight);
+          ...SiteNav.TOOLS.map(tool => {
+            const isActive = tool.id === "redesign-studio";
+            const color = dark ? tool.colorDark : tool.colorLight;
             return React.createElement("a", {
-              key: link.label,
-              href: link.href,
+              key: tool.id,
+              href: tool.href,
               style: {
                 fontFamily: mono, fontSize: 11, fontWeight: 700, color,
                 textDecoration: "none", letterSpacing: "0.06em",
                 padding: "13px 20px",
                 borderBottom: `1px solid ${t.divider}`,
-                borderLeft: link.active ? `3px solid ${accent}` : "3px solid transparent",
-                background: link.active ? (dark ? `${accent}08` : `${accent}05`) : "transparent",
+                borderLeft: isActive ? `3px solid ${color}` : "3px solid transparent",
+                background: isActive ? (dark ? `${color}08` : `${color}05`) : "transparent",
               }
-            }, link.label);
+            }, tool.navLabel);
           })
         ),
       )
@@ -1262,7 +1249,7 @@ function App() {
   const hasKey = !!localStorage.getItem("ANTHROPIC_API_KEY");
 
   return React.createElement("div", {
-    style: { minHeight: "100vh", background: t.bg, color: t.text, position: "relative", overflow: "hidden" }
+    style: { minHeight: "100vh", display: "flex", flexDirection: "column", background: t.bg, color: t.text, position: "relative", overflow: "hidden" }
   },
     // Background overlays
     React.createElement("div", {
@@ -1287,7 +1274,7 @@ function App() {
     ),
 
     React.createElement("main", {
-      style: { position: "relative", zIndex: 1, padding: isMobile ? "28px 16px 48px" : "40px 32px 64px" }
+      style: { flex: 1, position: "relative", zIndex: 1, padding: isMobile ? "28px 16px 48px" : "40px 32px 64px" }
     },
       error && React.createElement("div", { style: { maxWidth: 700, margin: "0 auto 20px" } },
         React.createElement(ErrorMessage, { message: error, onRetry: () => setError(null), dark, t })
@@ -1311,26 +1298,8 @@ function App() {
       }),
     ),
 
-    // Footer
-    React.createElement("footer", {
-      style: {
-        position: "relative", zIndex: 1,
-        borderTop: `1px solid ${t.divider}`,
-        padding: isMobile ? "20px" : "24px 40px",
-        display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8,
-      },
-    },
-      React.createElement("span", {
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em" }
-      }, "Kevin Farrant — Redesign Studio"),
-      React.createElement("span", {
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em" }
-      }, "© 2026 Kevin Farrant. All rights reserved."),
-      React.createElement("a", {
-        href: "mailto:kevinfarrant@gmail.com",
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em", textDecoration: "none" }
-      }, "Contact"),
-    ),
+    // Footer (shared)
+    SiteNav.renderFooter({ isMobile, t, currentPage: "redesign-studio" }),
 
     // Key modal
     showKeyModal && React.createElement(ApiKeyModal, {

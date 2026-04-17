@@ -25,6 +25,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
@@ -265,10 +266,7 @@ function App() {
       // Nav links (center, desktop only)
       !isMobile
         ? React.createElement("nav", { style: { display: "flex", gap: 28, alignItems: "center", justifyContent: "center" } },
-            React.createElement("a", { href: "/agency", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#2A9D8F" : "#00796B", textDecoration: "none", letterSpacing: "0.06em" } }, "THE AGENCY SPECTRUM"),
-            React.createElement("a", { href: "/pages/friction-scale.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F4A261" : "#E65100", textDecoration: "none", letterSpacing: "0.06em" } }, "AI FRICTION SCALE"),
-            React.createElement("a", { href: "/pages/assessment.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#818cf8" : "#6366f1", textDecoration: "none", letterSpacing: "0.06em" } }, "ASSESSMENT CHECK"),
-            React.createElement("a", { href: "/pages/redesign-studio.html", style: { fontFamily: mono, fontSize: 10, fontWeight: 700, color: dark ? "#F472B6" : "#BE185D", textDecoration: "none", letterSpacing: "0.06em" } }, "REDESIGN STUDIO"),
+            ...SiteNav.renderNavLinks({ dark, currentPage: null })
           )
         : React.createElement("div"),
       // Theme toggle (right, justified to end)
@@ -327,29 +325,8 @@ function App() {
       ),
     ),
 
-    // Footer
-    React.createElement("footer", {
-      style: {
-        borderTop: `1px solid ${t.divider}`,
-        padding: isMobile ? "20px" : "24px 40px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 8,
-      },
-    },
-      React.createElement("span", {
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em" }
-      }, "Kevin Farrant — AI Agency Toolkit"),
-      React.createElement("span", {
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em" }
-      }, "© 2026 Kevin Farrant. All rights reserved."),
-      React.createElement("a", {
-        href: "mailto:kevinfarrant@gmail.com",
-        style: { fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em", textDecoration: "none" }
-      }, "Contact"),
-    ),
+    // Footer (shared)
+    SiteNav.renderFooter({ isMobile, t, currentPage: null })
   );
 }
 

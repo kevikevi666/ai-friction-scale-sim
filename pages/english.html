@@ -12,6 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -58,6 +59,7 @@ function useTheme(dark) {
     scenarioBorderOn:  dark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)",
     scenarioBorderOff: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
     noiseOpacity:    dark ? 0.03 : 0.015,
+    divider:         dark ? "rgba(255,255,255,0.06)"    : "rgba(0,0,0,0.07)",
     scrollThumb:     dark ? "rgba(255,255,255,0.12)"    : "rgba(0,0,0,0.12)",
     accentFaint:     dark ? `${ACCENT}20`               : `${ACCENT}12`,
     accentBorder:    dark ? `${ACCENT}30`               : `${ACCENT}22`,
@@ -389,7 +391,7 @@ function App() {
   }, [dark]);
 
   return (
-    <div style={{ minHeight:"100vh", background:t.bg, color:t.text,
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", background:t.bg, color:t.text,
       fontFamily:"'Crimson Pro', Georgia, serif",
       position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" }}>
 
@@ -405,7 +407,7 @@ function App() {
 
       <HamburgerMenu open={menuOpen} onToggle={() => setMenuOpen(!menuOpen)} dark={dark} t={t} />
 
-      <div style={{ position:"relative", zIndex:1, maxWidth:1000, margin:"0 auto",
+      <div style={{ flex:1, width:"100%", position:"relative", zIndex:1, maxWidth:1000, margin:"0 auto",
         padding: isMobile ? "20px 14px" : "30px 28px" }}>
 
         {/* Theme toggle */}
@@ -490,17 +492,9 @@ function App() {
         {/* Content */}
         <PhaseContent phase={activePhase} scenario={scenario} t={t} isMobile={isMobile} />
 
-        {/* Footer */}
-        <footer style={{ textAlign:"center", marginTop: isMobile ? 40 : 64, paddingBottom:24 }}>
-          <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono,
-            letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8 }}>
-            AI Friction Scale Toolkit — High School English<br />
-            Based on Jane Beckwith's AI Friction Scale (2024)<br />
-            © 2026 Kevin Farrant. All rights reserved.
-          </div>
-        </footer>
-
       </div>
+
+      {SiteNav.renderFooter({ isMobile, t, pageTitle: "High School English" })}
     </div>
   );
 }

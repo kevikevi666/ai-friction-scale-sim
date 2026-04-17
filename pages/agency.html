@@ -24,6 +24,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -1156,7 +1157,7 @@ function App() {
     return dark ? tab.accentDark : tab.accentLight;
   })();
 
-  return React.createElement("div", { style:{ minHeight:"100vh", background:t.bg, color:t.text, fontFamily:serif, position:"relative", overflowX:"hidden", transition:"background 0.5s, color 0.5s" } },
+  return React.createElement("div", { style:{ minHeight:"100vh", display:"flex", flexDirection:"column", background:t.bg, color:t.text, fontFamily:serif, position:"relative", overflowX:"hidden", transition:"background 0.5s, color 0.5s" } },
 
     // BG effects
     React.createElement("div", { style:{ position:"fixed", inset:0, backgroundImage:`radial-gradient(circle at 20% 50%, ${tabAccent}06 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${tabAccent}04 0%, transparent 40%)`, transition:"all 1s", pointerEvents:"none" } }),
@@ -1172,9 +1173,7 @@ function App() {
       }, "AI AGENCY TOOLKIT"),
       !isMobile
         ? React.createElement("nav", { style:{ display:"flex", gap:28, alignItems:"center", justifyContent:"center" } },
-            React.createElement("a", { href:"/agency", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" } }, "THE AGENCY SPECTRUM"),
-            React.createElement("a", { href:"/pages/friction-scale.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" } }, "AI FRICTION SCALE"),
-            React.createElement("a", { href:"/pages/assessment.html", style:{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" } }, "ASSESSMENT CHECK"),
+            ...SiteNav.renderNavLinks({ dark, currentPage: "agency" })
           )
         : React.createElement("div"),
       React.createElement("div", { style:{ display:"flex", justifyContent:"flex-end" } },
@@ -1191,7 +1190,7 @@ function App() {
       onTouchStart: handleTouchStart,
       onTouchEnd: handleTouchEnd,
       onWheel: handleWheel,
-      style:{ position:"relative", zIndex:1, maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" }
+      style:{ flex:1, position:"relative", zIndex:1, width:"100%", maxWidth:1100, margin:"0 auto", padding:isMobile?"20px 14px":"30px 20px" }
     },
 
       // Hero
@@ -1328,16 +1327,10 @@ function App() {
         ),
 
       React.createElement("style", null, "@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }"),
-
-      // Footer
-      React.createElement("footer", { style:{ textAlign:"center", marginTop:isMobile?28:48, paddingBottom:24 } },
-        React.createElement("div", { style:{ fontSize:9, color:t.textGhost, fontFamily:mono, letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8, transition:"color 0.5s" } },
-          "The Agency Spectrum (2026)", React.createElement("br"),
-          "A companion to Jane Beckwith's AI Friction Scale", React.createElement("br"),
-          "By ", React.createElement("a", { href:"mailto:kevinfarrant@gmail.com", style:{ color:"inherit", textDecoration:"underline", textUnderlineOffset:"3px" } }, "Kevin Farrant"), React.createElement("br"),
-          "© 2026 Kevin Farrant. All rights reserved."),
-      ),
     ),
+
+    // Footer (shared)
+    SiteNav.renderFooter({ isMobile, t, currentPage: "agency" })
   );
 }
 

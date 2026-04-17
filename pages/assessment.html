@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous"></script>
+<script src="/assets/site-nav.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
@@ -179,6 +180,7 @@ function useTheme(dark) {
     optionBorderActive:  dark ? `1px solid ${ACCENT}55`           : `1px solid ${ACCENT}45`,
     optionBgActive:      dark ? `${ACCENT}14`                     : `${ACCENT}08`,
     trackBg:             dark ? "rgba(255,255,255,0.08)"          : "rgba(0,0,0,0.08)",
+    divider:             dark ? "rgba(255,255,255,0.06)"          : "rgba(0,0,0,0.07)",
     noiseOpacity:        dark ? 0.03                              : 0.015,
   };
 }
@@ -508,7 +510,7 @@ function App() {
     `Question ${step} of 5`;
 
   return (
-    <div style={{ minHeight:"100vh", background:t.bg, color:t.text,
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", background:t.bg, color:t.text,
       fontFamily:"'Crimson Pro', Georgia, serif",
       position:"relative", overflow:"hidden", transition:"background 0.5s, color 0.5s" }}>
 
@@ -524,9 +526,7 @@ function App() {
         <a href="/" style={{ fontFamily:"'Space Mono', monospace", fontSize:isMobile?10:13, fontWeight:700, color:t.text, textDecoration:"none", letterSpacing:"0.04em" }}>AI AGENCY TOOLKIT</a>
         {!isMobile ? (
           <nav style={{ display:"flex", gap:28, alignItems:"center", justifyContent:"center" }}>
-            <a href="/agency" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#2A9D8F":"#00796B", textDecoration:"none", letterSpacing:"0.06em" }}>THE AGENCY SPECTRUM</a>
-            <a href="/pages/friction-scale.html" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#F4A261":"#E65100", textDecoration:"none", letterSpacing:"0.06em" }}>AI FRICTION SCALE</a>
-            <a href="/pages/assessment.html" style={{ fontFamily:mono, fontSize:10, fontWeight:700, color:dark?"#818cf8":"#6366f1", textDecoration:"none", letterSpacing:"0.06em" }}>ASSESSMENT CHECK</a>
+            {SiteNav.renderNavLinks({ dark, currentPage: "assessment" })}
           </nav>
         ) : <div />}
         <div style={{ display:"flex", justifyContent:"flex-end" }}>
@@ -534,7 +534,7 @@ function App() {
         </div>
       </header>
 
-      <div style={{ position:"relative", zIndex:1, maxWidth:740, margin:"0 auto",
+      <div style={{ flex:1, position:"relative", zIndex:1, width:"100%", maxWidth:740, margin:"0 auto",
         padding: isMobile ? "20px 14px 48px" : "30px 28px 64px" }}>
 
         <div style={{ display:"flex", justifyContent:"flex-start", alignItems:"center",
@@ -571,16 +571,9 @@ function App() {
           />
         )}
 
-        {(step === 0 || step === 6) && (
-          <footer style={{ textAlign:"center", marginTop: isMobile ? 48 : 72 }}>
-            <div style={{ fontSize:10, color:t.textFaint, fontFamily:mono,
-              letterSpacing:"0.1em", textTransform:"uppercase", lineHeight:1.8 }}>
-              Kevin Farrant — Assessment Check<br />
-              © 2026 Kevin Farrant. All rights reserved.
-            </div>
-          </footer>
-        )}
       </div>
+
+      {SiteNav.renderFooter({ isMobile, t, currentPage: "assessment" })}
     </div>
   );
 }
