@@ -1694,7 +1694,14 @@ function App() {
     ),
 
     // Footer (shared)
-    SiteNav.renderFooter({ isMobile, t, currentPage: activeTab === "agency" ? "agency" : "friction-scale" })
+    SiteNav.renderFooter({
+      isMobile, t,
+      currentPage: activeTab === "agency" ? "agency" : "friction-scale",
+      attribution: [
+        "BASED ON JANE BECKWITH'S AI FRICTION SCALE (2025)",
+        "BUILDING ON THE AI ASSESSMENT SCALE BY PERKINS. FURZE. ROE & MACVAUGH",
+      ],
+    })
   );
 }
 

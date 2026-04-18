@@ -44,17 +44,16 @@
 
   // Returns a <footer> element. Use t.divider and t.textLow from the page's theme.
   // Pass pageTitle to override the default label (used for pages not in TOOLS, e.g. subject demos).
-  function renderFooter({ isMobile, t, currentPage, pageTitle }) {
+  // Pass attribution (array of strings) to show credit lines above the main footer row.
+  function renderFooter({ isMobile, t, currentPage, pageTitle, attribution }) {
     const tool = TOOLS_BY_ID[currentPage];
     const label = pageTitle || (tool ? tool.title : "AI Agency Toolkit");
     const spanStyle = {
       fontFamily: mono, fontSize: 10, color: t.textLow, letterSpacing: "0.04em",
     };
-    return React.createElement("footer", {
+
+    const mainRow = React.createElement("div", {
       style: {
-        position: "relative", zIndex: 1,
-        borderTop: `1px solid ${t.divider}`,
-        padding: isMobile ? "20px" : "24px 40px",
         display: "grid",
         gridTemplateColumns: isMobile ? "1fr" : "1fr auto 1fr",
         alignItems: "center",
@@ -72,6 +71,24 @@
         style: { ...spanStyle, textDecoration: "none", textAlign: isMobile ? "center" : "right" },
       }, "Contact"),
     );
+
+    const children = [];
+    if (attribution && attribution.length) {
+      children.push(React.createElement("div", {
+        style: { textAlign: "center", marginBottom: 16 },
+      }, ...attribution.map((line, i) =>
+        React.createElement("div", { key: i, style: { ...spanStyle, marginBottom: 4 } }, line)
+      )));
+    }
+    children.push(mainRow);
+
+    return React.createElement("footer", {
+      style: {
+        position: "relative", zIndex: 1,
+        borderTop: `1px solid ${t.divider}`,
+        padding: isMobile ? "20px" : "24px 40px",
+      },
+    }, ...children);
   }
 
   window.SiteNav = { TOOLS, TOOLS_BY_ID, renderNavLinks, renderFooter };
