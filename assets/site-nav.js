@@ -75,7 +75,7 @@
     const children = [];
     if (attribution && attribution.length) {
       children.push(React.createElement("div", {
-        style: { textAlign: "center", marginBottom: 16 },
+        style: { textAlign: "center", marginBottom: 4 },
       }, ...attribution.map((line, i) =>
         React.createElement("div", { key: i, style: { ...spanStyle, marginBottom: 4 } }, line)
       )));
