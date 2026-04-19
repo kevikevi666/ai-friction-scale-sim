@@ -4,6 +4,26 @@
 [functions]
   node_bundler = "esbuild"
 
+# 301 redirect the alias domain to the canonical domain so Google stops
+# treating aiagencytoolkit.com as a duplicate of aifrictionscale.com.
+[[redirects]]
+  from = "https://aifrictionscale.com/*"
+  to = "https://aiagencytoolkit.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.aifrictionscale.com/*"
+  to = "https://aiagencytoolkit.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.aiagencytoolkit.com/*"
+  to = "https://aiagencytoolkit.com/:splat"
+  status = 301
+  force = true
+
 # Security headers applied to every response.
 # CSP note: 'unsafe-eval' is required because pages use <script type="text/babel">
 # which is compiled at runtime by babel-standalone. 'unsafe-inline' is required
