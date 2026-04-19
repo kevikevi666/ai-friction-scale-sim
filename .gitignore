@@ -1,0 +1,27 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+
+# Node / Netlify
+node_modules/
+.netlify/
+.cache/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
