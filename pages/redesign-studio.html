@@ -21,9 +21,9 @@
 <link rel="icon" href="/favicon.svg" sizes="any" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/favicon.png" />
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js" integrity="sha384-ku9eM40vVDsFUiERorrdlHlF0LIhdfn716M7TntM72Uo98T7LWiogD3hNenPx8Q0" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
 <script src="/assets/site-nav.js" defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -362,103 +362,161 @@ function renderInline(text) {
 }
 
 /* ─────────── share link helpers ─────────── */
+// Base64 over UTF-8 via TextEncoder/Decoder (escape/unescape are deprecated).
+// Uses URL-safe base64 so the value survives a URL hash round-trip.
+
+function b64EncodeUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function b64DecodeUtf8(encoded) {
+  const normalized = encoded.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+  const bin = atob(normalized + pad);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
 
 function encodeShareState(input, diagnosis, redesign) {
   try {
     const state = { input, diagnosis, redesign };
-    return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    return b64EncodeUtf8(JSON.stringify(state));
   } catch (e) { return null; }
 }
 
 function decodeShareState(encoded) {
   try {
-    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    return JSON.parse(b64DecodeUtf8(encoded));
   } catch (e) { return null; }
 }
 
 /* ─────────── print helper ─────────── */
+// IMPORTANT: the print window shares the opener's origin (about:blank opened
+// via window.open inherits it), so any HTML we inject runs as first-party JS
+// with access to localStorage (including a stored BYOK API key). Every
+// interpolation below goes through escapeHtml(); the inline markdown
+// conversion escapes FIRST, then applies the **bold** / *italic* regex to
+// the already-escaped string so the regex can only produce safe <strong>
+// and <em> tags around escaped text.
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+    return c === "&" ? "&amp;"
+      : c === "<" ? "&lt;"
+      : c === ">" ? "&gt;"
+      : c === '"' ? "&quot;"
+      : "&#39;";
+  });
+}
+
+function inlineMarkdownToSafeHtml(line) {
+  // Must run AFTER escapeHtml, not before.
+  return line
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+}
+
+function markdownLinesToSafeHtml(md) {
+  if (md == null) return "";
+  return String(md).split("\n").map(function (rawLine) {
+    if (rawLine.startsWith("### ")) return "<h4>" + escapeHtml(rawLine.slice(4)) + "</h4>";
+    if (rawLine.startsWith("## "))  return "<h3>" + escapeHtml(rawLine.slice(3)) + "</h3>";
+    if (rawLine.startsWith("# "))   return "<h3>" + escapeHtml(rawLine.slice(2)) + "</h3>";
+    if (rawLine.startsWith("- ") || rawLine.startsWith("* ")) {
+      return "<li>" + inlineMarkdownToSafeHtml(escapeHtml(rawLine.slice(2))) + "</li>";
+    }
+    if (/^\d+\.\s/.test(rawLine)) {
+      return "<li>" + inlineMarkdownToSafeHtml(escapeHtml(rawLine.replace(/^\d+\.\s/, ""))) + "</li>";
+    }
+    if (rawLine.trim() === "") return "<br>";
+    return "<p>" + inlineMarkdownToSafeHtml(escapeHtml(rawLine)) + "</p>";
+  }).join("\n");
+}
 
 function openPrintWindow(redesign, diagnosis, input) {
-  const role = input.targetRole;
-  const grade = input.grade || "";
-  const tc = redesign.transferCheckpoint;
+  const role = escapeHtml(input.targetRole);
+  const grade = escapeHtml(input.grade || "");
+  const tc = redesign.transferCheckpoint || {};
+  const vulns = Array.isArray(diagnosis && diagnosis.aiVulnerabilities) ? diagnosis.aiVulnerabilities : [];
+  const prompts = Array.isArray(redesign.reflectionPrompts) ? redesign.reflectionPrompts : [];
+  const changes = Array.isArray(redesign.changeLog) ? redesign.changeLog : [];
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Redesign Studio: ${role} Mode${grade ? " \u2014 " + grade : ""}</title>
-<style>
-  body { font-family: Georgia, serif; font-size: 14px; line-height: 1.65; color: #111; max-width: 680px; margin: 36px auto; padding: 0 24px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  .subtitle { font-family: monospace; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 28px; }
-  h2 { font-family: monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #444; margin: 28px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-  h3, h4 { font-size: 14px; margin: 14px 0 4px; }
-  p { margin: 0 0 10px; }
-  ul, ol { padding-left: 20px; margin: 0 0 10px; }
-  li { margin-bottom: 4px; }
-  .vector { font-family: monospace; font-size: 12px; font-weight: bold; color: #b00; }
-  .example { font-style: italic; font-size: 13px; color: #555; border-left: 2px solid #ccc; padding-left: 10px; margin-top: 4px; }
-  .badge { display: inline-block; font-family: monospace; font-size: 10px; font-weight: bold; background: #fef3c7; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .checkpoint-grid { display: grid; grid-template-columns: 80px 1fr; gap: 6px 12px; background: #f8f6f0; border: 1px solid #ddd; border-radius: 6px; padding: 14px; margin-bottom: 10px; }
-  .checkpoint-label { font-family: monospace; font-size: 10px; text-transform: uppercase; color: #666; padding-top: 2px; }
-  .divider { border: none; border-top: 1px solid #eee; margin: 10px 0; }
-  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-family: monospace; font-size: 10px; color: #999; text-align: center; }
-  code { font-family: monospace; font-size: 0.9em; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
-  strong { font-weight: 700; }
-  em { font-style: italic; }
-  @media print { body { margin: 0; } }
-</style>
-</head>
-<body>
-<h1>Assignment Redesign: ${role} Mode</h1>
-${grade ? `<div class="subtitle">${grade}</div>` : '<div class="subtitle">Assignment Redesign</div>'}
+  const html = "<!DOCTYPE html>\n"
+    + "<html>\n<head>\n"
+    + "<meta charset=\"UTF-8\">\n"
+    + "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:;\">\n"
+    + "<title>Redesign Studio: " + role + " Mode" + (grade ? " \u2014 " + grade : "") + "</title>\n"
+    + "<style>\n"
+    + "  body { font-family: Georgia, serif; font-size: 14px; line-height: 1.65; color: #111; max-width: 680px; margin: 36px auto; padding: 0 24px; }\n"
+    + "  h1 { font-size: 22px; margin: 0 0 4px; }\n"
+    + "  .subtitle { font-family: monospace; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 28px; }\n"
+    + "  h2 { font-family: monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #444; margin: 28px 0 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px; }\n"
+    + "  h3, h4 { font-size: 14px; margin: 14px 0 4px; }\n"
+    + "  p { margin: 0 0 10px; }\n"
+    + "  ul, ol { padding-left: 20px; margin: 0 0 10px; }\n"
+    + "  li { margin-bottom: 4px; }\n"
+    + "  .vector { font-family: monospace; font-size: 12px; font-weight: bold; color: #b00; }\n"
+    + "  .example { font-style: italic; font-size: 13px; color: #555; border-left: 2px solid #ccc; padding-left: 10px; margin-top: 4px; }\n"
+    + "  .badge { display: inline-block; font-family: monospace; font-size: 10px; font-weight: bold; background: #fef3c7; padding: 2px 7px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }\n"
+    + "  .checkpoint-grid { display: grid; grid-template-columns: 80px 1fr; gap: 6px 12px; background: #f8f6f0; border: 1px solid #ddd; border-radius: 6px; padding: 14px; margin-bottom: 10px; }\n"
+    + "  .checkpoint-label { font-family: monospace; font-size: 10px; text-transform: uppercase; color: #666; padding-top: 2px; }\n"
+    + "  .divider { border: none; border-top: 1px solid #eee; margin: 10px 0; }\n"
+    + "  footer { margin-top: 36px; padding-top: 12px; border-top: 1px solid #ddd; font-family: monospace; font-size: 10px; color: #999; text-align: center; }\n"
+    + "  code { font-family: monospace; font-size: 0.9em; background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }\n"
+    + "  strong { font-weight: 700; }\n"
+    + "  em { font-style: italic; }\n"
+    + "  @media print { body { margin: 0; } }\n"
+    + "</style>\n"
+    + "</head>\n<body>\n"
+    + "<h1>Assignment Redesign: " + role + " Mode</h1>\n"
+    + (grade
+        ? "<div class=\"subtitle\">" + grade + "</div>\n"
+        : "<div class=\"subtitle\">Assignment Redesign</div>\n")
+    + "<h2>Why This Role</h2>\n"
+    + "<p>" + escapeHtml(redesign.roleRationale) + "</p>\n"
+    + "<h2>Redesigned Assignment</h2>\n"
+    + markdownLinesToSafeHtml(redesign.redesignedPrompt) + "\n"
+    + "<h2>Transfer Verification Checkpoint</h2>\n"
+    + "<div class=\"checkpoint-grid\">\n"
+    + "  <span class=\"checkpoint-label\">When</span><span>" + escapeHtml(tc.when) + "</span>\n"
+    + "  <span class=\"checkpoint-label\">What</span><span>" + escapeHtml(tc.what) + "</span>\n"
+    + "  <span class=\"checkpoint-label\">How</span><span>" + escapeHtml(tc.how) + "</span>\n"
+    + "</div>\n"
+    + "<h2>Student Reflection Prompts</h2>\n"
+    + prompts.map(function (rp) {
+        return "<div><span class=\"badge\">" + escapeHtml(rp && rp.constant) + "</span><p>" + escapeHtml(rp && rp.prompt) + "</p></div>";
+      }).join("\n") + "\n"
+    + "<h2>What This Redesign Develops</h2>\n"
+    + "<p>" + escapeHtml(redesign.develops) + "</p>\n"
+    + "<hr class=\"divider\">\n"
+    + "<p><strong>Does not develop:</strong> " + escapeHtml(redesign.doesNotDevelop) + "</p>\n"
+    + "<h2>Change Log</h2>\n"
+    + "<ol>" + changes.map(function (c) { return "<li>" + escapeHtml(c) + "</li>"; }).join("\n") + "</ol>\n"
+    + "<h2>Diagnosis Summary</h2>\n"
+    + "<p><em>" + escapeHtml(diagnosis && diagnosis.diagnosisHeadline) + "</em></p>\n"
+    + vulns.map(function (v) {
+        return "<div><span class=\"vector\">" + escapeHtml(v && v.vector) + "</span>"
+             + "<p>" + escapeHtml(v && v.description) + "</p>"
+             + "<p class=\"example\">Example: " + escapeHtml(v && v.example) + "</p></div>";
+      }).join("\n") + "\n"
+    + "<footer>Generated by Redesign Studio &mdash; AI Agency Toolkit (aiagencytoolkit.com)<br>&copy; 2026 Kevin Farrant. All rights reserved.</footer>\n"
+    + "</body>\n</html>";
 
-<h2>Why This Role</h2>
-<p>${redesign.roleRationale}</p>
-
-<h2>Redesigned Assignment</h2>
-${redesign.redesignedPrompt.split('\n').map(line => {
-  if (line.startsWith('### ')) return `<h4>${line.slice(4)}</h4>`;
-  if (line.startsWith('## ')) return `<h3>${line.slice(3)}</h3>`;
-  if (line.startsWith('# ')) return `<h3>${line.slice(2)}</h3>`;
-  if (line.startsWith('- ') || line.startsWith('* ')) return `<li>${line.slice(2).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}</li>`;
-  if (/^\d+\.\s/.test(line)) return `<li>${line.replace(/^\d+\.\s/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</li>`;
-  if (line.trim() === '') return '<br>';
-  return `<p>${line.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>')}</p>`;
-}).join('\n')}
-
-<h2>Transfer Verification Checkpoint</h2>
-<div class="checkpoint-grid">
-  <span class="checkpoint-label">When</span><span>${tc.when}</span>
-  <span class="checkpoint-label">What</span><span>${tc.what}</span>
-  <span class="checkpoint-label">How</span><span>${tc.how}</span>
-</div>
-
-<h2>Student Reflection Prompts</h2>
-${redesign.reflectionPrompts.map(rp => `<div><span class="badge">${rp.constant}</span><p>${rp.prompt}</p></div>`).join('\n')}
-
-<h2>What This Redesign Develops</h2>
-<p>${redesign.develops}</p>
-<hr class="divider">
-<p><strong>Does not develop:</strong> ${redesign.doesNotDevelop}</p>
-
-<h2>Change Log</h2>
-<ol>${redesign.changeLog.map(c => `<li>${c}</li>`).join('\n')}</ol>
-
-<h2>Diagnosis Summary</h2>
-<p><em>${diagnosis.diagnosisHeadline}</em></p>
-${diagnosis.aiVulnerabilities.map(v => `<div><span class="vector">${v.vector}</span><p>${v.description}</p><p class="example">Example: ${v.example}</p></div>`).join('\n')}
-
-<footer>Generated by Redesign Studio &mdash; AI Agency Toolkit (aiagencytoolkit.com)<br>&copy; 2026 Kevin Farrant. All rights reserved.</footer>
-<script>window.onload = function() { window.print(); }<\/script>
-</body>
-</html>`;
-
-  const win = window.open('', '_blank');
+  const win = window.open("", "_blank");
+  if (!win) return;
+  win.document.open();
   win.document.write(html);
   win.document.close();
   win.focus();
+  // Trigger the print dialog from the opener so the printed document itself
+  // carries no inline scripts — makes CSP behavior trivially correct.
+  try { win.onload = () => win.print(); } catch (e) { /* popup blockers etc. */ }
+  // Fallback: if the document finished writing synchronously, call print directly.
+  setTimeout(() => { try { win.print(); } catch (e) {} }, 250);
 }
 
 /* ─────────── components ─────────── */
