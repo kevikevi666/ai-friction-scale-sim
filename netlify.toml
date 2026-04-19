@@ -24,6 +24,18 @@
   status = 301
   force = true
 
+[[redirects]]
+  from = "https://aiagencyspectrum.com/*"
+  to = "https://aiagencytoolkit.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.aiagencyspectrum.com/*"
+  to = "https://aiagencytoolkit.com/:splat"
+  status = 301
+  force = true
+
 # Security headers applied to every response.
 # CSP note: 'unsafe-eval' is required because pages use <script type="text/babel">
 # which is compiled at runtime by babel-standalone. 'unsafe-inline' is required
